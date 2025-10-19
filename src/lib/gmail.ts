@@ -9,18 +9,13 @@ export function getGmailClient(accessToken: string, refreshToken: string) {
 
   oauth2Client.setCredentials({
     access_token: accessToken,
-    refresh_token: refreshToken,
+    refresh_token: refreshToken
   });
 
   return google.gmail({ version: 'v1', auth: oauth2Client });
 }
 
-export async function sendEmail(
-  gmail: any,
-  to: string,
-  subject: string,
-  htmlBody: string
-) {
+export async function sendEmail(gmail: any, to: string, subject: string, htmlBody: string) {
   const utf8Subject = `=?utf-8?B?${Buffer.from(subject).toString('base64')}?=`;
 
   const messageParts = [
@@ -30,7 +25,7 @@ export async function sendEmail(
     'Content-Type: text/html; charset=utf-8',
     'Content-Transfer-Encoding: base64',
     '',
-    Buffer.from(htmlBody).toString('base64'),
+    Buffer.from(htmlBody).toString('base64')
   ];
 
   const message = messageParts.join('\n');
@@ -43,8 +38,8 @@ export async function sendEmail(
   const res = await gmail.users.messages.send({
     userId: 'me',
     requestBody: {
-      raw: encodedMessage,
-    },
+      raw: encodedMessage
+    }
   });
 
   return res.data;

@@ -50,7 +50,7 @@ export async function POST(req: NextRequest) {
       sent,
       failed,
       remaining: recipients.length - batch.length,
-      results,
+      results
     });
   } catch (error: any) {
     console.error('Error sending batch:', error);

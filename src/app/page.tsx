@@ -12,7 +12,6 @@ export default function Home() {
           </div>
           <AuthButton />
         </div>
-
         <EmailComposer />
       </div>
     </main>

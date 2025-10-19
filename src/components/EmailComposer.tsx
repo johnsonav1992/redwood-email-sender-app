@@ -11,7 +11,7 @@ export default function EmailComposer() {
   const [recipientList, setRecipientList] = useState<string[]>([]);
   const [isRunning, setIsRunning] = useState(false);
   const [sentEmails, setSentEmails] = useState<string[]>([]);
-  const [failedEmails, setFailedEmails] = useState<Array<{email: string, error: string}>>([]);
+  const [failedEmails, setFailedEmails] = useState<Array<{ email: string; error: string }>>([]);
   const [progress, setProgress] = useState({ sent: 0, failed: 0, total: 0 });
   const [nextBatchIn, setNextBatchIn] = useState<number | null>(null);
   const [currentBatchSending, setCurrentBatchSending] = useState(false);
@@ -47,8 +47,8 @@ export default function EmailComposer() {
           recipients: recipientList,
           subject,
           htmlBody,
-          batchSize: 30,
-        }),
+          batchSize: 30
+        })
       });
 
       const data = await response.json();
@@ -59,9 +59,7 @@ export default function EmailComposer() {
         return;
       }
 
-      const newSent = data.results
-        .filter((r: any) => r.status === 'sent')
-        .map((r: any) => r.email);
+      const newSent = data.results.filter((r: any) => r.status === 'sent').map((r: any) => r.email);
 
       const newFailed = data.results
         .filter((r: any) => r.status === 'failed')
@@ -76,7 +74,7 @@ export default function EmailComposer() {
       setProgress(prev => ({
         sent: prev.sent + data.sent,
         failed: prev.failed + data.failed,
-        total: prev.total,
+        total: prev.total
       }));
 
       setCurrentBatchSending(false);
@@ -145,21 +143,18 @@ export default function EmailComposer() {
     return null;
   }
 
-  const progressPercent = progress.total > 0
-    ? ((progress.sent + progress.failed) / progress.total) * 100
-    : 0;
+  const progressPercent =
+    progress.total > 0 ? ((progress.sent + progress.failed) / progress.total) * 100 : 0;
 
   return (
     <div className="bg-white rounded-xl shadow-sm p-8 space-y-6">
       <div className="space-y-4">
         <div>
-          <label className="block text-sm font-semibold text-gray-700 mb-2">
-            Subject
-          </label>
+          <label className="block text-sm font-semibold text-gray-700 mb-2">Subject</label>
           <input
             type="text"
             value={subject}
-            onChange={(e) => setSubject(e.target.value)}
+            onChange={e => setSubject(e.target.value)}
             placeholder="Email subject"
             disabled={isRunning}
             className="w-full px-4 py-2 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:outline-none transition disabled:bg-gray-50 disabled:cursor-not-allowed"
@@ -172,7 +167,7 @@ export default function EmailComposer() {
           </label>
           <textarea
             value={htmlBody}
-            onChange={(e) => setHtmlBody(e.target.value)}
+            onChange={e => setHtmlBody(e.target.value)}
             rows={12}
             placeholder="<p>Hello!</p><img src='https://example.com/signature.png' />"
             disabled={isRunning}
@@ -186,7 +181,7 @@ export default function EmailComposer() {
           </label>
           <textarea
             value={recipients}
-            onChange={(e) => setRecipients(e.target.value)}
+            onChange={e => setRecipients(e.target.value)}
             rows={6}
             placeholder="email1@example.com&#10;email2@example.com&#10;email3@example.com"
             disabled={isRunning}
@@ -197,7 +192,8 @@ export default function EmailComposer() {
             disabled={isRunning}
             className="mt-2 px-4 py-2 bg-gray-100 text-gray-800 rounded-lg hover:bg-gray-200 font-semibold transition disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Load Recipients ({recipientList.length > 0 ? `${recipientList.length} loaded` : '0 loaded'})
+            Load Recipients (
+            {recipientList.length > 0 ? `${recipientList.length} loaded` : '0 loaded'})
           </button>
         </div>
       </div>
@@ -208,11 +204,7 @@ export default function EmailComposer() {
             <h3 className="text-lg font-bold text-gray-900">Campaign Progress</h3>
             {isRunning && (
               <div className="px-4 py-2 bg-blue-100 text-blue-800 rounded-full text-sm font-semibold">
-                {currentBatchSending ? (
-                  <>Sending batch...</>
-                ) : (
-                  <>Next batch in {nextBatchIn}s</>
-                )}
+                {currentBatchSending ? <>Sending batch...</> : <>Next batch in {nextBatchIn}s</>}
               </div>
             )}
             {!isRunning && progress.sent + progress.failed === progress.total && (
@@ -220,11 +212,13 @@ export default function EmailComposer() {
                 Completed
               </div>
             )}
-            {!isRunning && progress.sent + progress.failed < progress.total && progress.sent > 0 && (
-              <div className="px-4 py-2 bg-yellow-100 text-yellow-800 rounded-full text-sm font-semibold">
-                Paused
-              </div>
-            )}
+            {!isRunning &&
+              progress.sent + progress.failed < progress.total &&
+              progress.sent > 0 && (
+                <div className="px-4 py-2 bg-yellow-100 text-yellow-800 rounded-full text-sm font-semibold">
+                  Paused
+                </div>
+              )}
           </div>
 
           <div className="relative h-8 bg-gray-200 rounded-full overflow-hidden mb-4">
@@ -252,7 +246,9 @@ export default function EmailComposer() {
             </div>
             <div className="bg-white p-4 rounded-lg border-2 border-yellow-500 text-center">
               <div className="text-xs text-gray-600 mb-1">Remaining</div>
-              <div className="text-2xl font-bold text-gray-900">{progress.total - progress.sent - progress.failed}</div>
+              <div className="text-2xl font-bold text-gray-900">
+                {progress.total - progress.sent - progress.failed}
+              </div>
             </div>
           </div>
         </div>
@@ -283,12 +279,15 @@ export default function EmailComposer() {
             Recently Sent ({sentEmails.length})
           </h3>
           <div className="max-h-72 overflow-y-auto p-4 bg-green-50 rounded-lg border-2 border-green-200">
-            {sentEmails.slice(-10).reverse().map((email, i) => (
-              <div key={i} className="flex items-center gap-3 p-2 mb-2 bg-white rounded">
-                <span className="text-green-600 font-bold">✓</span>
-                <span className="text-sm text-gray-700">{email}</span>
-              </div>
-            ))}
+            {sentEmails
+              .slice(-10)
+              .reverse()
+              .map((email, i) => (
+                <div key={i} className="flex items-center gap-3 p-2 mb-2 bg-white rounded">
+                  <span className="text-green-600 font-bold">✓</span>
+                  <span className="text-sm text-gray-700">{email}</span>
+                </div>
+              ))}
             {sentEmails.length > 10 && (
               <div className="text-center text-sm text-gray-600 italic mt-2">
                 ...and {sentEmails.length - 10} more
@@ -300,9 +299,7 @@ export default function EmailComposer() {
 
       {failedEmails.length > 0 && (
         <div>
-          <h3 className="text-lg font-bold text-gray-900 mb-3">
-            Failed ({failedEmails.length})
-          </h3>
+          <h3 className="text-lg font-bold text-gray-900 mb-3">Failed ({failedEmails.length})</h3>
           <div className="max-h-72 overflow-y-auto p-4 bg-red-50 rounded-lg border-2 border-red-200">
             {failedEmails.map((item, i) => (
               <div key={i} className="flex items-start gap-3 p-2 mb-2 bg-white rounded">

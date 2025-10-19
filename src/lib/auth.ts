@@ -10,10 +10,10 @@ export const authOptions: NextAuthOptions = {
         params: {
           scope: 'openid email profile https://www.googleapis.com/auth/gmail.send',
           access_type: 'offline',
-          prompt: 'consent',
-        },
-      },
-    }),
+          prompt: 'consent'
+        }
+      }
+    })
   ],
   callbacks: {
     async jwt({ token, account }) {
@@ -27,6 +27,6 @@ export const authOptions: NextAuthOptions = {
       session.accessToken = token.accessToken as string;
       session.refreshToken = token.refreshToken as string;
       return session;
-    },
-  },
+    }
+  }
 };
