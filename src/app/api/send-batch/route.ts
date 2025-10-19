@@ -2,25 +2,31 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 import { getGmailClient, sendEmail } from '@/lib/gmail';
+import { BatchSendRequest, BatchSendResponse, EmailResult, ErrorResponse } from '@/types/email';
 
-export async function POST(req: NextRequest) {
+export async function POST(
+  req: NextRequest
+): Promise<NextResponse<BatchSendResponse | ErrorResponse>> {
   const session = await getServerSession(authOptions);
 
   if (!session?.accessToken || !session?.refreshToken) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    return NextResponse.json<ErrorResponse>({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const body = await req.json();
-  const { recipients, subject, htmlBody, batchSize = 30 } = body;
+  const body = (await req.json()) as BatchSendRequest;
+  const { recipients, subject, htmlBody, batchSize = 1 } = body;
 
   if (!recipients || !Array.isArray(recipients) || recipients.length === 0) {
-    return NextResponse.json({ error: 'Recipients array is required' }, { status: 400 });
+    return NextResponse.json<ErrorResponse>(
+      { error: 'Recipients array is required' },
+      { status: 400 }
+    );
   }
 
   try {
     const gmail = getGmailClient(session.accessToken, session.refreshToken);
     const batch = recipients.slice(0, batchSize);
-    const results = [];
+    const results: EmailResult[] = [];
 
     for (const recipient of batch) {
       try {
@@ -30,11 +36,12 @@ export async function POST(req: NextRequest) {
           status: 'sent',
           timestamp: new Date().toISOString()
         });
-      } catch (error: any) {
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
         results.push({
           email: recipient,
           status: 'failed',
-          error: error.message
+          error: errorMessage
         });
       }
 
@@ -45,17 +52,18 @@ export async function POST(req: NextRequest) {
     const sent = results.filter(r => r.status === 'sent').length;
     const failed = results.filter(r => r.status === 'failed').length;
 
-    return NextResponse.json({
+    return NextResponse.json<BatchSendResponse>({
       batchSize: batch.length,
       sent,
       failed,
       remaining: recipients.length - batch.length,
       results
     });
-  } catch (error: any) {
+  } catch (error) {
     console.error('Error sending batch:', error);
-    return NextResponse.json(
-      { error: 'Failed to send batch', details: error.message },
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    return NextResponse.json<ErrorResponse>(
+      { error: 'Failed to send batch', details: errorMessage },
       { status: 500 }
     );
   }

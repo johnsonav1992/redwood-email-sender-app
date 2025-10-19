@@ -1,4 +1,4 @@
-import { google } from 'googleapis';
+import { google, gmail_v1 } from 'googleapis';
 
 export function getGmailClient(accessToken: string, refreshToken: string) {
   const oauth2Client = new google.auth.OAuth2(
@@ -15,7 +15,12 @@ export function getGmailClient(accessToken: string, refreshToken: string) {
   return google.gmail({ version: 'v1', auth: oauth2Client });
 }
 
-export async function sendEmail(gmail: any, to: string, subject: string, htmlBody: string) {
+export async function sendEmail(
+  gmail: gmail_v1.Gmail,
+  to: string,
+  subject: string,
+  htmlBody: string
+) {
   const utf8Subject = `=?utf-8?B?${Buffer.from(subject).toString('base64')}?=`;
 
   const messageParts = [

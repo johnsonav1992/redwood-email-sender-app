@@ -8,7 +8,7 @@ export default function Home() {
         <div className="bg-white rounded-xl shadow-sm p-6 mb-8 flex justify-between items-center">
           <div>
             <h1 className="text-3xl font-bold text-gray-900">Gmail Batch Sender</h1>
-            <p className="text-gray-600 mt-1">Send emails in batches of 30 every minute</p>
+            <p className="text-gray-600 mt-1">Send emails in batches of 1 every minute</p>
           </div>
           <AuthButton />
         </div>

@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useSession } from 'next-auth/react';
+import { BatchSendResponse, EmailResult } from '@/types/email';
 
 export default function EmailComposer() {
   const { data: session } = useSession();
@@ -47,23 +48,25 @@ export default function EmailComposer() {
           recipients: recipientList,
           subject,
           htmlBody,
-          batchSize: 30
+          batchSize: 1
         })
       });
 
-      const data = await response.json();
+      const data = (await response.json()) as BatchSendResponse;
 
       if (!response.ok) {
-        console.error('Batch send error:', data.error);
+        console.error('Batch send error:', data);
         setCurrentBatchSending(false);
         return;
       }
 
-      const newSent = data.results.filter((r: any) => r.status === 'sent').map((r: any) => r.email);
+      const newSent = data.results
+        .filter((r: EmailResult) => r.status === 'sent')
+        .map((r: EmailResult) => r.email);
 
       const newFailed = data.results
-        .filter((r: any) => r.status === 'failed')
-        .map((r: any) => ({ email: r.email, error: r.error }));
+        .filter((r: EmailResult) => r.status === 'failed')
+        .map((r: EmailResult) => ({ email: r.email, error: r.error || 'Unknown error' }));
 
       setSentEmails(prev => [...prev, ...newSent]);
       setFailedEmails(prev => [...prev, ...newFailed]);
@@ -261,7 +264,7 @@ export default function EmailComposer() {
             disabled={recipientList.length === 0 || !subject || !htmlBody}
             className="w-full px-6 py-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-bold text-lg transition disabled:bg-gray-300 disabled:cursor-not-allowed"
           >
-            Start Campaign (Sends 30 emails every minute)
+            Start Campaign (Sends 1 email every minute)
           </button>
         ) : (
           <button
