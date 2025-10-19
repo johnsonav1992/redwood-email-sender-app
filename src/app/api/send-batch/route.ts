@@ -2,7 +2,12 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 import { getGmailClient, sendEmail } from '@/lib/gmail';
-import { BatchSendRequest, BatchSendResponse, EmailResult, ErrorResponse } from '@/types/email';
+import {
+  BatchSendRequest,
+  BatchSendResponse,
+  EmailResult,
+  ErrorResponse
+} from '@/types/email';
 
 export async function POST(
   req: NextRequest
@@ -10,7 +15,10 @@ export async function POST(
   const session = await getServerSession(authOptions);
 
   if (!session?.accessToken || !session?.refreshToken) {
-    return NextResponse.json<ErrorResponse>({ error: 'Unauthorized' }, { status: 401 });
+    return NextResponse.json<ErrorResponse>(
+      { error: 'Unauthorized' },
+      { status: 401 }
+    );
   }
 
   const body = (await req.json()) as BatchSendRequest;
@@ -37,7 +45,8 @@ export async function POST(
           timestamp: new Date().toISOString()
         });
       } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+        const errorMessage =
+          error instanceof Error ? error.message : 'Unknown error';
         results.push({
           email: recipient,
           status: 'failed',
@@ -61,7 +70,8 @@ export async function POST(
     });
   } catch (error) {
     console.error('Error sending batch:', error);
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    const errorMessage =
+      error instanceof Error ? error.message : 'Unknown error';
     return NextResponse.json<ErrorResponse>(
       { error: 'Failed to send batch', details: errorMessage },
       { status: 500 }

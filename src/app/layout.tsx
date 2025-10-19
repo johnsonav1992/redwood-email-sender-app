@@ -10,7 +10,11 @@ export const metadata: Metadata = {
   description: 'Send batch emails through Gmail'
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default function RootLayout({
+  children
+}: {
+  children: React.ReactNode;
+}) {
   return (
     <html lang="en">
       <body className={inter.className}>

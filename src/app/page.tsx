@@ -4,11 +4,15 @@ import EmailComposer from '@/components/EmailComposer';
 export default function Home() {
   return (
     <main className="min-h-screen bg-gray-50 py-8">
-      <div className="max-w-5xl mx-auto px-4">
-        <div className="bg-white rounded-xl shadow-sm p-6 mb-8 flex justify-between items-center">
+      <div className="mx-auto max-w-5xl px-4">
+        <div className="mb-8 flex items-center justify-between rounded-xl bg-white p-6 shadow-sm">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Gmail Batch Sender</h1>
-            <p className="text-gray-600 mt-1">Send emails in batches of 1 every minute</p>
+            <h1 className="text-3xl font-bold text-gray-900">
+              Gmail Batch Sender
+            </h1>
+            <p className="mt-1 text-gray-600">
+              Send emails in batches of 1 every minute
+            </p>
           </div>
           <AuthButton />
         </div>
