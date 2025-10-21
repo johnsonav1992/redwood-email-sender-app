@@ -45,7 +45,10 @@ export async function GET(): Promise<
     const sentToday =
       response.data.messages?.length || response.data.resultSizeEstimate || 0;
 
-    const dailyLimit = 2000;
+    // Conservative limit for Workspace accounts
+    // Actual Workspace limits: 2000/day (paid) or 500/day (trial)
+    // Using 1500 as a safe buffer to ensure users never hit their actual limit
+    const dailyLimit = 1500;
     const remaining = Math.max(0, dailyLimit - sentToday);
 
     const tomorrow = new Date(today);
