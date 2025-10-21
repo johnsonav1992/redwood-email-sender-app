@@ -10,7 +10,11 @@ import CampaignProgress from './CampaignProgress';
 import CampaignControls from './CampaignControls';
 import EmailResults from './EmailResults';
 
-export default function EmailComposer() {
+interface EmailComposerProps {
+  onBatchSent?: () => void;
+}
+
+export default function EmailComposer({ onBatchSent }: EmailComposerProps) {
   const { data: session } = useSession();
   const [subject, setSubject] = useState('');
   const [htmlBody, setHtmlBody] = useState('');
@@ -24,7 +28,7 @@ export default function EmailComposer() {
     currentBatchSending,
     resetProgress,
     sendBatch
-  } = useEmailSending();
+  } = useEmailSending(onBatchSent);
 
   const handleSendBatch = async (): Promise<boolean> => {
     if (recipientList.length === 0) {

@@ -12,7 +12,7 @@ interface Progress {
   total: number;
 }
 
-export function useEmailSending() {
+export function useEmailSending(onBatchSent?: () => void) {
   const [sentEmails, setSentEmails] = useState<string[]>([]);
   const [failedEmails, setFailedEmails] = useState<FailedEmail[]>([]);
   const [progress, setProgress] = useState<Progress>({
@@ -83,6 +83,11 @@ export function useEmailSending() {
       }));
 
       setCurrentBatchSending(false);
+
+      // Trigger quota refresh callback if provided
+      if (data.sent > 0 && onBatchSent) {
+        onBatchSent();
+      }
 
       return { success: true, remaining };
     } catch (error) {

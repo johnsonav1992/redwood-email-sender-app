@@ -1,13 +1,16 @@
 'use client';
 
+import { useRef } from 'react';
 import { useSession } from 'next-auth/react';
 import AuthButton from '@/components/AuthButton';
 import EmailComposer from '@/components/EmailComposer';
 import LandingPage from '@/components/LandingPage';
+import QuotaDisplay from '@/components/QuotaDisplay';
 import { cn } from '@/lib/utils';
 
 export default function Home() {
   const { data: session } = useSession();
+  const quotaRefreshRef = useRef<(() => void) | null>(null);
 
   // Show landing page if not logged in
   if (!session) {
@@ -24,6 +27,7 @@ export default function Home() {
             'flex',
             'items-center',
             'justify-between',
+            'gap-4',
             'rounded-xl',
             'bg-white',
             'p-6',
@@ -38,9 +42,12 @@ export default function Home() {
               Send emails in batches of 1 every minute
             </p>
           </div>
-          <AuthButton />
+          <div className={cn('flex', 'items-center', 'gap-4')}>
+            <QuotaDisplay onRefreshReady={fn => (quotaRefreshRef.current = fn)} />
+            <AuthButton />
+          </div>
         </div>
-        <EmailComposer />
+        <EmailComposer onBatchSent={() => quotaRefreshRef.current?.()} />
       </div>
     </main>
   );
