@@ -32,7 +32,7 @@ export default function Home() {
         >
           <div>
             <h1 className={cn('text-3xl', 'font-bold', 'text-gray-900')}>
-              Email Campaign Manager
+              Email Campaign Sender
             </h1>
             <p className={cn('mt-1', 'text-gray-600')}>
               Send emails in batches of 1 every minute
