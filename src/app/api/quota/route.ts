@@ -45,10 +45,10 @@ export async function GET(): Promise<
     const sentToday =
       response.data.messages?.length || response.data.resultSizeEstimate || 0;
 
-    // Conservative limit for Workspace accounts
-    // Actual Workspace limits: 2000/day (paid) or 500/day (trial)
-    // Using 1500 as a safe buffer to ensure users never hit their actual limit
-    const dailyLimit = 1500;
+    // Determine daily limit based on account type
+    // Workspace (has hostedDomain): 1500 (conservative, actual is 2000 for paid)
+    // Regular Gmail: 400 (conservative, actual is 500)
+    const dailyLimit = session.hostedDomain ? 1500 : 400;
     const remaining = Math.max(0, dailyLimit - sentToday);
 
     const tomorrow = new Date(today);
