@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import { useSession } from 'next-auth/react';
 import { cn } from '@/lib/utils';
 import { useCampaignStream } from '@/hooks/useCampaignStream';
@@ -14,13 +14,17 @@ import CampaignList from './CampaignList';
 import CampaignProgress from './CampaignProgress';
 import CampaignControls from './CampaignControls';
 import type { ParsedEmailResult, CampaignWithProgress, CampaignStatus } from '@/types/campaign';
+import { useState } from 'react';
 
 type View = 'compose' | 'campaigns';
 
-export default function EmailComposer() {
-  const { data: session } = useSession();
+interface EmailComposerProps {
+  view: View;
+  onViewChange: (view: string) => void;
+}
 
-  const [view, setView] = useState<View>('compose');
+export default function EmailComposer({ view, onViewChange }: EmailComposerProps) {
+  const { data: session } = useSession();
   const [subject, setSubject] = useState('');
   const [htmlBody, setHtmlBody] = useState('');
   const [signature, setSignature] = useState('');
@@ -139,7 +143,7 @@ export default function EmailComposer() {
     setHtmlBody(campaign.body);
     setSignature(campaign.signature || '');
     await fetchCampaign(campaign.id);
-    setView('compose');
+    onViewChange('compose');
     // Don't auto-start/resume campaigns - let user manually click Resume/Start
     // This prevents accidental duplicate sends on page refresh
   };
@@ -161,7 +165,7 @@ export default function EmailComposer() {
     setConfirmedResult(null);
     setInitialStatus('draft');
     setInitialProgress({ total: 0, sent: 0, failed: 0, pending: 0 });
-    setView('compose');
+    onViewChange('compose');
   };
 
   const handleClearRecipients = () => {
@@ -179,38 +183,7 @@ export default function EmailComposer() {
   const canStart = !campaignId && subject.trim() !== '' && htmlBody.trim() !== '' && recipientList.length > 0;
 
   return (
-    <div className={cn('space-y-6', 'rounded-xl', 'bg-white', 'p-8', 'shadow-sm')}>
-      <div className="flex items-center justify-between border-b pb-4">
-        <div className="flex gap-2">
-          <button
-            onClick={() => setView('compose')}
-            className={cn(
-              'px-4 py-2 rounded-lg font-medium transition-colors',
-              view === 'compose' ? 'bg-blue-100 text-blue-700' : 'text-gray-600 hover:bg-gray-100'
-            )}
-          >
-            Compose
-          </button>
-          <button
-            onClick={() => setView('campaigns')}
-            className={cn(
-              'px-4 py-2 rounded-lg font-medium transition-colors',
-              view === 'campaigns' ? 'bg-blue-100 text-blue-700' : 'text-gray-600 hover:bg-gray-100'
-            )}
-          >
-            Campaigns ({campaigns.length})
-          </button>
-        </div>
-        {view === 'compose' && campaignId && (
-          <button
-            onClick={handleNewCampaign}
-            className="text-sm px-3 py-1.5 rounded border border-gray-300 text-gray-600 hover:bg-gray-50"
-          >
-            New Campaign
-          </button>
-        )}
-      </div>
-
+    <div className={cn('space-y-6')}>
       {view === 'campaigns' ? (
         <CampaignList
           campaigns={campaigns}
@@ -219,7 +192,31 @@ export default function EmailComposer() {
           loading={persistenceLoading}
         />
       ) : (
-        <>
+        <div className={cn('bg-white', 'rounded-xl', 'shadow-sm', 'p-6')}>
+          {campaignId && (
+            <div className={cn('flex', 'items-center', 'justify-between', 'mb-6', 'pb-4', 'border-b', 'border-gray-200')}>
+              <div>
+                <span className={cn('text-sm', 'text-gray-500')}>Editing campaign</span>
+                <h3 className={cn('font-medium', 'text-gray-900')}>{subject || 'Untitled'}</h3>
+              </div>
+              <button
+                onClick={handleNewCampaign}
+                className={cn(
+                  'px-4',
+                  'py-2',
+                  'text-sm',
+                  'font-medium',
+                  'text-blue-600',
+                  'hover:text-blue-700',
+                  'hover:bg-blue-50',
+                  'rounded-lg',
+                  'transition-colors'
+                )}
+              >
+                + Start New Campaign
+              </button>
+            </div>
+          )}
           <div className="space-y-4">
             <div>
               <label className="mb-2 block text-sm font-semibold text-gray-700">Subject</label>
@@ -324,7 +321,7 @@ export default function EmailComposer() {
             onResume={resumeCampaign}
             onStop={stopCampaign}
           />
-        </>
+        </div>
       )}
     </div>
   );
