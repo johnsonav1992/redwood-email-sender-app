@@ -7,6 +7,7 @@ import { useCampaign } from '@/hooks/useCampaign';
 import { useCampaignPersistence } from '@/hooks/useCampaignPersistence';
 import FileUploader from './FileUploader';
 import EmailValidator from './EmailValidator';
+import RecipientsList from './RecipientsList';
 import BatchSettings from './BatchSettings';
 import SignatureEditor from './SignatureEditor';
 import CampaignList from './CampaignList';
@@ -31,6 +32,7 @@ export default function EmailComposer({ onBatchSent }: EmailComposerProps) {
   const [batchSize, setBatchSize] = useState(30);
   const [batchDelaySeconds, setBatchDelaySeconds] = useState(60);
   const [uploadResult, setUploadResult] = useState<ParsedEmailResult | null>(null);
+  const [confirmedResult, setConfirmedResult] = useState<ParsedEmailResult | null>(null);
   const [campaignId, setCampaignId] = useState<string | null>(null);
 
   const {
@@ -100,6 +102,7 @@ export default function EmailComposer({ onBatchSent }: EmailComposerProps) {
 
   const handleConfirmEmails = (emails: string[]) => {
     setRecipientList(emails);
+    setConfirmedResult(uploadResult);
     setUploadResult(null);
   };
 
@@ -162,8 +165,14 @@ export default function EmailComposer({ onBatchSent }: EmailComposerProps) {
     setSignature('');
     setRecipientList([]);
     setUploadResult(null);
+    setConfirmedResult(null);
     setInitialStatus('draft');
     setView('compose');
+  };
+
+  const handleClearRecipients = () => {
+    setRecipientList([]);
+    setConfirmedResult(null);
   };
 
   if (!session) {
@@ -266,23 +275,19 @@ export default function EmailComposer({ onBatchSent }: EmailComposerProps) {
                 />
               ) : (
                 <>
-                  <FileUploader
-                    onUploadComplete={handleUploadComplete}
-                    disabled={isRunning || isPaused}
-                  />
-                  {recipientList.length > 0 && (
-                    <div className="mt-3 p-3 bg-green-50 rounded-lg">
-                      <p className="text-green-700 font-medium">
-                        {recipientList.length} recipients loaded
-                      </p>
-                      <button
-                        onClick={() => setRecipientList([])}
-                        disabled={isRunning || isPaused}
-                        className="text-sm text-green-600 hover:text-green-800 mt-1"
-                      >
-                        Clear and upload new file
-                      </button>
-                    </div>
+                  {recipientList.length === 0 ? (
+                    <FileUploader
+                      onUploadComplete={handleUploadComplete}
+                      disabled={isRunning || isPaused}
+                    />
+                  ) : (
+                    <RecipientsList
+                      validEmails={recipientList}
+                      invalidEmails={confirmedResult?.invalid}
+                      duplicates={confirmedResult?.duplicates}
+                      onClear={handleClearRecipients}
+                      disabled={isRunning || isPaused}
+                    />
                   )}
                 </>
               )}
