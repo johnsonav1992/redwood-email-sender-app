@@ -118,7 +118,7 @@ export default function CampaignList({ campaigns, onSelect, onDelete, loading }:
                 {canResume && (
                   <button
                     onClick={() => onSelect(campaign)}
-                    className="text-sm px-3 py-1.5 rounded bg-blue-600 text-white hover:bg-blue-700"
+                    className="text-sm px-3 py-1.5 rounded bg-blue-600 text-white hover:bg-blue-700 cursor-pointer"
                   >
                     Resume
                   </button>
@@ -126,7 +126,7 @@ export default function CampaignList({ campaigns, onSelect, onDelete, loading }:
                 {campaign.status === 'draft' && (
                   <button
                     onClick={() => onSelect(campaign)}
-                    className="text-sm px-3 py-1.5 rounded bg-blue-600 text-white hover:bg-blue-700"
+                    className="text-sm px-3 py-1.5 rounded bg-blue-600 text-white hover:bg-blue-700 cursor-pointer"
                   >
                     Start
                   </button>
@@ -134,7 +134,7 @@ export default function CampaignList({ campaigns, onSelect, onDelete, loading }:
                 {canDelete && (
                   <button
                     onClick={() => onDelete(campaign.id)}
-                    className="text-sm px-3 py-1.5 rounded border border-gray-300 text-gray-600 hover:bg-gray-50"
+                    className="text-sm px-3 py-1.5 rounded border border-gray-300 text-gray-600 hover:bg-gray-50 cursor-pointer"
                   >
                     Delete
                   </button>

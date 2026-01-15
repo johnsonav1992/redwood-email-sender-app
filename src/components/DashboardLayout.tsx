@@ -62,9 +62,7 @@ export default function DashboardLayout({
         <div className={cn('flex-1')} />
 
         {/* Right side - quota */}
-        <div className={cn('mr-4')}>
           <QuotaDisplay />
-        </div>
       </header>
 
       <div className={cn('flex', 'pt-20')}>
@@ -99,6 +97,7 @@ export default function DashboardLayout({
                   'rounded-lg',
                   'text-left',
                   'transition-colors',
+                  'cursor-pointer',
                   activeNav === item.id
                     ? 'bg-blue-50 text-blue-700 font-medium'
                     : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
@@ -158,6 +157,7 @@ export default function DashboardLayout({
                 'hover:bg-gray-50',
                 'rounded-lg',
                 'transition-colors',
+                'cursor-pointer',
                 'text-left',
                 'flex',
                 'items-center',

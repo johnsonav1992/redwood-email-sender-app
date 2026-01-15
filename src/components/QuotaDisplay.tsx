@@ -56,24 +56,49 @@ export default function QuotaDisplay({ onRefreshReady }: QuotaDisplayProps) {
         className={cn(
           'flex',
           'items-center',
-          'gap-2',
+          'gap-3',
           'rounded-lg',
-          'bg-gray-100',
+          'border-2',
+          'border-gray-200',
+          'bg-white',
           'px-4',
-          'py-2',
-          'text-sm'
+          'py-2'
         )}
       >
-        <div
-          className={cn(
-            'h-2',
-            'w-2',
-            'animate-pulse',
-            'rounded-full',
-            'bg-gray-400'
-          )}
-        />
-        <span className={cn('text-gray-600')}>Loading quota...</span>
+        <div className={cn('flex', 'items-center', 'gap-2')}>
+          <div
+            className={cn(
+              'h-2',
+              'w-2',
+              'animate-pulse',
+              'rounded-full',
+              'bg-gray-400'
+            )}
+          />
+          <div className={cn('flex', 'flex-col')}>
+            <div className={cn('text-xs', 'text-gray-600')}>Daily Quota</div>
+            <div className={cn('flex', 'items-baseline', 'gap-1', 'whitespace-nowrap', 'h-7')}>
+              <div className={cn('h-5', 'w-10', 'bg-gray-200', 'rounded', 'animate-pulse', 'self-center')} />
+              <span className={cn('text-sm', 'text-gray-300')}>/</span>
+              <div className={cn('h-4', 'w-10', 'bg-gray-200', 'rounded', 'animate-pulse', 'self-center')} />
+            </div>
+          </div>
+        </div>
+        <div className={cn('rounded', 'p-1', 'text-gray-300')}>
+          <svg
+            className={cn('h-4', 'w-4', 'animate-spin')}
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+            />
+          </svg>
+        </div>
       </div>
     );
   }
@@ -131,8 +156,8 @@ export default function QuotaDisplay({ onRefreshReady }: QuotaDisplayProps) {
         <div className={cn('flex', 'flex-col')}>
           <div className={cn('text-xs', 'text-gray-600')}>Daily Quota</div>
           <div className={cn('flex', 'items-baseline', 'gap-1', 'whitespace-nowrap')}>
-            <span className={cn('text-lg', 'font-bold', 'text-gray-900')}>{quota.remaining.toLocaleString()}</span>
-            <span className={cn('text-sm', 'text-gray-400')}>/ {quota.limit.toLocaleString()}</span>
+            <span className={cn('text-lg', 'font-bold', 'text-gray-900', 'tabular-nums')}>{quota.remaining.toLocaleString()}</span>
+            <span className={cn('text-sm', 'text-gray-400', 'tabular-nums')}>/ {quota.limit.toLocaleString()}</span>
           </div>
         </div>
       </div>
@@ -145,7 +170,8 @@ export default function QuotaDisplay({ onRefreshReady }: QuotaDisplayProps) {
           'text-gray-400',
           'transition',
           'hover:bg-gray-100',
-          'hover:text-gray-600'
+          'hover:text-gray-600',
+          'cursor-pointer'
         )}
         title="Refresh quota"
       >

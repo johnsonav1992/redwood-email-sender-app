@@ -51,7 +51,7 @@ export default function CampaignControls({
         <button
           onClick={onPause}
           className={cn(
-            'flex-1 rounded-lg bg-yellow-500 px-6 py-4 text-lg font-bold text-white transition hover:bg-yellow-600'
+            'flex-1 rounded-lg bg-yellow-500 px-6 py-4 text-lg font-bold text-white transition hover:bg-yellow-600 cursor-pointer'
           )}
         >
           Pause Campaign
@@ -59,7 +59,7 @@ export default function CampaignControls({
         <button
           onClick={onStop}
           className={cn(
-            'rounded-lg bg-red-600 px-6 py-4 text-lg font-bold text-white transition hover:bg-red-700'
+            'rounded-lg bg-red-600 px-6 py-4 text-lg font-bold text-white transition hover:bg-red-700 cursor-pointer'
           )}
         >
           Stop
@@ -74,7 +74,7 @@ export default function CampaignControls({
         <button
           onClick={onResume}
           className={cn(
-            'flex-1 rounded-lg bg-blue-600 px-6 py-4 text-lg font-bold text-white transition hover:bg-blue-700'
+            'flex-1 rounded-lg bg-blue-600 px-6 py-4 text-lg font-bold text-white transition hover:bg-blue-700 cursor-pointer'
           )}
         >
           Resume Campaign
@@ -82,7 +82,7 @@ export default function CampaignControls({
         <button
           onClick={onStop}
           className={cn(
-            'rounded-lg bg-red-600 px-6 py-4 text-lg font-bold text-white transition hover:bg-red-700'
+            'rounded-lg bg-red-600 px-6 py-4 text-lg font-bold text-white transition hover:bg-red-700 cursor-pointer'
           )}
         >
           Stop
@@ -96,7 +96,7 @@ export default function CampaignControls({
       onClick={onStart}
       disabled={!canStart || recipientCount === 0}
       className={cn(
-        'w-full rounded-lg bg-blue-600 px-6 py-4 text-lg font-bold text-white transition hover:bg-blue-700',
+        'w-full rounded-lg bg-blue-600 px-6 py-4 text-lg font-bold text-white transition hover:bg-blue-700 cursor-pointer',
         'disabled:cursor-not-allowed disabled:bg-gray-300'
       )}
     >

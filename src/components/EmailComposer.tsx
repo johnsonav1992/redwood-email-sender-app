@@ -210,7 +210,8 @@ export default function EmailComposer({ view, onViewChange }: EmailComposerProps
                   'hover:text-blue-700',
                   'hover:bg-blue-50',
                   'rounded-lg',
-                  'transition-colors'
+                  'transition-colors',
+                  'cursor-pointer'
                 )}
               >
                 + Start New Campaign
