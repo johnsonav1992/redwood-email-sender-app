@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { useSession } from 'next-auth/react';
 import { cn } from '@/lib/utils';
 import { useCampaign } from '@/hooks/useCampaign';
@@ -30,24 +30,28 @@ export default function EmailComposer({ onBatchSent }: EmailComposerProps) {
     sendBatch
   } = useEmailSending(onBatchSent);
 
-  const handleSendBatch = async (): Promise<boolean> => {
+  const handleSendBatch = useCallback(async () => {
     if (recipientList.length === 0) {
-      alert('All emails sent!');
-      return false;
+      return { success: true, completed: true };
     }
 
     const result = await sendBatch(recipientList, subject, htmlBody, 1);
 
     if (result.success) {
       setRecipientList(result.remaining);
-      return result.remaining.length > 0;
+      return {
+        success: true,
+        completed: result.remaining.length === 0,
+      };
     }
 
-    return false;
-  };
+    return { success: false, completed: false, error: 'Failed to send batch' };
+  }, [recipientList, subject, htmlBody, sendBatch]);
 
   const { isRunning, nextBatchIn, startCampaign, stopCampaign } = useCampaign({
-    onSendBatch: handleSendBatch
+    campaignId: 'legacy',
+    onSendBatch: handleSendBatch,
+    onQuotaRefresh: onBatchSent,
   });
 
   const parseRecipients = () => {
