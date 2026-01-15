@@ -178,14 +178,6 @@ export function useCampaign({
     };
   }, [clearTimers]);
 
-  useEffect(() => {
-    if (!campaignId) {
-      setStatus('draft');
-      setLastError(null);
-      clearTimers();
-    }
-  }, [campaignId, clearTimers]);
-
   return {
     status,
     nextBatchIn,

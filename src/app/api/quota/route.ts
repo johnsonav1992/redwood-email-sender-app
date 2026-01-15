@@ -22,6 +22,8 @@ export async function GET(): Promise<NextResponse<QuotaInfo | ErrorResponse>> {
     const gmail = getGmailClient(session.accessToken, session.refreshToken);
     const quotaInfo = await getQuotaInfo(gmail, !!session.hostedDomain);
 
+    console.log(quotaInfo);
+
     return NextResponse.json<QuotaInfo>(quotaInfo);
   } catch (error) {
     console.error('Error fetching quota:', error);
