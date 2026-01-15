@@ -11,15 +11,13 @@ interface Progress {
 interface CampaignProgressProps {
   progress: Progress;
   isRunning: boolean;
-  currentBatchSending: boolean;
-  nextBatchIn: number | null;
+  isConnected?: boolean;
 }
 
 export default function CampaignProgress({
   progress,
   isRunning,
-  currentBatchSending,
-  nextBatchIn
+  isConnected,
 }: CampaignProgressProps) {
   if (progress.total === 0) {
     return null;
@@ -54,20 +52,12 @@ export default function CampaignProgress({
         {isRunning && (
           <div
             className={cn(
-              'rounded-full',
-              'bg-blue-100',
-              'px-4',
-              'py-2',
-              'text-sm',
-              'font-semibold',
-              'text-blue-800'
+              'flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold',
+              isConnected ? 'bg-blue-100 text-blue-800' : 'bg-yellow-100 text-yellow-800'
             )}
           >
-            {currentBatchSending ? (
-              <>Sending batch...</>
-            ) : (
-              <>Next batch in {nextBatchIn}s</>
-            )}
+            <span className={cn('w-2 h-2 rounded-full', isConnected ? 'bg-blue-500 animate-pulse' : 'bg-yellow-500')} />
+            {isConnected ? 'Processing...' : 'Connecting...'}
           </div>
         )}
         {isCompleted && (

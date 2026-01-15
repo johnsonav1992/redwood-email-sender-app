@@ -1,5 +1,6 @@
 import { NextAuthOptions } from 'next-auth';
 import GoogleProvider from 'next-auth/providers/google';
+import { saveUserTokens } from './db';
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -29,6 +30,20 @@ export const authOptions: NextAuthOptions = {
       session.accessToken = token.accessToken as string;
       session.refreshToken = token.refreshToken as string;
       session.hostedDomain = token.hostedDomain || null;
+
+      if (session.user?.email && session.accessToken && session.refreshToken) {
+        try {
+          await saveUserTokens(
+            session.user.email,
+            session.accessToken,
+            session.refreshToken,
+            session.hostedDomain || undefined
+          );
+        } catch (error) {
+          console.error('Failed to save user tokens:', error);
+        }
+      }
+
       return session;
     }
   }

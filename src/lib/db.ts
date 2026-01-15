@@ -244,3 +244,40 @@ export async function deleteCampaignImages(campaignId: string): Promise<void> {
     args: [campaignId],
   });
 }
+
+// User token operations (for server-side campaign processing)
+export async function saveUserTokens(
+  userEmail: string,
+  accessToken: string,
+  refreshToken: string,
+  hostedDomain?: string
+): Promise<void> {
+  await db.execute({
+    sql: `INSERT INTO user_tokens (user_email, access_token, refresh_token, hosted_domain, updated_at)
+          VALUES (?, ?, ?, ?, ?)
+          ON CONFLICT(user_email) DO UPDATE SET
+            access_token = excluded.access_token,
+            refresh_token = excluded.refresh_token,
+            hosted_domain = excluded.hosted_domain,
+            updated_at = excluded.updated_at`,
+    args: [userEmail, accessToken, refreshToken, hostedDomain || null, now()],
+  });
+}
+
+export async function getUserTokens(userEmail: string): Promise<{
+  accessToken: string;
+  refreshToken: string;
+  hostedDomain?: string;
+} | null> {
+  const result = await db.execute({
+    sql: `SELECT access_token, refresh_token, hosted_domain FROM user_tokens WHERE user_email = ?`,
+    args: [userEmail],
+  });
+  if (result.rows.length === 0) return null;
+  const row = result.rows[0] as Record<string, string>;
+  return {
+    accessToken: row.access_token,
+    refreshToken: row.refresh_token,
+    hostedDomain: row.hosted_domain || undefined,
+  };
+}

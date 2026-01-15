@@ -3,7 +3,7 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { useSession } from 'next-auth/react';
 import { cn } from '@/lib/utils';
-import { useCampaign } from '@/hooks/useCampaign';
+import { useCampaignStream } from '@/hooks/useCampaignStream';
 import { useCampaignPersistence } from '@/hooks/useCampaignPersistence';
 import FileUploader from './FileUploader';
 import EmailValidator from './EmailValidator';
@@ -15,13 +15,9 @@ import CampaignProgress from './CampaignProgress';
 import CampaignControls from './CampaignControls';
 import type { ParsedEmailResult, CampaignWithProgress, CampaignStatus } from '@/types/campaign';
 
-interface EmailComposerProps {
-  onBatchSent?: () => void;
-}
-
 type View = 'compose' | 'campaigns';
 
-export default function EmailComposer({ onBatchSent }: EmailComposerProps) {
+export default function EmailComposer() {
   const { data: session } = useSession();
 
   const [view, setView] = useState<View>('compose');
@@ -48,37 +44,26 @@ export default function EmailComposer({ onBatchSent }: EmailComposerProps) {
     sendNextBatch,
   } = useCampaignPersistence();
 
-  const handleSendBatch = useCallback(async () => {
-    const id = campaignIdRef.current;
-    if (!id) {
-      return { success: false, completed: false, error: 'No campaign selected' };
-    }
-
-    const result = await sendNextBatch(id);
-
-    if (result.quotaExhausted) {
-      return { success: false, completed: false, quotaExhausted: true };
-    }
-
-    return {
-      success: result.success,
-      completed: result.completed,
-      error: result.error,
-    };
-  }, [sendNextBatch]);
-
   const handleStatusChange = useCallback(
-    async (status: CampaignStatus) => {
+    async (newStatus: CampaignStatus) => {
       const id = campaignIdRef.current;
       if (!id) return false;
-      return await updateCampaignStatus(id, status);
+      return await updateCampaignStatus(id, newStatus);
     },
     [updateCampaignStatus]
   );
 
+  const handleSendBatch = useCallback(
+    async (id: string) => {
+      await sendNextBatch(id);
+    },
+    [sendNextBatch]
+  );
+
   const {
     status,
-    nextBatchIn,
+    progress: streamProgress,
+    isConnected,
     lastError,
     isRunning,
     isPaused,
@@ -87,12 +72,11 @@ export default function EmailComposer({ onBatchSent }: EmailComposerProps) {
     resumeCampaign,
     stopCampaign,
     setInitialStatus,
-  } = useCampaign({
+    setInitialProgress,
+  } = useCampaignStream({
     campaignId,
-    batchDelaySeconds,
-    onSendBatch: handleSendBatch,
     onStatusChange: handleStatusChange,
-    onQuotaRefresh: onBatchSent,
+    onSendBatch: handleSendBatch,
   });
 
   useEffect(() => {
@@ -142,6 +126,12 @@ export default function EmailComposer({ onBatchSent }: EmailComposerProps) {
     campaignIdRef.current = campaign.id;
     setCampaignId(campaign.id);
     setInitialStatus(campaign.status);
+    setInitialProgress({
+      total: campaign.total_recipients,
+      sent: campaign.sent_count,
+      failed: campaign.failed_count,
+      pending: campaign.pending_count,
+    });
     setBatchSize(campaign.batch_size);
     setBatchDelaySeconds(campaign.batch_delay_seconds);
     setSubject(campaign.subject);
@@ -173,6 +163,7 @@ export default function EmailComposer({ onBatchSent }: EmailComposerProps) {
     setUploadResult(null);
     setConfirmedResult(null);
     setInitialStatus('draft');
+    setInitialProgress({ total: 0, sent: 0, failed: 0, pending: 0 });
     setView('compose');
   };
 
@@ -185,7 +176,9 @@ export default function EmailComposer({ onBatchSent }: EmailComposerProps) {
     return null;
   }
 
-  const progress = currentCampaign?.progress || { total: recipientList.length, sent: 0, failed: 0, pending: recipientList.length };
+  const progress = streamProgress.total > 0
+    ? streamProgress
+    : currentCampaign?.progress || { total: recipientList.length, sent: 0, failed: 0, pending: recipientList.length };
   const canStart = !campaignId && subject.trim() !== '' && htmlBody.trim() !== '' && recipientList.length > 0;
 
   return (
@@ -314,8 +307,7 @@ export default function EmailComposer({ onBatchSent }: EmailComposerProps) {
             <CampaignProgress
               progress={progress}
               isRunning={isRunning}
-              currentBatchSending={isRunning}
-              nextBatchIn={nextBatchIn}
+              isConnected={isConnected}
             />
           )}
 

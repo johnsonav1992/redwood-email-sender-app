@@ -40,6 +40,15 @@ CREATE TABLE IF NOT EXISTS campaign_images (
   FOREIGN KEY (campaign_id) REFERENCES campaigns(id) ON DELETE CASCADE
 );
 
+-- user_tokens table (for server-side campaign processing)
+CREATE TABLE IF NOT EXISTS user_tokens (
+  user_email TEXT PRIMARY KEY,
+  access_token TEXT NOT NULL,
+  refresh_token TEXT NOT NULL,
+  hosted_domain TEXT,
+  updated_at TEXT NOT NULL
+);
+
 -- indexes for performance
 CREATE INDEX IF NOT EXISTS idx_campaigns_user_email ON campaigns(user_email);
 CREATE INDEX IF NOT EXISTS idx_campaigns_status ON campaigns(status);
