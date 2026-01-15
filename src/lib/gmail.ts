@@ -1,4 +1,5 @@
 import { google, gmail_v1 } from 'googleapis';
+import { buildMimeMessage, extractImagesFromHtml, type InlineImage } from './mime-builder';
 
 export function getGmailClient(accessToken: string, refreshToken: string) {
   const oauth2Client = new google.auth.OAuth2(
@@ -48,4 +49,43 @@ export async function sendEmail(
   });
 
   return res.data;
+}
+
+export async function sendBccEmail(
+  gmail: gmail_v1.Gmail,
+  senderEmail: string,
+  bccRecipients: string[],
+  subject: string,
+  htmlBody: string,
+  signature?: string,
+  additionalImages?: InlineImage[]
+) {
+  const fullHtml = signature ? `${htmlBody}${signature}` : htmlBody;
+
+  const { html: processedHtml, images: extractedImages } = extractImagesFromHtml(fullHtml);
+
+  const allImages = [...extractedImages, ...(additionalImages || [])];
+
+  const encodedMessage = buildMimeMessage({
+    from: senderEmail,
+    to: senderEmail,
+    bcc: bccRecipients,
+    subject,
+    htmlBody: processedHtml,
+    inlineImages: allImages.length > 0 ? allImages : undefined,
+  });
+
+  const res = await gmail.users.messages.send({
+    userId: 'me',
+    requestBody: {
+      raw: encodedMessage,
+    },
+  });
+
+  return res.data;
+}
+
+export async function getUserEmail(gmail: gmail_v1.Gmail): Promise<string> {
+  const res = await gmail.users.getProfile({ userId: 'me' });
+  return res.data.emailAddress || '';
 }
