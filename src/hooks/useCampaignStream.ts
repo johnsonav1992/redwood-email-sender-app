@@ -16,11 +16,12 @@ interface StreamUpdate {
 
 interface UseCampaignStreamProps {
   campaignId: string | null;
+  batchDelaySeconds?: number;
   onStatusChange?: (status: CampaignStatus) => Promise<boolean>;
   onSendBatch?: (campaignId: string) => Promise<void>;
 }
 
-export function useCampaignStream({ campaignId, onStatusChange, onSendBatch }: UseCampaignStreamProps) {
+export function useCampaignStream({ campaignId, batchDelaySeconds = 60, onStatusChange, onSendBatch }: UseCampaignStreamProps) {
   const [status, setStatus] = useState<CampaignStatus>('draft');
   const [progress, setProgress] = useState<CampaignProgress>({ total: 0, sent: 0, failed: 0, pending: 0 });
   const [isConnected, setIsConnected] = useState(false);
@@ -29,11 +30,38 @@ export function useCampaignStream({ campaignId, onStatusChange, onSendBatch }: U
 
   const eventSourceRef = useRef<EventSource | null>(null);
   const retryTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const batchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const shouldConnectRef = useRef(false);
+  const statusRef = useRef<CampaignStatus>('draft');
 
   useEffect(() => {
     shouldConnectRef.current = shouldConnect;
   }, [shouldConnect]);
+
+  useEffect(() => {
+    statusRef.current = status;
+  }, [status]);
+
+  // Clear batch timeout when status changes away from running
+  useEffect(() => {
+    if (status !== 'running' && batchTimeoutRef.current) {
+      clearTimeout(batchTimeoutRef.current);
+      batchTimeoutRef.current = null;
+    }
+  }, [status]);
+
+  // Schedule the next batch for local development (when cron isn't available)
+  const scheduleNextBatch = useCallback((id: string, delayMs: number, pendingCount: number) => {
+    // Only schedule if there are pending recipients, we're running, and no batch is already scheduled
+    if (pendingCount > 0 && statusRef.current === 'running' && !batchTimeoutRef.current) {
+      batchTimeoutRef.current = setTimeout(() => {
+        batchTimeoutRef.current = null; // Clear ref so next batch can be scheduled
+        if (statusRef.current === 'running' && onSendBatch) {
+          onSendBatch(id);
+        }
+      }, delayMs);
+    }
+  }, [onSendBatch]);
 
   useEffect(() => {
     if (!shouldConnect || !campaignId) {
@@ -44,6 +72,10 @@ export function useCampaignStream({ campaignId, onStatusChange, onSendBatch }: U
       if (retryTimeoutRef.current) {
         clearTimeout(retryTimeoutRef.current);
         retryTimeoutRef.current = null;
+      }
+      if (batchTimeoutRef.current) {
+        clearTimeout(batchTimeoutRef.current);
+        batchTimeoutRef.current = null;
       }
       return;
     }
@@ -72,9 +104,17 @@ export function useCampaignStream({ campaignId, onStatusChange, onSendBatch }: U
 
           if (data.status) {
             setStatus(data.status);
+            // Stop reconnecting when campaign is done
+            if (data.status === 'completed' || data.status === 'stopped') {
+              setShouldConnect(false);
+            }
           }
           if (data.progress) {
             setProgress(data.progress);
+            // Schedule next batch if there are pending recipients (for local dev without cron)
+            if (data.progress.pending > 0 && data.status === 'running' && campaignId) {
+              scheduleNextBatch(campaignId, batchDelaySeconds * 1000, data.progress.pending);
+            }
           }
         } catch (error) {
           console.error('Failed to parse SSE message:', error);
@@ -104,8 +144,12 @@ export function useCampaignStream({ campaignId, onStatusChange, onSendBatch }: U
         clearTimeout(retryTimeoutRef.current);
         retryTimeoutRef.current = null;
       }
+      if (batchTimeoutRef.current) {
+        clearTimeout(batchTimeoutRef.current);
+        batchTimeoutRef.current = null;
+      }
     };
-  }, [shouldConnect, campaignId]);
+  }, [shouldConnect, campaignId, batchDelaySeconds, scheduleNextBatch]);
 
   const startCampaign = useCallback(async (overrideCampaignId?: string) => {
     const id = overrideCampaignId || campaignId;

@@ -145,6 +145,66 @@ export async function getPendingRecipients(
   return result.rows as unknown as Recipient[];
 }
 
+// Atomically claim pending recipients by marking them as 'sending'
+// This prevents race conditions when multiple processes try to send the same batch
+export async function claimPendingRecipients(
+  campaignId: string,
+  limit: number
+): Promise<Recipient[]> {
+  // Check if there are already recipients being sent - don't start a new batch
+  const sendingCheck = await db.execute({
+    sql: `SELECT COUNT(*) as count FROM recipients WHERE campaign_id = ? AND status = 'sending'`,
+    args: [campaignId],
+  });
+  const sendingCount = Number((sendingCheck.rows[0] as Record<string, number>).count) || 0;
+  if (sendingCount > 0) {
+    // Another batch is already in progress
+    return [];
+  }
+
+  // Get the IDs of recipients we want to claim
+  const pendingResult = await db.execute({
+    sql: `SELECT id FROM recipients WHERE campaign_id = ? AND status = 'pending' ORDER BY id LIMIT ?`,
+    args: [campaignId, limit],
+  });
+
+  if (pendingResult.rows.length === 0) {
+    return [];
+  }
+
+  const ids = pendingResult.rows.map((r) => (r as unknown as { id: string }).id);
+
+  // Mark them as 'sending' atomically
+  // Only update rows that are still 'pending' (in case another process got them first)
+  const placeholders = ids.map(() => '?').join(',');
+  const updateResult = await db.execute({
+    sql: `UPDATE recipients SET status = 'sending' WHERE id IN (${placeholders}) AND status = 'pending'`,
+    args: ids,
+  });
+
+  // If no rows were updated, another process claimed them
+  if (updateResult.rowsAffected === 0) {
+    return [];
+  }
+
+  // Return the recipients that were successfully claimed
+  const claimedResult = await db.execute({
+    sql: `SELECT * FROM recipients WHERE id IN (${placeholders}) AND status = 'sending'`,
+    args: ids,
+  });
+
+  return claimedResult.rows as unknown as Recipient[];
+}
+
+// Reset any 'sending' recipients back to 'pending' (for cleanup on startup or error recovery)
+export async function resetSendingRecipients(campaignId: string): Promise<number> {
+  const result = await db.execute({
+    sql: `UPDATE recipients SET status = 'pending' WHERE campaign_id = ? AND status = 'sending'`,
+    args: [campaignId],
+  });
+  return result.rowsAffected;
+}
+
 export async function updateRecipientStatus(
   id: string,
   status: RecipientStatus,
@@ -190,13 +250,15 @@ export async function getCampaignProgress(campaignId: string): Promise<{
   sent: number;
   failed: number;
   pending: number;
+  sending: number;
 }> {
   const result = await db.execute({
     sql: `SELECT
             COUNT(*) as total,
             SUM(CASE WHEN status = 'sent' THEN 1 ELSE 0 END) as sent,
             SUM(CASE WHEN status = 'failed' THEN 1 ELSE 0 END) as failed,
-            SUM(CASE WHEN status = 'pending' THEN 1 ELSE 0 END) as pending
+            SUM(CASE WHEN status = 'pending' THEN 1 ELSE 0 END) as pending,
+            SUM(CASE WHEN status = 'sending' THEN 1 ELSE 0 END) as sending
           FROM recipients WHERE campaign_id = ?`,
     args: [campaignId],
   });
@@ -207,6 +269,7 @@ export async function getCampaignProgress(campaignId: string): Promise<{
     sent: Number(row.sent) || 0,
     failed: Number(row.failed) || 0,
     pending: Number(row.pending) || 0,
+    sending: Number(row.sending) || 0,
   };
 }
 

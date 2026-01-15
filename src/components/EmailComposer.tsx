@@ -75,6 +75,7 @@ export default function EmailComposer() {
     setInitialProgress,
   } = useCampaignStream({
     campaignId,
+    batchDelaySeconds,
     onStatusChange: handleStatusChange,
     onSendBatch: handleSendBatch,
   });
@@ -139,12 +140,8 @@ export default function EmailComposer() {
     setSignature(campaign.signature || '');
     await fetchCampaign(campaign.id);
     setView('compose');
-
-    if (campaign.status === 'paused') {
-      resumeCampaign();
-    } else if (campaign.status === 'draft') {
-      startCampaign(campaign.id);
-    }
+    // Don't auto-start/resume campaigns - let user manually click Resume/Start
+    // This prevents accidental duplicate sends on page refresh
   };
 
   const handleDeleteCampaign = async (id: string) => {

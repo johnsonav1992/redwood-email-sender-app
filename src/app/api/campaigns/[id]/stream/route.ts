@@ -27,6 +27,7 @@ export async function GET(req: NextRequest, context: RouteContext) {
   let lastStatus = '';
   let lastSent = -1;
   let lastFailed = -1;
+  let lastPending = -1;
   let isClosed = false;
   let intervalId: ReturnType<typeof setInterval> | null = null;
 
@@ -36,6 +37,29 @@ export async function GET(req: NextRequest, context: RouteContext) {
         if (intervalId) {
           clearInterval(intervalId);
           intervalId = null;
+        }
+      };
+
+      const safeEnqueue = (data: Uint8Array) => {
+        if (isClosed) return false;
+        try {
+          controller.enqueue(data);
+          return true;
+        } catch {
+          isClosed = true;
+          cleanup();
+          return false;
+        }
+      };
+
+      const safeClose = () => {
+        if (isClosed) return;
+        isClosed = true;
+        cleanup();
+        try {
+          controller.close();
+        } catch {
+          // Controller already closed, ignore
         }
       };
 
@@ -49,22 +73,25 @@ export async function GET(req: NextRequest, context: RouteContext) {
           if (isClosed) return false;
 
           if (!currentCampaign) {
-            isClosed = true;
-            cleanup();
-            controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'deleted' })}\n\n`));
-            controller.close();
+            safeEnqueue(encoder.encode(`data: ${JSON.stringify({ type: 'deleted' })}\n\n`));
+            safeClose();
             return false;
           }
+
+          // Include 'sending' recipients in pending count for UI display
+          const effectivePending = progress.pending + progress.sending;
 
           const hasChanged =
             currentCampaign.status !== lastStatus ||
             progress.sent !== lastSent ||
-            progress.failed !== lastFailed;
+            progress.failed !== lastFailed ||
+            effectivePending !== lastPending;
 
           if (hasChanged) {
             lastStatus = currentCampaign.status;
             lastSent = progress.sent;
             lastFailed = progress.failed;
+            lastPending = effectivePending;
 
             const data = {
               type: 'update',
@@ -73,17 +100,17 @@ export async function GET(req: NextRequest, context: RouteContext) {
                 total: progress.total,
                 sent: progress.sent,
                 failed: progress.failed,
-                pending: progress.pending,
+                pending: effectivePending,
               },
             };
 
-            controller.enqueue(encoder.encode(`data: ${JSON.stringify(data)}\n\n`));
+            if (!safeEnqueue(encoder.encode(`data: ${JSON.stringify(data)}\n\n`))) {
+              return false;
+            }
           }
 
           if (currentCampaign.status === 'completed' || currentCampaign.status === 'stopped') {
-            isClosed = true;
-            cleanup();
-            controller.close();
+            safeClose();
             return false;
           }
 
@@ -109,6 +136,13 @@ export async function GET(req: NextRequest, context: RouteContext) {
         isClosed = true;
         cleanup();
       });
+    },
+    cancel() {
+      isClosed = true;
+      if (intervalId) {
+        clearInterval(intervalId);
+        intervalId = null;
+      }
     },
   });
 

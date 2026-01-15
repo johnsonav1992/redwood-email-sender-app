@@ -4,7 +4,7 @@ import { authOptions } from '@/lib/auth';
 import { getGmailClient, sendBccEmail, getUserEmail, getQuotaInfo } from '@/lib/gmail';
 import {
   getCampaignById,
-  getPendingRecipients,
+  claimPendingRecipients,
   markRecipientsAsSent,
   markRecipientsAsFailed,
   updateCampaignStatus,
@@ -82,26 +82,39 @@ export async function POST(
       });
     }
 
-    const pendingRecipients = await getPendingRecipients(id, campaign.batch_size);
+    // Atomically claim recipients to prevent race conditions
+    const claimedRecipients = await claimPendingRecipients(id, campaign.batch_size);
 
-    if (pendingRecipients.length === 0) {
-      await updateCampaignStatus(id, 'completed');
+    if (claimedRecipients.length === 0) {
+      // Check if there are any pending recipients left
       const progress = await getCampaignProgress(id);
+      if (progress.pending === 0 && progress.sending === 0) {
+        await updateCampaignStatus(id, 'completed');
+        return NextResponse.json({
+          success: true,
+          batchNumber: 0,
+          sent: 0,
+          failed: 0,
+          remaining: 0,
+          completed: true,
+        });
+      }
+      // Another process is handling recipients, or they're all claimed
       return NextResponse.json({
         success: true,
         batchNumber: 0,
         sent: 0,
         failed: 0,
-        remaining: 0,
-        completed: true,
+        remaining: progress.pending,
+        completed: false,
       });
     }
 
     const progress = await getCampaignProgress(id);
     const batchNumber = Math.floor(progress.sent / campaign.batch_size) + 1;
 
-    const bccEmails = pendingRecipients.map((r) => r.email);
-    const recipientIds = pendingRecipients.map((r) => r.id);
+    const bccEmails = claimedRecipients.map((r) => r.email);
+    const recipientIds = claimedRecipients.map((r) => r.id);
 
     const senderEmail = await getUserEmail(gmail);
     const images = await getCampaignImages(id);
@@ -137,7 +150,7 @@ export async function POST(
       return NextResponse.json({
         success: true,
         batchNumber,
-        sent: pendingRecipients.length,
+        sent: claimedRecipients.length,
         failed: 0,
         remaining: newProgress.pending,
         completed: isCompleted,
@@ -160,7 +173,7 @@ export async function POST(
         success: true,
         batchNumber,
         sent: 0,
-        failed: pendingRecipients.length,
+        failed: claimedRecipients.length,
         remaining: newProgress.pending,
         completed: isCompleted,
       });

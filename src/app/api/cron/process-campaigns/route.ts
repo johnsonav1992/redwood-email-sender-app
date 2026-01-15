@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { getGmailClient, sendBccEmail, getUserEmail, getQuotaInfo } from '@/lib/gmail';
 import {
-  getPendingRecipients,
+  claimPendingRecipients,
   markRecipientsAsSent,
   markRecipientsAsFailed,
   updateCampaignStatus,
@@ -38,16 +38,23 @@ async function processCampaign(campaign: Campaign): Promise<{ sent: number; fail
       return { sent: 0, failed: 0, completed: false, error: 'Quota exhausted' };
     }
 
-    const pendingRecipients = await getPendingRecipients(campaign.id, campaign.batch_size);
-    if (pendingRecipients.length === 0) {
-      await updateCampaignStatus(campaign.id, 'completed');
-      return { sent: 0, failed: 0, completed: true };
+    // Atomically claim recipients to prevent race conditions
+    const claimedRecipients = await claimPendingRecipients(campaign.id, campaign.batch_size);
+    if (claimedRecipients.length === 0) {
+      // Check if campaign is complete
+      const progress = await getCampaignProgress(campaign.id);
+      if (progress.pending === 0 && progress.sending === 0) {
+        await updateCampaignStatus(campaign.id, 'completed');
+        return { sent: 0, failed: 0, completed: true };
+      }
+      // Another process is handling recipients
+      return { sent: 0, failed: 0, completed: false };
     }
 
     const progress = await getCampaignProgress(campaign.id);
     const batchNumber = Math.floor(progress.sent / campaign.batch_size) + 1;
-    const bccEmails = pendingRecipients.map((r) => r.email);
-    const recipientIds = pendingRecipients.map((r) => r.id);
+    const bccEmails = claimedRecipients.map((r) => r.email);
+    const recipientIds = claimedRecipients.map((r) => r.id);
 
     const senderEmail = await getUserEmail(gmail);
     const images = await getCampaignImages(campaign.id);
@@ -79,7 +86,7 @@ async function processCampaign(campaign: Campaign): Promise<{ sent: number; fail
         await updateCampaignStatus(campaign.id, 'completed');
       }
 
-      return { sent: pendingRecipients.length, failed: 0, completed: isCompleted };
+      return { sent: claimedRecipients.length, failed: 0, completed: isCompleted };
     } catch (sendError) {
       const errorMessage = sendError instanceof Error ? sendError.message : 'Unknown send error';
       await markRecipientsAsFailed(recipientIds, errorMessage, batchNumber);
@@ -92,7 +99,7 @@ async function processCampaign(campaign: Campaign): Promise<{ sent: number; fail
         await updateCampaignStatus(campaign.id, 'completed');
       }
 
-      return { sent: 0, failed: pendingRecipients.length, completed: isCompleted, error: errorMessage };
+      return { sent: 0, failed: claimedRecipients.length, completed: isCompleted, error: errorMessage };
     }
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
