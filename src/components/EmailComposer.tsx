@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { useSession } from 'next-auth/react';
 import { cn } from '@/lib/utils';
 import { useCampaign } from '@/hooks/useCampaign';
@@ -34,6 +34,7 @@ export default function EmailComposer({ onBatchSent }: EmailComposerProps) {
   const [uploadResult, setUploadResult] = useState<ParsedEmailResult | null>(null);
   const [confirmedResult, setConfirmedResult] = useState<ParsedEmailResult | null>(null);
   const [campaignId, setCampaignId] = useState<string | null>(null);
+  const campaignIdRef = useRef<string | null>(null);
 
   const {
     campaigns,
@@ -48,11 +49,12 @@ export default function EmailComposer({ onBatchSent }: EmailComposerProps) {
   } = useCampaignPersistence();
 
   const handleSendBatch = useCallback(async () => {
-    if (!campaignId) {
+    const id = campaignIdRef.current;
+    if (!id) {
       return { success: false, completed: false, error: 'No campaign selected' };
     }
 
-    const result = await sendNextBatch(campaignId);
+    const result = await sendNextBatch(id);
 
     if (result.quotaExhausted) {
       return { success: false, completed: false, quotaExhausted: true };
@@ -63,14 +65,15 @@ export default function EmailComposer({ onBatchSent }: EmailComposerProps) {
       completed: result.completed,
       error: result.error,
     };
-  }, [campaignId, sendNextBatch]);
+  }, [sendNextBatch]);
 
   const handleStatusChange = useCallback(
     async (status: CampaignStatus) => {
-      if (!campaignId) return false;
-      return await updateCampaignStatus(campaignId, status);
+      const id = campaignIdRef.current;
+      if (!id) return false;
+      return await updateCampaignStatus(id, status);
     },
-    [campaignId, updateCampaignStatus]
+    [updateCampaignStatus]
   );
 
   const {
@@ -127,14 +130,16 @@ export default function EmailComposer({ onBatchSent }: EmailComposerProps) {
     });
 
     if (campaign) {
+      campaignIdRef.current = campaign.id;
       setCampaignId(campaign.id);
       setInitialStatus('draft');
       await fetchCampaign(campaign.id);
-      startCampaign();
+      startCampaign(campaign.id);
     }
   };
 
   const handleSelectCampaign = async (campaign: CampaignWithProgress) => {
+    campaignIdRef.current = campaign.id;
     setCampaignId(campaign.id);
     setInitialStatus(campaign.status);
     setBatchSize(campaign.batch_size);
@@ -148,7 +153,7 @@ export default function EmailComposer({ onBatchSent }: EmailComposerProps) {
     if (campaign.status === 'paused') {
       resumeCampaign();
     } else if (campaign.status === 'draft') {
-      startCampaign();
+      startCampaign(campaign.id);
     }
   };
 
@@ -159,6 +164,7 @@ export default function EmailComposer({ onBatchSent }: EmailComposerProps) {
   };
 
   const handleNewCampaign = () => {
+    campaignIdRef.current = null;
     setCampaignId(null);
     setSubject('');
     setHtmlBody('');

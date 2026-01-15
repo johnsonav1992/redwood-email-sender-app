@@ -83,8 +83,9 @@ export function useCampaign({
     return true;
   }, [onSendBatch, onQuotaRefresh, clearTimers]);
 
-  const startCampaign = useCallback(async () => {
-    if (!campaignId) return;
+  const startCampaign = useCallback(async (overrideCampaignId?: string) => {
+    const effectiveCampaignId = overrideCampaignId || campaignId;
+    if (!effectiveCampaignId) return;
 
     setLastError(null);
     isRunningRef.current = true;
