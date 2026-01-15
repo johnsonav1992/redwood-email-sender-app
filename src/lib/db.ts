@@ -1,4 +1,14 @@
 import { createClient } from '@libsql/client';
+import { SCHEMA_SQL } from './schema';
+import type {
+  Campaign,
+  Recipient,
+  CampaignImage,
+  CampaignStatus,
+  RecipientStatus,
+  CreateCampaignInput,
+  CampaignWithProgress,
+} from '@/types/campaign';
 
 if (!process.env.TURSO_DATABASE_URL) {
   throw new Error('TURSO_DATABASE_URL is not defined in environment variables');
@@ -10,5 +20,227 @@ if (!process.env.TURSO_AUTH_TOKEN) {
 
 export const db = createClient({
   url: process.env.TURSO_DATABASE_URL,
-  authToken: process.env.TURSO_AUTH_TOKEN
+  authToken: process.env.TURSO_AUTH_TOKEN,
 });
+
+function generateId(): string {
+  return crypto.randomUUID();
+}
+
+function now(): string {
+  return new Date().toISOString();
+}
+
+export async function initializeSchema(): Promise<void> {
+  const statements = SCHEMA_SQL.split(';')
+    .map((s) => s.trim())
+    .filter((s) => s.length > 0);
+
+  for (const statement of statements) {
+    await db.execute(statement);
+  }
+}
+
+// Campaign operations
+export async function createCampaign(input: CreateCampaignInput): Promise<Campaign> {
+  const id = generateId();
+  const timestamp = now();
+
+  await db.execute({
+    sql: `INSERT INTO campaigns (id, user_email, name, subject, body, signature, batch_size, batch_delay_seconds, status, total_recipients, sent_count, failed_count, created_at, updated_at)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'draft', ?, 0, 0, ?, ?)`,
+    args: [
+      id,
+      input.user_email,
+      input.name || null,
+      input.subject,
+      input.body,
+      input.signature || null,
+      input.batch_size || 30,
+      input.batch_delay_seconds || 60,
+      input.recipients.length,
+      timestamp,
+      timestamp,
+    ],
+  });
+
+  // Insert recipients
+  for (const email of input.recipients) {
+    await db.execute({
+      sql: `INSERT INTO recipients (id, campaign_id, email, status) VALUES (?, ?, ?, 'pending')`,
+      args: [generateId(), id, email.toLowerCase().trim()],
+    });
+  }
+
+  return getCampaignById(id) as Promise<Campaign>;
+}
+
+export async function getCampaignById(id: string): Promise<Campaign | null> {
+  const result = await db.execute({
+    sql: `SELECT * FROM campaigns WHERE id = ?`,
+    args: [id],
+  });
+
+  if (result.rows.length === 0) return null;
+  return result.rows[0] as unknown as Campaign;
+}
+
+export async function getCampaignsByUser(userEmail: string): Promise<CampaignWithProgress[]> {
+  const result = await db.execute({
+    sql: `SELECT c.*,
+          (SELECT COUNT(*) FROM recipients r WHERE r.campaign_id = c.id AND r.status = 'pending') as pending_count
+          FROM campaigns c
+          WHERE c.user_email = ?
+          ORDER BY c.created_at DESC`,
+    args: [userEmail],
+  });
+
+  return result.rows as unknown as CampaignWithProgress[];
+}
+
+export async function updateCampaignStatus(id: string, status: CampaignStatus): Promise<void> {
+  await db.execute({
+    sql: `UPDATE campaigns SET status = ?, updated_at = ? WHERE id = ?`,
+    args: [status, now(), id],
+  });
+}
+
+export async function updateCampaignCounts(
+  id: string,
+  sentCount: number,
+  failedCount: number
+): Promise<void> {
+  await db.execute({
+    sql: `UPDATE campaigns SET sent_count = ?, failed_count = ?, updated_at = ? WHERE id = ?`,
+    args: [sentCount, failedCount, now(), id],
+  });
+}
+
+export async function deleteCampaign(id: string): Promise<void> {
+  await db.execute({
+    sql: `DELETE FROM campaigns WHERE id = ?`,
+    args: [id],
+  });
+}
+
+// Recipient operations
+export async function getRecipientsByCampaign(campaignId: string): Promise<Recipient[]> {
+  const result = await db.execute({
+    sql: `SELECT * FROM recipients WHERE campaign_id = ? ORDER BY id`,
+    args: [campaignId],
+  });
+
+  return result.rows as unknown as Recipient[];
+}
+
+export async function getPendingRecipients(
+  campaignId: string,
+  limit: number
+): Promise<Recipient[]> {
+  const result = await db.execute({
+    sql: `SELECT * FROM recipients WHERE campaign_id = ? AND status = 'pending' ORDER BY id LIMIT ?`,
+    args: [campaignId, limit],
+  });
+
+  return result.rows as unknown as Recipient[];
+}
+
+export async function updateRecipientStatus(
+  id: string,
+  status: RecipientStatus,
+  errorMessage?: string,
+  batchNumber?: number
+): Promise<void> {
+  const sentAt = status === 'sent' ? now() : null;
+
+  await db.execute({
+    sql: `UPDATE recipients SET status = ?, error_message = ?, batch_number = ?, sent_at = ? WHERE id = ?`,
+    args: [status, errorMessage || null, batchNumber || null, sentAt, id],
+  });
+}
+
+export async function markRecipientsAsSent(
+  recipientIds: string[],
+  batchNumber: number
+): Promise<void> {
+  const timestamp = now();
+  for (const id of recipientIds) {
+    await db.execute({
+      sql: `UPDATE recipients SET status = 'sent', batch_number = ?, sent_at = ? WHERE id = ?`,
+      args: [batchNumber, timestamp, id],
+    });
+  }
+}
+
+export async function markRecipientsAsFailed(
+  recipientIds: string[],
+  errorMessage: string,
+  batchNumber: number
+): Promise<void> {
+  for (const id of recipientIds) {
+    await db.execute({
+      sql: `UPDATE recipients SET status = 'failed', error_message = ?, batch_number = ? WHERE id = ?`,
+      args: [errorMessage, batchNumber, id],
+    });
+  }
+}
+
+export async function getCampaignProgress(campaignId: string): Promise<{
+  total: number;
+  sent: number;
+  failed: number;
+  pending: number;
+}> {
+  const result = await db.execute({
+    sql: `SELECT
+            COUNT(*) as total,
+            SUM(CASE WHEN status = 'sent' THEN 1 ELSE 0 END) as sent,
+            SUM(CASE WHEN status = 'failed' THEN 1 ELSE 0 END) as failed,
+            SUM(CASE WHEN status = 'pending' THEN 1 ELSE 0 END) as pending
+          FROM recipients WHERE campaign_id = ?`,
+    args: [campaignId],
+  });
+
+  const row = result.rows[0] as Record<string, number>;
+  return {
+    total: Number(row.total) || 0,
+    sent: Number(row.sent) || 0,
+    failed: Number(row.failed) || 0,
+    pending: Number(row.pending) || 0,
+  };
+}
+
+// Campaign image operations
+export async function addCampaignImage(
+  campaignId: string,
+  contentId: string,
+  filename: string,
+  mimeType: string,
+  base64Data: string
+): Promise<CampaignImage> {
+  const id = generateId();
+
+  await db.execute({
+    sql: `INSERT INTO campaign_images (id, campaign_id, content_id, filename, mime_type, base64_data)
+          VALUES (?, ?, ?, ?, ?, ?)`,
+    args: [id, campaignId, contentId, filename, mimeType, base64Data],
+  });
+
+  return { id, campaign_id: campaignId, content_id: contentId, filename, mime_type: mimeType, base64_data: base64Data };
+}
+
+export async function getCampaignImages(campaignId: string): Promise<CampaignImage[]> {
+  const result = await db.execute({
+    sql: `SELECT * FROM campaign_images WHERE campaign_id = ?`,
+    args: [campaignId],
+  });
+
+  return result.rows as unknown as CampaignImage[];
+}
+
+export async function deleteCampaignImages(campaignId: string): Promise<void> {
+  await db.execute({
+    sql: `DELETE FROM campaign_images WHERE campaign_id = ?`,
+    args: [campaignId],
+  });
+}
