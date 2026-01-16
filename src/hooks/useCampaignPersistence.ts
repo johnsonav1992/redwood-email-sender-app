@@ -1,4 +1,10 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useTransition } from 'react';
+import {
+  createCampaign as createCampaignAction,
+  updateCampaignStatus as updateCampaignStatusAction,
+  deleteCampaign as deleteCampaignAction,
+  fetchCampaigns as fetchCampaignsAction,
+} from '@/lib/actions';
 import type {
   Campaign,
   CampaignWithProgress,
@@ -28,26 +34,28 @@ interface SendBatchResult {
   error?: string;
 }
 
-export function useCampaignPersistence() {
-  const [campaigns, setCampaigns] = useState<CampaignWithProgress[]>([]);
+interface UseCampaignPersistenceOptions {
+  initialCampaigns?: CampaignWithProgress[];
+}
+
+export function useCampaignPersistence({ initialCampaigns }: UseCampaignPersistenceOptions = {}) {
+  const [campaigns, setCampaigns] = useState<CampaignWithProgress[]>(initialCampaigns ?? []);
   const [currentCampaign, setCurrentCampaign] = useState<CampaignDetail | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isPending, startTransition] = useTransition();
 
   const fetchCampaigns = useCallback(async () => {
     setLoading(true);
     setError(null);
 
     try {
-      const response = await fetch('/api/campaigns');
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to fetch campaigns');
+      const result = await fetchCampaignsAction();
+      if (result.error) {
+        throw new Error(result.error);
       }
-
-      setCampaigns(data.campaigns);
-      return data.campaigns;
+      setCampaigns(result.campaigns);
+      return result.campaigns;
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Unknown error';
       setError(errorMessage);
@@ -94,20 +102,17 @@ export function useCampaignPersistence() {
       setError(null);
 
       try {
-        const response = await fetch('/api/campaigns', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(data),
-        });
+        const result = await createCampaignAction(data);
 
-        const result = await response.json();
-
-        if (!response.ok) {
-          throw new Error(result.error || 'Failed to create campaign');
+        if (result.error) {
+          throw new Error(result.error);
         }
 
-        setCampaigns((prev) => [result.campaign, ...prev]);
-        return result.campaign as CampaignWithProgress;
+        if (result.campaign) {
+          setCampaigns((prev) => [result.campaign as CampaignWithProgress, ...prev]);
+          return result.campaign as CampaignWithProgress;
+        }
+        return null;
       } catch (err) {
         const errorMessage = err instanceof Error ? err.message : 'Unknown error';
         setError(errorMessage);
@@ -123,16 +128,10 @@ export function useCampaignPersistence() {
     setError(null);
 
     try {
-      const response = await fetch(`/api/campaigns/${id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status }),
-      });
+      const result = await updateCampaignStatusAction(id, status);
 
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(result.error || 'Failed to update campaign');
+      if (result.error) {
+        throw new Error(result.error);
       }
 
       setCampaigns((prev) =>
@@ -157,14 +156,10 @@ export function useCampaignPersistence() {
     setError(null);
 
     try {
-      const response = await fetch(`/api/campaigns/${id}`, {
-        method: 'DELETE',
-      });
+      const result = await deleteCampaignAction(id);
 
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(result.error || 'Failed to delete campaign');
+      if (result.error) {
+        throw new Error(result.error);
       }
 
       setCampaigns((prev) => prev.filter((c) => c.id !== id));
@@ -241,7 +236,7 @@ export function useCampaignPersistence() {
   return {
     campaigns,
     currentCampaign,
-    loading,
+    loading: loading || isPending,
     error,
     fetchCampaigns,
     fetchCampaign,

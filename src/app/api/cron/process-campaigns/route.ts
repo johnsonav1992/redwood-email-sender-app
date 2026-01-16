@@ -10,6 +10,7 @@ import {
   getCampaignProgress,
   getCampaignImages,
   getUserTokens,
+  getTodaySentCount,
 } from '@/lib/db';
 import type { Campaign } from '@/types/campaign';
 
@@ -32,8 +33,18 @@ async function processCampaign(campaign: Campaign): Promise<{ sent: number; fail
   const isWorkspace = !!tokens.hostedDomain;
 
   try {
-    const quotaInfo = await getQuotaInfo(gmail, isWorkspace);
-    if (quotaInfo.remaining < campaign.batch_size) {
+    // Get both Gmail API count and DB count for accurate quota checking
+    const [gmailQuota, dbSentCount] = await Promise.all([
+      getQuotaInfo(gmail, isWorkspace),
+      getTodaySentCount(campaign.user_email),
+    ]);
+
+    // Use the higher count to be conservative (DB is more accurate for BCC emails)
+    const sentToday = Math.max(gmailQuota.sentToday, dbSentCount);
+    const limit = isWorkspace ? 1500 : 400;
+    const remaining = Math.max(0, limit - sentToday);
+
+    if (remaining < campaign.batch_size) {
       await updateCampaignStatus(campaign.id, 'paused');
       return { sent: 0, failed: 0, completed: false, error: 'Quota exhausted' };
     }

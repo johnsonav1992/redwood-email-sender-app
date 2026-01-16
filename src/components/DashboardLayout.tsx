@@ -5,6 +5,7 @@ import Image from 'next/image';
 import { useSession, signOut } from 'next-auth/react';
 import { cn } from '@/lib/utils';
 import QuotaDisplay from './QuotaDisplay';
+import type { QuotaInfo } from '@/lib/gmail';
 
 interface NavItem {
   id: string;
@@ -17,6 +18,7 @@ interface DashboardLayoutProps {
   activeNav: string;
   onNavChange: (id: string) => void;
   navItems: NavItem[];
+  initialQuota?: QuotaInfo | null;
 }
 
 export default function DashboardLayout({
@@ -24,6 +26,7 @@ export default function DashboardLayout({
   activeNav,
   onNavChange,
   navItems,
+  initialQuota,
 }: DashboardLayoutProps) {
   const { data: session } = useSession();
 
@@ -43,7 +46,7 @@ export default function DashboardLayout({
           'h-20',
           'flex',
           'items-center',
-          'px-8'
+          'pl-4', 'pr-8'
         )}
       >
         {/* Logo */}
@@ -54,7 +57,7 @@ export default function DashboardLayout({
             width={200}
             height={60}
             priority
-            className={cn('h-auto', 'w-auto', 'max-h-14')}
+            className={cn('h-auto', 'w-auto', 'max-h-16')}
           />
         </div>
 
@@ -62,7 +65,7 @@ export default function DashboardLayout({
         <div className={cn('flex-1')} />
 
         {/* Right side - quota */}
-          <QuotaDisplay />
+          <QuotaDisplay initialQuota={initialQuota} />
       </header>
 
       <div className={cn('flex', 'pt-20')}>

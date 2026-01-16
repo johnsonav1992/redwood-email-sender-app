@@ -11,6 +11,7 @@ import {
   updateCampaignCounts,
   getCampaignProgress,
   getCampaignImages,
+  getTodaySentCount,
 } from '@/lib/db';
 
 interface SendBatchResponse {
@@ -71,13 +72,23 @@ export async function POST(
 
     const gmail = getGmailClient(session.accessToken, session.refreshToken);
     const isWorkspace = !!session.hostedDomain;
-    const quotaInfo = await getQuotaInfo(gmail, isWorkspace);
 
-    if (quotaInfo.remaining < campaign.batch_size) {
+    // Get both Gmail API count and DB count for accurate quota checking
+    const [gmailQuota, dbSentCount] = await Promise.all([
+      getQuotaInfo(gmail, isWorkspace),
+      getTodaySentCount(session.user.email),
+    ]);
+
+    // Use the higher count to be conservative (DB is more accurate for BCC emails)
+    const sentToday = Math.max(gmailQuota.sentToday, dbSentCount);
+    const limit = isWorkspace ? 1500 : 400;
+    const remaining = Math.max(0, limit - sentToday);
+
+    if (remaining < campaign.batch_size) {
       await updateCampaignStatus(id, 'paused');
       return NextResponse.json({
         success: false,
-        error: `Daily quota exhausted. ${quotaInfo.remaining} emails remaining. Campaign paused.`,
+        error: `Daily quota exhausted. ${remaining} emails remaining. Campaign paused.`,
         quotaExhausted: true,
       });
     }

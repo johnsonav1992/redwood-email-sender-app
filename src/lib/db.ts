@@ -31,6 +31,14 @@ function now(): string {
   return new Date().toISOString();
 }
 
+function toPlainObject<T extends object>(row: T): T {
+  return { ...row };
+}
+
+function toPlainObjects<T extends object>(rows: T[]): T[] {
+  return rows.map(row => ({ ...row }));
+}
+
 export async function initializeSchema(): Promise<void> {
   const statements = SCHEMA_SQL.split(';')
     .map((s) => s.trim())
@@ -82,7 +90,7 @@ export async function getCampaignById(id: string): Promise<Campaign | null> {
   });
 
   if (result.rows.length === 0) return null;
-  return result.rows[0] as unknown as Campaign;
+  return toPlainObject(result.rows[0] as unknown as Campaign);
 }
 
 export async function getCampaignsByUser(userEmail: string): Promise<CampaignWithProgress[]> {
@@ -95,7 +103,7 @@ export async function getCampaignsByUser(userEmail: string): Promise<CampaignWit
     args: [userEmail],
   });
 
-  return result.rows as unknown as CampaignWithProgress[];
+  return toPlainObjects(result.rows as unknown as CampaignWithProgress[]);
 }
 
 export async function updateCampaignStatus(id: string, status: CampaignStatus): Promise<void> {
@@ -343,4 +351,26 @@ export async function getUserTokens(userEmail: string): Promise<{
     refreshToken: row.refresh_token,
     hostedDomain: row.hosted_domain || undefined,
   };
+}
+
+// Get count of emails sent today by a user (across all their campaigns)
+// This is more accurate than Gmail API for BCC emails since each recipient = 1 quota
+export async function getTodaySentCount(userEmail: string): Promise<number> {
+  // Get start of today in UTC
+  const today = new Date();
+  today.setUTCHours(0, 0, 0, 0);
+  const todayStart = today.toISOString();
+
+  const result = await db.execute({
+    sql: `SELECT COUNT(*) as count
+          FROM recipients r
+          JOIN campaigns c ON r.campaign_id = c.id
+          WHERE c.user_email = ?
+            AND r.status = 'sent'
+            AND r.sent_at >= ?`,
+    args: [userEmail, todayStart],
+  });
+
+  const row = result.rows[0] as Record<string, number>;
+  return Number(row.count) || 0;
 }

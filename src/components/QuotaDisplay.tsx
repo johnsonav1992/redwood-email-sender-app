@@ -11,12 +11,13 @@ interface QuotaData {
 }
 
 interface QuotaDisplayProps {
+  initialQuota?: QuotaData | null;
   onRefreshReady?: (refreshFn: () => void) => void;
 }
 
-export default function QuotaDisplay({ onRefreshReady }: QuotaDisplayProps) {
-  const [quota, setQuota] = useState<QuotaData | null>(null);
-  const [loading, setLoading] = useState(true);
+export default function QuotaDisplay({ initialQuota, onRefreshReady }: QuotaDisplayProps) {
+  const [quota, setQuota] = useState<QuotaData | null>(initialQuota ?? null);
+  const [loading, setLoading] = useState(!initialQuota);
   const [error, setError] = useState<string | null>(null);
 
   const fetchQuota = async () => {
@@ -40,15 +41,15 @@ export default function QuotaDisplay({ onRefreshReady }: QuotaDisplayProps) {
   };
 
   useEffect(() => {
-    fetchQuota();
-    // Expose refresh function to parent
+    if (!initialQuota) {
+      fetchQuota();
+    }
     if (onRefreshReady) {
       onRefreshReady(fetchQuota);
     }
-    // Refresh quota every 5 minutes
     const interval = setInterval(fetchQuota, 5 * 60 * 1000);
     return () => clearInterval(interval);
-  }, [onRefreshReady]);
+  }, [initialQuota, onRefreshReady]);
 
   if (loading) {
     return (
@@ -155,7 +156,7 @@ export default function QuotaDisplay({ onRefreshReady }: QuotaDisplayProps) {
         />
         <div className={cn('flex', 'flex-col')}>
           <div className={cn('text-xs', 'text-gray-600')}>Daily Quota</div>
-          <div className={cn('flex', 'items-baseline', 'gap-1', 'whitespace-nowrap')}>
+          <div className={cn('flex', 'items-baseline', 'gap-1', 'whitespace-nowrap', 'h-7')}>
             <span className={cn('text-lg', 'font-bold', 'text-gray-900', 'tabular-nums')}>{quota.remaining.toLocaleString()}</span>
             <span className={cn('text-sm', 'text-gray-400', 'tabular-nums')}>/ {quota.limit.toLocaleString()}</span>
           </div>

@@ -21,9 +21,10 @@ type View = 'compose' | 'campaigns';
 interface EmailComposerProps {
   view: View;
   onViewChange: (view: string) => void;
+  initialCampaigns?: CampaignWithProgress[];
 }
 
-export default function EmailComposer({ view, onViewChange }: EmailComposerProps) {
+export default function EmailComposer({ view, onViewChange, initialCampaigns }: EmailComposerProps) {
   const { data: session } = useSession();
   const [subject, setSubject] = useState('');
   const [htmlBody, setHtmlBody] = useState('');
@@ -46,7 +47,7 @@ export default function EmailComposer({ view, onViewChange }: EmailComposerProps
     updateCampaignStatus,
     deleteCampaign,
     sendNextBatch,
-  } = useCampaignPersistence();
+  } = useCampaignPersistence({ initialCampaigns });
 
   const handleStatusChange = useCallback(
     async (newStatus: CampaignStatus) => {
@@ -85,8 +86,10 @@ export default function EmailComposer({ view, onViewChange }: EmailComposerProps
   });
 
   useEffect(() => {
-    fetchCampaigns();
-  }, [fetchCampaigns]);
+    if (!initialCampaigns) {
+      fetchCampaigns();
+    }
+  }, [initialCampaigns, fetchCampaigns]);
 
   const handleUploadComplete = (result: ParsedEmailResult) => {
     setUploadResult(result);

@@ -1,5 +1,9 @@
 import { google, gmail_v1 } from 'googleapis';
-import { buildMimeMessage, extractImagesFromHtml, type InlineImage } from './mime-builder';
+import {
+  buildMimeMessage,
+  extractImagesFromHtml,
+  type InlineImage
+} from './mime-builder';
 
 export function getGmailClient(accessToken: string, refreshToken: string) {
   const oauth2Client = new google.auth.OAuth2(
@@ -62,7 +66,8 @@ export async function sendBccEmail(
 ) {
   const fullHtml = signature ? `${htmlBody}${signature}` : htmlBody;
 
-  const { html: processedHtml, images: extractedImages } = extractImagesFromHtml(fullHtml);
+  const { html: processedHtml, images: extractedImages } =
+    extractImagesFromHtml(fullHtml);
 
   const allImages = [...extractedImages, ...(additionalImages || [])];
 
@@ -72,14 +77,14 @@ export async function sendBccEmail(
     bcc: bccRecipients,
     subject,
     htmlBody: processedHtml,
-    inlineImages: allImages.length > 0 ? allImages : undefined,
+    inlineImages: allImages.length > 0 ? allImages : undefined
   });
 
   const res = await gmail.users.messages.send({
     userId: 'me',
     requestBody: {
-      raw: encodedMessage,
-    },
+      raw: encodedMessage
+    }
   });
 
   return res.data;
@@ -101,31 +106,25 @@ export async function getQuotaInfo(
   gmail: gmail_v1.Gmail,
   isWorkspace: boolean
 ): Promise<QuotaInfo> {
-  const today = new Date();
-  const year = today.getFullYear();
-  const month = String(today.getMonth() + 1).padStart(2, '0');
-  const day = String(today.getDate()).padStart(2, '0');
-  const dateStr = `${year}/${month}/${day}`;
+  const now = new Date();
+  const tomorrow = new Date(now);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  tomorrow.setHours(0, 0, 0, 0);
 
   const response = await gmail.users.messages.list({
     userId: 'me',
-    q: `in:sent after:${dateStr}`,
-    maxResults: 500,
+    q: 'in:sent newer_than:1d',
+    maxResults: 500
   });
 
-  const sentToday =
-    response.data.messages?.length || response.data.resultSizeEstimate || 0;
-
+  const sentToday = response.data.messages?.length || 0;
   const limit = isWorkspace ? 1500 : 400;
   const remaining = Math.max(0, limit - sentToday);
-
-  const tomorrow = new Date(today);
-  tomorrow.setDate(tomorrow.getDate() + 1);
 
   return {
     sentToday,
     limit,
     remaining,
-    resetTime: tomorrow.toISOString(),
+    resetTime: tomorrow.toISOString()
   };
 }
