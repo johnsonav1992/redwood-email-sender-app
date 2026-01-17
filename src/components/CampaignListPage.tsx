@@ -1,13 +1,13 @@
 'use client';
 
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
+import { useCampaignPersistence } from '@/hooks/useCampaignPersistence';
 import type { CampaignWithProgress, CampaignStatus } from '@/types/campaign';
 
-interface CampaignListProps {
-  campaigns: CampaignWithProgress[];
-  onSelect: (campaign: CampaignWithProgress) => void;
-  onDelete: (id: string) => void;
-  loading?: boolean;
+interface CampaignListPageProps {
+  initialCampaigns?: CampaignWithProgress[];
 }
 
 const statusColors: Record<CampaignStatus, string> = {
@@ -26,7 +26,32 @@ const statusLabels: Record<CampaignStatus, string> = {
   stopped: 'Stopped',
 };
 
-export default function CampaignList({ campaigns, onSelect, onDelete, loading }: CampaignListProps) {
+export default function CampaignListPage({ initialCampaigns }: CampaignListPageProps) {
+  const router = useRouter();
+
+  const {
+    campaigns,
+    loading,
+    fetchCampaigns,
+    deleteCampaign,
+  } = useCampaignPersistence({ initialCampaigns });
+
+  useEffect(() => {
+    if (!initialCampaigns) {
+      fetchCampaigns();
+    }
+  }, [initialCampaigns, fetchCampaigns]);
+
+  const handleSelect = (campaign: CampaignWithProgress) => {
+    router.push(`/compose?edit=${campaign.id}`);
+  };
+
+  const handleDelete = async (id: string) => {
+    if (confirm('Are you sure you want to delete this campaign?')) {
+      await deleteCampaign(id);
+    }
+  };
+
   if (loading) {
     return (
       <div className="p-4 text-center text-gray-500">
@@ -117,7 +142,7 @@ export default function CampaignList({ campaigns, onSelect, onDelete, loading }:
               <div className="flex items-center gap-2 ml-4">
                 {canResume && (
                   <button
-                    onClick={() => onSelect(campaign)}
+                    onClick={() => handleSelect(campaign)}
                     className="text-sm px-3 py-1.5 rounded bg-blue-600 text-white hover:bg-blue-700 cursor-pointer"
                   >
                     Resume
@@ -125,7 +150,7 @@ export default function CampaignList({ campaigns, onSelect, onDelete, loading }:
                 )}
                 {campaign.status === 'draft' && (
                   <button
-                    onClick={() => onSelect(campaign)}
+                    onClick={() => handleSelect(campaign)}
                     className="text-sm px-3 py-1.5 rounded bg-blue-600 text-white hover:bg-blue-700 cursor-pointer"
                   >
                     Start
@@ -133,7 +158,7 @@ export default function CampaignList({ campaigns, onSelect, onDelete, loading }:
                 )}
                 {canDelete && (
                   <button
-                    onClick={() => onDelete(campaign.id)}
+                    onClick={() => handleDelete(campaign.id)}
                     className="text-sm px-3 py-1.5 rounded border border-gray-300 text-gray-600 hover:bg-gray-50 cursor-pointer"
                   >
                     Delete

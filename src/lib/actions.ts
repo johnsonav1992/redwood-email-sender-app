@@ -152,7 +152,8 @@ export async function createCampaign(data: {
       recipients: data.recipients,
     });
 
-    revalidatePath('/');
+    revalidatePath('/compose');
+    revalidatePath('/campaigns');
     return { campaign: { ...campaign, pending_count: data.recipients.length } };
   } catch (error) {
     console.error('Create campaign error:', error);
@@ -177,7 +178,8 @@ export async function updateCampaignStatus(id: string, status: CampaignStatus) {
     }
 
     await dbUpdateCampaignStatus(id, status);
-    revalidatePath('/');
+    revalidatePath('/compose');
+    revalidatePath('/campaigns');
     return { success: true };
   } catch (error) {
     console.error('Update campaign status error:', error);
@@ -202,7 +204,8 @@ export async function deleteCampaign(id: string) {
     }
 
     await dbDeleteCampaign(id);
-    revalidatePath('/');
+    revalidatePath('/compose');
+    revalidatePath('/campaigns');
     return { success: true };
   } catch (error) {
     console.error('Delete campaign error:', error);
