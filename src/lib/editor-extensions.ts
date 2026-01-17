@@ -235,7 +235,47 @@ export const ImageWithResize = Image.configure({
       },
       width: widthAttribute,
       height: heightAttribute,
+      href: {
+        default: null,
+        parseHTML: (element: HTMLElement) => {
+          const parent = element.parentElement;
+          if (parent?.tagName === 'A') {
+            return parent.getAttribute('href');
+          }
+          return element.getAttribute('href');
+        },
+        renderHTML: (attributes: Record<string, unknown>) => {
+          if (!attributes.href) return {};
+          return { href: attributes.href };
+        },
+      },
+      target: {
+        default: null,
+        parseHTML: (element: HTMLElement) => {
+          const parent = element.parentElement;
+          if (parent?.tagName === 'A') {
+            return parent.getAttribute('target');
+          }
+          return element.getAttribute('target');
+        },
+        renderHTML: (attributes: Record<string, unknown>) => {
+          if (!attributes.target) return {};
+          return { target: attributes.target };
+        },
+      },
     };
+  },
+  renderHTML({ HTMLAttributes }) {
+    const { href, target, ...imgAttributes } = HTMLAttributes;
+
+    if (href) {
+      const linkAttrs: Record<string, string> = { href };
+      if (target) linkAttrs.target = target;
+
+      return ['a', linkAttrs, ['img', imgAttributes]];
+    }
+
+    return ['img', imgAttributes];
   },
 });
 
@@ -270,6 +310,46 @@ export const ImageWithStyles = Image.extend({
       },
       width: widthAttribute,
       height: heightAttribute,
+      href: {
+        default: null,
+        parseHTML: (element: HTMLElement) => {
+          const parent = element.parentElement;
+          if (parent?.tagName === 'A') {
+            return parent.getAttribute('href');
+          }
+          return element.getAttribute('href');
+        },
+        renderHTML: (attributes: Record<string, unknown>) => {
+          if (!attributes.href) return {};
+          return { href: attributes.href };
+        },
+      },
+      target: {
+        default: null,
+        parseHTML: (element: HTMLElement) => {
+          const parent = element.parentElement;
+          if (parent?.tagName === 'A') {
+            return parent.getAttribute('target');
+          }
+          return element.getAttribute('target');
+        },
+        renderHTML: (attributes: Record<string, unknown>) => {
+          if (!attributes.target) return {};
+          return { target: attributes.target };
+        },
+      },
     };
+  },
+  renderHTML({ HTMLAttributes }) {
+    const { href, target, ...imgAttributes } = HTMLAttributes;
+
+    if (href) {
+      const linkAttrs: Record<string, string> = { href };
+      if (target) linkAttrs.target = target;
+
+      return ['a', linkAttrs, ['img', imgAttributes]];
+    }
+
+    return ['img', imgAttributes];
   },
 });

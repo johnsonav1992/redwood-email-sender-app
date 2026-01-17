@@ -53,7 +53,7 @@ export default function EmailFormFields({
             'px-4',
             'py-2',
             'transition',
-            'focus:border-blue-500',
+            'focus:border-slate-400',
             'focus:outline-none',
             'disabled:cursor-not-allowed',
             'disabled:bg-gray-50'
@@ -89,7 +89,7 @@ export default function EmailFormFields({
             'font-mono',
             'text-sm',
             'transition',
-            'focus:border-blue-500',
+            'focus:border-slate-400',
             'focus:outline-none',
             'disabled:cursor-not-allowed',
             'disabled:bg-gray-50'
@@ -123,7 +123,7 @@ export default function EmailFormFields({
             'px-4',
             'py-2',
             'transition',
-            'focus:border-blue-500',
+            'focus:border-slate-400',
             'focus:outline-none',
             'disabled:cursor-not-allowed',
             'disabled:bg-gray-50'

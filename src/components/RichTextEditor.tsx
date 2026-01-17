@@ -187,6 +187,23 @@ export default function RichTextEditor({
     }
   };
 
+  const handleImageLink = useCallback(() => {
+    if (!editor) return;
+
+    const { href } = editor.getAttributes('image');
+    const url = window.prompt('Enter image link URL (leave empty to remove):', href || '');
+
+    if (url === null) return;
+
+    if (url === '') {
+      editor.chain().focus().updateAttributes('image', { href: null, target: null }).run();
+    } else {
+      editor.chain().focus().updateAttributes('image', { href: url, target: '_blank' }).run();
+    }
+  }, [editor]);
+
+  const isImageSelected = editor?.isActive('image');
+
   useEffect(() => {
     if (editor && value !== editor.getHTML()) {
       editor.commands.setContent(value);
@@ -210,7 +227,7 @@ export default function RichTextEditor({
           'overflow-hidden rounded-lg border-2 transition',
           disabled
             ? 'border-gray-200 bg-gray-50'
-            : 'border-gray-200 focus-within:border-blue-500'
+            : 'border-gray-200 focus-within:border-slate-400'
         )}
       >
         <div
@@ -383,6 +400,34 @@ export default function RichTextEditor({
             </svg>
             <span className="text-xs">Image</span>
           </button>
+
+          {isImageSelected && (
+            <button
+              type="button"
+              onClick={handleImageLink}
+              disabled={disabled}
+              className={cn(
+                'flex cursor-pointer items-center gap-1 rounded p-1.5 text-sm transition-colors hover:bg-gray-200',
+                editor.getAttributes('image').href && 'bg-blue-100'
+              )}
+              title={editor.getAttributes('image').href ? 'Edit image link' : 'Add link to image'}
+            >
+              <svg
+                className="h-4 w-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"
+                />
+              </svg>
+              <span className="text-xs">Link</span>
+            </button>
+          )}
         </div>
 
         <div className="relative">
@@ -405,7 +450,7 @@ export default function RichTextEditor({
       />
 
       <p className="mt-1.5 text-xs text-gray-500">
-        Drag & drop or paste images. Click an image to resize it with the corner handles.
+        Drag & drop or paste images. Click an image to resize it with the corner handles or add a link.
       </p>
 
       <style jsx global>{`

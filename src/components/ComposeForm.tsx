@@ -294,7 +294,7 @@ export default function ComposeForm({ initialCampaigns }: ComposeFormProps) {
               disabled={isRunning || isPaused}
               className={cn(
                 'w-full rounded-lg border-2 border-gray-200 px-4 py-2 transition',
-                'focus:border-blue-500 focus:outline-none',
+                'focus:border-slate-400 focus:outline-none',
                 'disabled:cursor-not-allowed disabled:bg-gray-50'
               )}
             />
