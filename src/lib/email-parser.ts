@@ -1,5 +1,5 @@
 import Papa from 'papaparse';
-import * as XLSX from 'xlsx';
+import ExcelJS from 'exceljs';
 import type { ParsedEmailResult } from '@/types/campaign';
 
 // RFC 5322 compliant email regex (simplified but robust)
@@ -80,22 +80,49 @@ export function parseCSV(content: string): string[] {
   return extractEmailsFromData(result.data);
 }
 
-export function parseExcel(buffer: ArrayBuffer): string[] {
-  const workbook = XLSX.read(buffer, { type: 'array' });
-  const firstSheetName = workbook.SheetNames[0];
-  const worksheet = workbook.Sheets[firstSheetName];
+export async function parseExcel(buffer: ArrayBuffer): Promise<string[]> {
+  const workbook = new ExcelJS.Workbook();
+  await workbook.xlsx.load(buffer);
+
+  const worksheet = workbook.worksheets[0];
+  if (!worksheet) return [];
+
+  const rows: Record<string, unknown>[] = [];
+  const allCells: string[] = [];
+  let headers: string[] = [];
+
+  worksheet.eachRow((row, rowNumber) => {
+    const values = row.values as (string | number | null | undefined)[];
+    // row.values is 1-indexed, so values[0] is undefined
+    const cells = values.slice(1);
+
+    if (rowNumber === 1) {
+      // First row as headers
+      headers = cells.map((cell) => String(cell ?? '').trim().toLowerCase());
+    } else {
+      // Build row object with headers
+      const rowData: Record<string, unknown> = {};
+      cells.forEach((cell, index) => {
+        const header = headers[index] || `col${index}`;
+        rowData[header] = cell;
+      });
+      rows.push(rowData);
+    }
+
+    // Also collect all cells for fallback
+    cells.forEach((cell) => {
+      if (cell != null) {
+        allCells.push(String(cell).trim());
+      }
+    });
+  });
 
   // Try parsing with headers first
-  const dataWithHeaders = XLSX.utils.sheet_to_json<Record<string, unknown>>(worksheet);
-  let emails = extractEmailsFromData(dataWithHeaders);
+  let emails = extractEmailsFromData(rows);
 
-  // If no emails found, try without headers (single column)
+  // If no emails found, try all cells (single column fallback)
   if (emails.length === 0) {
-    const dataWithoutHeaders = XLSX.utils.sheet_to_json<string[]>(worksheet, { header: 1 });
-    emails = dataWithoutHeaders
-      .flat()
-      .map((cell) => (typeof cell === 'string' ? cell.trim() : ''))
-      .filter((cell) => cell.includes('@'));
+    emails = allCells.filter((cell) => cell.includes('@'));
   }
 
   return emails;
@@ -141,7 +168,7 @@ export async function parseEmailFile(file: File): Promise<ParsedEmailResult> {
     rawEmails = parseCSV(content);
   } else if (fileName.endsWith('.xlsx') || fileName.endsWith('.xls')) {
     const buffer = await file.arrayBuffer();
-    rawEmails = parseExcel(buffer);
+    rawEmails = await parseExcel(buffer);
   } else {
     // Treat as plain text (one email per line)
     const content = await file.text();
@@ -160,11 +187,11 @@ export function parseCSVBuffer(buffer: Buffer): string[] {
   return parseCSV(content);
 }
 
-export function parseExcelBuffer(buffer: Buffer): string[] {
+export async function parseExcelBuffer(buffer: Buffer): Promise<string[]> {
   const uint8Array = new Uint8Array(buffer);
   const arrayBuffer = uint8Array.buffer.slice(
     uint8Array.byteOffset,
     uint8Array.byteOffset + uint8Array.byteLength
   ) as ArrayBuffer;
-  return parseExcel(arrayBuffer);
+  return await parseExcel(arrayBuffer);
 }

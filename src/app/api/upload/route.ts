@@ -46,7 +46,7 @@ export async function POST(
     if (fileName.endsWith('.csv')) {
       rawEmails = parseCSVBuffer(buffer);
     } else if (fileName.endsWith('.xlsx') || fileName.endsWith('.xls')) {
-      rawEmails = parseExcelBuffer(buffer);
+      rawEmails = await parseExcelBuffer(buffer);
     } else if (fileName.endsWith('.txt')) {
       const content = buffer.toString('utf-8');
       rawEmails = content
