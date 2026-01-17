@@ -1,16 +1,5 @@
 import { useState } from 'react';
-import { BatchSendResponse, EmailResult } from '@/types/email';
-
-interface FailedEmail {
-  email: string;
-  error: string;
-}
-
-interface Progress {
-  sent: number;
-  failed: number;
-  total: number;
-}
+import type { BatchSendResponse, EmailResult, FailedEmail, Progress } from '@/types/email';
 
 export function useEmailSending(onBatchSent?: () => void) {
   const [sentEmails, setSentEmails] = useState<string[]>([]);
@@ -84,7 +73,6 @@ export function useEmailSending(onBatchSent?: () => void) {
 
       setCurrentBatchSending(false);
 
-      // Trigger quota refresh callback if provided
       if (data.sent > 0 && onBatchSent) {
         onBatchSent();
       }

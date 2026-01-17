@@ -5,6 +5,17 @@ export interface EmailResult {
   error?: string;
 }
 
+export interface FailedEmail {
+  email: string;
+  error: string;
+}
+
+export interface Progress {
+  sent: number;
+  failed: number;
+  total: number;
+}
+
 export interface BatchSendRequest {
   recipients: string[];
   subject: string;

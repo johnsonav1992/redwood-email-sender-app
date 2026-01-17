@@ -1,12 +1,7 @@
 'use client';
 
 import { cn } from '@/lib/utils';
-
-interface Progress {
-  sent: number;
-  failed: number;
-  total: number;
-}
+import type { Progress } from '@/types/email';
 
 interface CampaignProgressProps {
   progress: Progress;

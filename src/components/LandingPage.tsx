@@ -17,7 +17,6 @@ export default function LandingPage() {
       )}
     >
       <div className={cn('mx-auto', 'max-w-6xl', 'px-4', 'py-12')}>
-        {/* Header */}
         <div className={cn('mb-12', 'text-center')}>
           <div className={cn('mb-8', 'flex', 'justify-center')}>
             <Image

@@ -1,11 +1,7 @@
 'use client';
 
 import { cn } from '@/lib/utils';
-
-interface FailedEmail {
-  email: string;
-  error: string;
-}
+import type { FailedEmail } from '@/types/email';
 
 interface EmailResultsProps {
   sentEmails: string[];

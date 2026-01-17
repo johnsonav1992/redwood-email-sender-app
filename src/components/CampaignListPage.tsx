@@ -3,28 +3,13 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
+import { STATUS_COLORS, STATUS_LABELS } from '@/lib/constants';
 import { useCampaignPersistence } from '@/hooks/useCampaignPersistence';
-import type { CampaignWithProgress, CampaignStatus } from '@/types/campaign';
+import type { CampaignWithProgress } from '@/types/campaign';
 
 interface CampaignListPageProps {
   initialCampaigns?: CampaignWithProgress[];
 }
-
-const statusColors: Record<CampaignStatus, string> = {
-  draft: 'bg-gray-100 text-gray-700',
-  running: 'bg-blue-100 text-blue-700',
-  paused: 'bg-yellow-100 text-yellow-700',
-  completed: 'bg-green-100 text-green-700',
-  stopped: 'bg-red-100 text-red-700',
-};
-
-const statusLabels: Record<CampaignStatus, string> = {
-  draft: 'Draft',
-  running: 'Running',
-  paused: 'Paused',
-  completed: 'Completed',
-  stopped: 'Stopped',
-};
 
 export default function CampaignListPage({ initialCampaigns }: CampaignListPageProps) {
   const router = useRouter();
@@ -109,8 +94,8 @@ export default function CampaignListPage({ initialCampaigns }: CampaignListPageP
                   <h4 className="font-medium text-gray-900 truncate">
                     {campaign.name || campaign.subject}
                   </h4>
-                  <span className={cn('text-xs px-2 py-0.5 rounded-full', statusColors[campaign.status])}>
-                    {statusLabels[campaign.status]}
+                  <span className={cn('text-xs px-2 py-0.5 rounded-full', STATUS_COLORS[campaign.status])}>
+                    {STATUS_LABELS[campaign.status]}
                   </span>
                 </div>
                 <p className="text-sm text-gray-500 truncate mt-1">

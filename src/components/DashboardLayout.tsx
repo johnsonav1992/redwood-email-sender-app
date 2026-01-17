@@ -6,41 +6,32 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useSession, signOut } from 'next-auth/react';
 import { cn } from '@/lib/utils';
+import { NAV_ITEMS } from '@/lib/constants';
 import QuotaDisplay from './QuotaDisplay';
 import type { QuotaInfo } from '@/lib/gmail';
 
-const navItems = [
-  {
-    id: 'compose',
-    href: '/compose',
-    label: 'New Campaign',
-    icon: (
-      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth={2}
-          d="M12 4v16m8-8H4"
-        />
-      </svg>
-    ),
-  },
-  {
-    id: 'campaigns',
-    href: '/campaigns',
-    label: 'Campaigns',
-    icon: (
-      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth={2}
-          d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
-        />
-      </svg>
-    ),
-  },
-];
+const NAV_ICONS: Record<string, React.ReactNode> = {
+  compose: (
+    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={2}
+        d="M12 4v16m8-8H4"
+      />
+    </svg>
+  ),
+  campaigns: (
+    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={2}
+        d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
+      />
+    </svg>
+  ),
+};
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -57,7 +48,6 @@ export default function DashboardLayout({
 
   return (
     <div className={cn('min-h-screen', 'bg-gray-100')}>
-      {/* Top header - full width */}
       <header
         className={cn(
           'bg-white',
@@ -74,7 +64,6 @@ export default function DashboardLayout({
           'pl-4', 'pr-8'
         )}
       >
-        {/* Logo */}
         <div className={cn('w-64', 'flex', 'items-center')}>
           <Image
             src="/redwood-logo.png"
@@ -86,15 +75,12 @@ export default function DashboardLayout({
           />
         </div>
 
-        {/* Spacer */}
         <div className={cn('flex-1')} />
 
-        {/* Right side - quota */}
-          <QuotaDisplay initialQuota={initialQuota} />
+        <QuotaDisplay initialQuota={initialQuota} />
       </header>
 
       <div className={cn('flex', 'pt-20')}>
-        {/* Sidebar */}
         <aside
           className={cn(
             'w-64',
@@ -109,9 +95,8 @@ export default function DashboardLayout({
             'flex-col'
           )}
         >
-          {/* Navigation */}
           <nav className={cn('flex-1', 'p-4', 'space-y-1')}>
-            {navItems.map((item) => (
+            {NAV_ITEMS.map((item) => (
               <Link
                 key={item.id}
                 href={item.href}
@@ -130,13 +115,12 @@ export default function DashboardLayout({
                     : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
                 )}
               >
-                {item.icon}
+                {NAV_ICONS[item.id]}
                 {item.label}
               </Link>
             ))}
           </nav>
 
-          {/* User section */}
           <div className={cn('p-4', 'border-t', 'border-gray-200')}>
             <div className={cn('flex', 'items-center', 'gap-3', 'mb-3')}>
               {session?.user?.image ? (
@@ -209,10 +193,9 @@ export default function DashboardLayout({
           </div>
         </aside>
 
-        {/* Main content */}
         <main className={cn('flex-1', 'ml-64', 'p-8')}>
           <h1 className={cn('text-2xl', 'font-semibold', 'text-gray-900', 'mb-6')}>
-            {navItems.find((item) => item.id === activeNav)?.label || 'Dashboard'}
+            {NAV_ITEMS.find((item) => item.id === activeNav)?.label || 'Dashboard'}
           </h1>
           {children}
         </main>
