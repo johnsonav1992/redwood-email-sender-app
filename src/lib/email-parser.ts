@@ -158,29 +158,6 @@ export function parseAndValidateEmails(rawEmails: string[]): ParsedEmailResult {
   return { valid, invalid, duplicates };
 }
 
-export async function parseEmailFile(file: File): Promise<ParsedEmailResult> {
-  const fileName = file.name.toLowerCase();
-
-  let rawEmails: string[] = [];
-
-  if (fileName.endsWith('.csv')) {
-    const content = await file.text();
-    rawEmails = parseCSV(content);
-  } else if (fileName.endsWith('.xlsx') || fileName.endsWith('.xls')) {
-    const buffer = await file.arrayBuffer();
-    rawEmails = await parseExcel(buffer);
-  } else {
-    // Treat as plain text (one email per line)
-    const content = await file.text();
-    rawEmails = content
-      .split(/[\n\r,;]+/)
-      .map((line) => line.trim())
-      .filter((line) => line.length > 0);
-  }
-
-  return parseAndValidateEmails(rawEmails);
-}
-
 // Server-side parsing functions (for API routes)
 export function parseCSVBuffer(buffer: Buffer): string[] {
   const content = buffer.toString('utf-8');

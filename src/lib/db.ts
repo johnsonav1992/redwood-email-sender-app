@@ -5,7 +5,6 @@ import type {
   Recipient,
   CampaignImage,
   CampaignStatus,
-  RecipientStatus,
   CreateCampaignInput,
   CampaignWithProgress,
 } from '@/types/campaign';
@@ -204,29 +203,6 @@ export async function claimPendingRecipients(
   return claimedResult.rows as unknown as Recipient[];
 }
 
-// Reset any 'sending' recipients back to 'pending' (for cleanup on startup or error recovery)
-export async function resetSendingRecipients(campaignId: string): Promise<number> {
-  const result = await db.execute({
-    sql: `UPDATE recipients SET status = 'pending' WHERE campaign_id = ? AND status = 'sending'`,
-    args: [campaignId],
-  });
-  return result.rowsAffected;
-}
-
-export async function updateRecipientStatus(
-  id: string,
-  status: RecipientStatus,
-  errorMessage?: string,
-  batchNumber?: number
-): Promise<void> {
-  const sentAt = status === 'sent' ? now() : null;
-
-  await db.execute({
-    sql: `UPDATE recipients SET status = ?, error_message = ?, batch_number = ?, sent_at = ? WHERE id = ?`,
-    args: [status, errorMessage || null, batchNumber || null, sentAt, id],
-  });
-}
-
 export async function markRecipientsAsSent(
   recipientIds: string[],
   batchNumber: number
@@ -307,13 +283,6 @@ export async function getCampaignImages(campaignId: string): Promise<CampaignIma
   });
 
   return result.rows as unknown as CampaignImage[];
-}
-
-export async function deleteCampaignImages(campaignId: string): Promise<void> {
-  await db.execute({
-    sql: `DELETE FROM campaign_images WHERE campaign_id = ?`,
-    args: [campaignId],
-  });
 }
 
 // User token operations (for server-side campaign processing)
