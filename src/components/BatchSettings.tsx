@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import { cn } from '@/lib/utils';
 
 interface BatchSettingsProps {
@@ -17,6 +18,32 @@ export default function BatchSettings({
   onBatchDelayChange,
   disabled,
 }: BatchSettingsProps) {
+  const [batchSizeInput, setBatchSizeInput] = useState(String(batchSize));
+  const [batchSizeError, setBatchSizeError] = useState<string | null>(null);
+
+  const handleBatchSizeChange = (value: string) => {
+    setBatchSizeInput(value);
+    setBatchSizeError(null);
+
+    const num = parseInt(value);
+    if (!isNaN(num) && num >= 1 && num <= 100) {
+      onBatchSizeChange(num);
+    }
+  };
+
+  const handleBatchSizeBlur = () => {
+    const num = parseInt(batchSizeInput);
+    if (batchSizeInput.trim() === '' || isNaN(num)) {
+      setBatchSizeError('Batch size is required');
+    } else if (num < 1) {
+      setBatchSizeError('Must be at least 1');
+    } else if (num > 100) {
+      setBatchSizeError('Must be 100 or less');
+    } else {
+      setBatchSizeError(null);
+    }
+  };
+
   return (
     <div className="grid grid-cols-2 gap-4">
       <div>
@@ -27,15 +54,21 @@ export default function BatchSettings({
           type="number"
           min={1}
           max={100}
-          value={batchSize}
-          onChange={(e) => onBatchSizeChange(Math.max(1, Math.min(100, parseInt(e.target.value) || 1)))}
+          value={batchSizeInput}
+          onChange={(e) => handleBatchSizeChange(e.target.value)}
+          onBlur={handleBatchSizeBlur}
           disabled={disabled}
           className={cn(
             'w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500',
-            disabled && 'bg-gray-100 text-gray-500'
+            disabled && 'bg-gray-100 text-gray-500',
+            batchSizeError && 'border-red-500 focus:ring-red-500 focus:border-red-500'
           )}
         />
-        <p className="text-xs text-gray-500 mt-1">How many recipients to BCC per email (1-100)</p>
+        {batchSizeError ? (
+          <p className="text-xs text-red-500 mt-1">{batchSizeError}</p>
+        ) : (
+          <p className="text-xs text-gray-500 mt-1">How many recipients to BCC per email (1-100)</p>
+        )}
       </div>
 
       <div>

@@ -388,16 +388,18 @@ export default function ComposeForm({ initialCampaigns }: ComposeFormProps) {
           </div>
         )}
 
-        <CampaignControls
-          status={status}
-          recipientCount={progress.total}
-          canStart={canStart}
-          batchSize={batchSize}
-          onStart={handleCreateAndStart}
-          onPause={pauseCampaign}
-          onResume={resumeCampaign}
-          onStop={stopCampaign}
-        />
+        <div className="mt-8">
+          <CampaignControls
+            status={status}
+            recipientCount={progress.total}
+            canStart={canStart}
+            batchSize={batchSize}
+            onStart={handleCreateAndStart}
+            onPause={pauseCampaign}
+            onResume={resumeCampaign}
+            onStop={stopCampaign}
+          />
+        </div>
       </div>
     </div>
   );
