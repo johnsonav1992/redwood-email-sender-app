@@ -30,6 +30,8 @@ export function useCampaignStream({ campaignId, batchDelaySeconds = 60, onStatus
   const [shouldConnect, setShouldConnect] = useState(false);
   const [nextBatchIn, setNextBatchIn] = useState<number | null>(null);
   const [nextBatchEmails, setNextBatchEmails] = useState<string[]>([]);
+  const [prevStatus, setPrevStatus] = useState<CampaignStatus>('draft');
+  const [prevShouldConnect, setPrevShouldConnect] = useState(false);
 
   const eventSourceRef = useRef<EventSource | null>(null);
   const retryTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -46,16 +48,19 @@ export function useCampaignStream({ campaignId, batchDelaySeconds = 60, onStatus
     statusRef.current = status;
   }, [status]);
 
-  const clearCountdown = useCallback(() => {
+  const clearCountdownInterval = useCallback(() => {
     if (countdownIntervalRef.current) {
       clearInterval(countdownIntervalRef.current);
       countdownIntervalRef.current = null;
     }
-    setNextBatchIn(null);
+    if (batchTimeoutRef.current) {
+      clearTimeout(batchTimeoutRef.current);
+      batchTimeoutRef.current = null;
+    }
   }, []);
 
   const startCountdown = useCallback((seconds: number) => {
-    clearCountdown();
+    clearCountdownInterval();
     setNextBatchIn(seconds);
     countdownIntervalRef.current = setInterval(() => {
       setNextBatchIn((prev) => {
@@ -65,30 +70,51 @@ export function useCampaignStream({ campaignId, batchDelaySeconds = 60, onStatus
         return prev - 1;
       });
     }, 1000);
-  }, [clearCountdown]);
+  }, [clearCountdownInterval]);
+
+  if (status !== prevStatus) {
+    setPrevStatus(status);
+    if (status !== 'running' && nextBatchIn !== null) {
+      setNextBatchIn(null);
+    }
+  }
+
+  if (shouldConnect !== prevShouldConnect) {
+    setPrevShouldConnect(shouldConnect);
+    if (!shouldConnect && nextBatchIn !== null) {
+      setNextBatchIn(null);
+    }
+  }
 
   useEffect(() => {
-    if (status !== 'running') {
-      clearCountdown();
+    if (nextBatchIn === null) {
+      if (countdownIntervalRef.current) {
+        clearInterval(countdownIntervalRef.current);
+        countdownIntervalRef.current = null;
+      }
       if (batchTimeoutRef.current) {
         clearTimeout(batchTimeoutRef.current);
         batchTimeoutRef.current = null;
       }
     }
-  }, [status, clearCountdown]);
+  }, [nextBatchIn]);
 
   const scheduleNextBatch = useCallback((id: string, delayMs: number, pendingCount: number) => {
     if (pendingCount > 0 && statusRef.current === 'running' && !batchTimeoutRef.current) {
       startCountdown(Math.floor(delayMs / 1000));
       batchTimeoutRef.current = setTimeout(() => {
         batchTimeoutRef.current = null;
-        clearCountdown();
+        if (countdownIntervalRef.current) {
+          clearInterval(countdownIntervalRef.current);
+          countdownIntervalRef.current = null;
+        }
+        setNextBatchIn(null);
         if (statusRef.current === 'running' && onSendBatch) {
           onSendBatch(id);
         }
       }, delayMs);
     }
-  }, [onSendBatch, startCountdown, clearCountdown]);
+  }, [onSendBatch, startCountdown]);
 
   useEffect(() => {
     if (!shouldConnect || !campaignId) {
@@ -100,11 +126,7 @@ export function useCampaignStream({ campaignId, batchDelaySeconds = 60, onStatus
         clearTimeout(retryTimeoutRef.current);
         retryTimeoutRef.current = null;
       }
-      if (batchTimeoutRef.current) {
-        clearTimeout(batchTimeoutRef.current);
-        batchTimeoutRef.current = null;
-      }
-      clearCountdown();
+      clearCountdownInterval();
       return;
     }
 
@@ -173,13 +195,9 @@ export function useCampaignStream({ campaignId, batchDelaySeconds = 60, onStatus
         clearTimeout(retryTimeoutRef.current);
         retryTimeoutRef.current = null;
       }
-      if (batchTimeoutRef.current) {
-        clearTimeout(batchTimeoutRef.current);
-        batchTimeoutRef.current = null;
-      }
-      clearCountdown();
+      clearCountdownInterval();
     };
-  }, [shouldConnect, campaignId, batchDelaySeconds, scheduleNextBatch, clearCountdown]);
+  }, [shouldConnect, campaignId, batchDelaySeconds, scheduleNextBatch, clearCountdownInterval]);
 
   const startCampaign = useCallback(async (overrideCampaignId?: string) => {
     const id = overrideCampaignId || campaignId;
@@ -200,9 +218,8 @@ export function useCampaignStream({ campaignId, batchDelaySeconds = 60, onStatus
     const success = await onStatusChange?.('paused');
     if (success !== false) {
       setStatus('paused');
-      clearCountdown();
     }
-  }, [campaignId, onStatusChange, clearCountdown]);
+  }, [campaignId, onStatusChange]);
 
   const resumeCampaign = useCallback(async () => {
     if (!campaignId || status !== 'paused') return;
@@ -223,9 +240,8 @@ export function useCampaignStream({ campaignId, batchDelaySeconds = 60, onStatus
     if (success !== false) {
       setStatus('stopped');
       setShouldConnect(false);
-      clearCountdown();
     }
-  }, [campaignId, onStatusChange, clearCountdown]);
+  }, [campaignId, onStatusChange]);
 
   const setInitialStatus = useCallback((newStatus: CampaignStatus) => {
     setStatus(newStatus);
