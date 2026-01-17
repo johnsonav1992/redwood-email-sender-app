@@ -7,6 +7,7 @@ import {
   getCampaignProgress,
   updateCampaignStatus,
   deleteCampaign,
+  updateCampaignDraft,
 } from '@/lib/db';
 import type { Campaign, Recipient, CampaignStatus } from '@/types/campaign';
 
@@ -92,7 +93,16 @@ export async function PATCH(
     }
 
     const body = await req.json();
-    const { status } = body as { status?: CampaignStatus };
+    const { status, name, subject, body: emailBody, signature, batch_size, batch_delay_seconds, recipients } = body as {
+      status?: CampaignStatus;
+      name?: string;
+      subject?: string;
+      body?: string;
+      signature?: string;
+      batch_size?: number;
+      batch_delay_seconds?: number;
+      recipients?: string[];
+    };
 
     if (status) {
       const validTransitions: Record<CampaignStatus, CampaignStatus[]> = {
@@ -111,6 +121,18 @@ export async function PATCH(
       }
 
       await updateCampaignStatus(id, status);
+    }
+
+    if (campaign.status === 'draft' && (name !== undefined || subject !== undefined || emailBody !== undefined || signature !== undefined || batch_size !== undefined || batch_delay_seconds !== undefined || recipients !== undefined)) {
+      await updateCampaignDraft(id, {
+        name,
+        subject,
+        body: emailBody,
+        signature,
+        batch_size,
+        batch_delay_seconds,
+        recipients
+      });
     }
 
     return NextResponse.json({ success: true });

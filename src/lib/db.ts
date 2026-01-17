@@ -112,6 +112,54 @@ export async function updateCampaignStatus(id: string, status: CampaignStatus): 
   });
 }
 
+export async function updateCampaignDraft(
+  id: string,
+  data: {
+    name?: string;
+    subject?: string;
+    body?: string;
+    signature?: string | null;
+    batch_size?: number;
+    batch_delay_seconds?: number;
+    recipients?: string[];
+  }
+): Promise<void> {
+  const timestamp = now();
+
+  await db.execute({
+    sql: `UPDATE campaigns
+          SET name = ?, subject = ?, body = ?, signature = ?,
+              batch_size = ?, batch_delay_seconds = ?,
+              total_recipients = ?, updated_at = ?
+          WHERE id = ?`,
+    args: [
+      data.name || null,
+      data.subject || '',
+      data.body || '',
+      data.signature || null,
+      data.batch_size || 30,
+      data.batch_delay_seconds || 60,
+      data.recipients?.length || 0,
+      timestamp,
+      id,
+    ],
+  });
+
+  if (data.recipients) {
+    await db.execute({
+      sql: `DELETE FROM recipients WHERE campaign_id = ?`,
+      args: [id],
+    });
+
+    for (const email of data.recipients) {
+      await db.execute({
+        sql: `INSERT INTO recipients (id, campaign_id, email, status) VALUES (?, ?, ?, 'pending')`,
+        args: [generateId(), id, email.toLowerCase().trim()],
+      });
+    }
+  }
+}
+
 export async function updateCampaignCounts(
   id: string,
   sentCount: number,

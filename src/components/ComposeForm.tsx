@@ -14,6 +14,7 @@ import SignatureEditor from './SignatureEditor';
 import RichTextEditor from './RichTextEditor';
 import CampaignProgress from './CampaignProgress';
 import CampaignControls from './CampaignControls';
+import AlertModal from './AlertModal';
 import type {
   ParsedEmailResult,
   CampaignWithProgress,
@@ -45,6 +46,17 @@ export default function ComposeForm({ initialCampaigns }: ComposeFormProps) {
   const [initialized, setInitialized] = useState(false);
   const [sendingTest, setSendingTest] = useState(false);
   const [testSent, setTestSent] = useState(false);
+  const [alertModal, setAlertModal] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    type: 'success' | 'error' | 'info';
+  }>({
+    isOpen: false,
+    title: '',
+    message: '',
+    type: 'info'
+  });
 
   const {
     campaigns,
@@ -151,9 +163,79 @@ export default function ComposeForm({ initialCampaigns }: ComposeFormProps) {
     setUploadResult(null);
   };
 
+  const showAlert = (title: string, message: string, type: 'success' | 'error' | 'info' = 'info') => {
+    setAlertModal({ isOpen: true, title, message, type });
+  };
+
+  const closeAlert = () => {
+    setAlertModal(prev => ({ ...prev, isOpen: false }));
+  };
+
+  const handleSaveDraft = async () => {
+    if (!hasAnyContent) {
+      showAlert('Cannot Save', 'Please fill in at least one field', 'error');
+      return;
+    }
+
+    if (campaignId && isDraft) {
+      try {
+        const response = await fetch(`/api/campaigns/${campaignId}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: subject.substring(0, 50) || 'Untitled Draft',
+            subject,
+            body: htmlBody,
+            signature: signature || undefined,
+            batch_size: batchSize,
+            batch_delay_seconds: batchDelaySeconds,
+            recipients: recipientList
+          })
+        });
+
+        if (response.ok) {
+          await fetchCampaign(campaignId);
+          showAlert('Draft Saved', 'Your draft has been saved successfully!', 'success');
+        } else {
+          showAlert('Save Failed', 'Failed to save draft. Please try again.', 'error');
+        }
+      } catch (error) {
+        console.error('Failed to update draft:', error);
+        showAlert('Save Failed', 'Failed to save draft. Please try again.', 'error');
+      }
+      return;
+    }
+
+    const campaign = await createCampaign({
+      name: subject.substring(0, 50) || 'Untitled Draft',
+      subject,
+      htmlBody,
+      signature: signature || undefined,
+      batchSize,
+      batchDelaySeconds,
+      recipients: recipientList
+    });
+
+    if (campaign) {
+      campaignIdRef.current = campaign.id;
+      setCampaignId(campaign.id);
+      setInitialStatus('draft');
+      await fetchCampaign(campaign.id);
+      showAlert('Draft Created', 'Your draft has been created successfully!', 'success');
+      router.push(`/compose?edit=${campaign.id}`);
+    } else {
+      showAlert('Save Failed', 'Failed to create draft. Please try again.', 'error');
+    }
+  };
+
   const handleCreateAndStart = async () => {
     if (!subject || !htmlBody || recipientList.length === 0) {
-      alert('Please fill in subject, body, and upload recipients');
+      showAlert('Missing Information', 'Please fill in subject, body, and upload recipients', 'error');
+      return;
+    }
+
+    if (campaignId && status === 'draft') {
+      startCampaign(campaignId);
       return;
     }
 
@@ -233,11 +315,11 @@ export default function ComposeForm({ initialCampaigns }: ComposeFormProps) {
           failed: 0,
           pending: recipientList.length
         };
-  const canStart =
-    !campaignId &&
-    subject.trim() !== '' &&
-    htmlBody.trim() !== '' &&
-    recipientList.length > 0;
+  const isDraft = status === 'draft';
+  const hasAnyContent = subject.trim() !== '' || htmlBody.trim() !== '' || recipientList.length > 0;
+  const hasAllContent = subject.trim() !== '' && htmlBody.trim() !== '' && recipientList.length > 0;
+  const canStart = (!campaignId || isDraft) && hasAllContent;
+  const canSaveDraft = hasAnyContent && (!campaignId || isDraft);
 
   return (
     <div className={cn('space-y-6')}>
@@ -372,7 +454,7 @@ export default function ComposeForm({ initialCampaigns }: ComposeFormProps) {
               batchDelaySeconds={batchDelaySeconds}
               onBatchSizeChange={setBatchSize}
               onBatchDelayChange={setBatchDelaySeconds}
-              disabled={isRunning || isPaused || !!campaignId}
+              disabled={isRunning || isPaused || (!!campaignId && !isDraft)}
             />
           </div>
         </div>
@@ -399,14 +481,24 @@ export default function ComposeForm({ initialCampaigns }: ComposeFormProps) {
             status={status}
             recipientCount={progress.total}
             canStart={canStart}
+            canSaveDraft={canSaveDraft}
             batchSize={batchSize}
             onStart={handleCreateAndStart}
+            onSaveDraft={handleSaveDraft}
             onPause={pauseCampaign}
             onResume={resumeCampaign}
             onStop={stopCampaign}
           />
         </div>
       </div>
+
+      <AlertModal
+        isOpen={alertModal.isOpen}
+        onClose={closeAlert}
+        title={alertModal.title}
+        message={alertModal.message}
+        type={alertModal.type}
+      />
     </div>
   );
 }

@@ -1,0 +1,77 @@
+'use client';
+
+import { cn } from '@/lib/utils';
+
+interface AlertModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  title: string;
+  message: string;
+  type?: 'success' | 'error' | 'info';
+}
+
+export default function AlertModal({
+  isOpen,
+  onClose,
+  title,
+  message,
+  type = 'info'
+}: AlertModalProps) {
+  if (!isOpen) return null;
+
+  const colors = {
+    success: {
+      bg: 'bg-green-50',
+      border: 'border-green-200',
+      title: 'text-green-800',
+      button: 'bg-green-600 hover:bg-green-700'
+    },
+    error: {
+      bg: 'bg-red-50',
+      border: 'border-red-200',
+      title: 'text-red-800',
+      button: 'bg-red-600 hover:bg-red-700'
+    },
+    info: {
+      bg: 'bg-blue-50',
+      border: 'border-blue-200',
+      title: 'text-blue-800',
+      button: 'bg-blue-600 hover:bg-blue-700'
+    }
+  };
+
+  const color = colors[type];
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center">
+      <div
+        className="absolute inset-0 bg-black/50"
+        onClick={onClose}
+      />
+      <div className={cn(
+        'relative bg-white rounded-lg shadow-xl p-6 max-w-sm w-full mx-4 border-2',
+        color.border
+      )}>
+        <div className={cn('rounded-lg p-4 mb-4', color.bg)}>
+          <h3 className={cn('text-lg font-semibold mb-2', color.title)}>
+            {title}
+          </h3>
+          <p className="text-gray-700">
+            {message}
+          </p>
+        </div>
+        <div className="flex justify-end">
+          <button
+            onClick={onClose}
+            className={cn(
+              'px-6 py-2 text-sm font-medium text-white rounded transition cursor-pointer',
+              color.button
+            )}
+          >
+            OK
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}

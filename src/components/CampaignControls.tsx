@@ -7,8 +7,10 @@ interface CampaignControlsProps {
   status: CampaignStatus;
   recipientCount: number;
   canStart: boolean;
+  canSaveDraft: boolean;
   batchSize?: number;
   onStart: () => void;
+  onSaveDraft: () => void;
   onPause: () => void;
   onResume: () => void;
   onStop: () => void;
@@ -18,8 +20,10 @@ export default function CampaignControls({
   status,
   recipientCount,
   canStart,
+  canSaveDraft,
   batchSize = 30,
   onStart,
+  onSaveDraft,
   onPause,
   onResume,
   onStop,
@@ -92,15 +96,27 @@ export default function CampaignControls({
   }
 
   return (
-    <button
-      onClick={onStart}
-      disabled={!canStart || recipientCount === 0}
-      className={cn(
-        'w-full rounded-lg bg-redwood px-6 py-4 text-lg font-semibold text-white transition hover:bg-redwood-light cursor-pointer',
-        'disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-500'
+    <div className="flex gap-3">
+      {canSaveDraft && (
+        <button
+          onClick={onSaveDraft}
+          className={cn(
+            'rounded-lg border-2 border-slate-300 bg-white px-6 py-4 text-lg font-semibold text-slate-600 transition hover:bg-slate-50 cursor-pointer'
+          )}
+        >
+          Save Draft
+        </button>
       )}
-    >
-      Start Campaign ({recipientCount} recipients, {batchSize} per batch)
-    </button>
+      <button
+        onClick={onStart}
+        disabled={!canStart || recipientCount === 0}
+        className={cn(
+          'flex-1 rounded-lg bg-redwood px-6 py-4 text-lg font-semibold text-white transition hover:bg-redwood-light cursor-pointer',
+          'disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-500'
+        )}
+      >
+        Start Campaign ({recipientCount} recipients, {batchSize} per batch)
+      </button>
+    </div>
   );
 }

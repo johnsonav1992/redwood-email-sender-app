@@ -1,7 +1,7 @@
 /* eslint-disable react/no-unknown-property */
 'use client';
 
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import {
@@ -47,6 +47,7 @@ export default function RichTextEditor({
   enableImageResize = false
 }: RichTextEditorProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isImageSelected, setIsImageSelected] = useState(false);
 
   const handleImageFile = useCallback(
     async (file: File, editorInstance: ReturnType<typeof useEditor> | null) => {
@@ -202,8 +203,6 @@ export default function RichTextEditor({
     }
   }, [editor]);
 
-  const isImageSelected = editor?.isActive('image');
-
   useEffect(() => {
     if (editor && value !== editor.getHTML()) {
       editor.commands.setContent(value);
@@ -215,6 +214,22 @@ export default function RichTextEditor({
       editor.setEditable(!disabled);
     }
   }, [disabled, editor]);
+
+  useEffect(() => {
+    if (!editor) return;
+
+    const updateImageSelection = () => {
+      setIsImageSelected(editor.isActive('image'));
+    };
+
+    editor.on('selectionUpdate', updateImageSelection);
+    editor.on('transaction', updateImageSelection);
+
+    return () => {
+      editor.off('selectionUpdate', updateImageSelection);
+      editor.off('transaction', updateImageSelection);
+    };
+  }, [editor]);
 
   if (!editor) {
     return null;
