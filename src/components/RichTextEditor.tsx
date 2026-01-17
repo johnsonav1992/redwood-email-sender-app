@@ -53,6 +53,7 @@ export default function RichTextEditor({
     width: number;
     height: number;
   } | null>(null);
+  const [prevSelectedImage, setPrevSelectedImage] = useState<HTMLImageElement | null>(null);
   const resizeStartRef = useRef<{
     width: number;
     height: number;
@@ -212,32 +213,40 @@ export default function RichTextEditor({
     }
   }, [disabled, editor]);
 
-  const updateOverlayPosition = useCallback(() => {
-    if (!selectedImage) {
-      setOverlayPosition(null);
-      return;
-    }
-    const rect = selectedImage.getBoundingClientRect();
-    setOverlayPosition({
+  const computeOverlayPosition = useCallback((img: HTMLImageElement) => {
+    const rect = img.getBoundingClientRect();
+    return {
       left: rect.left - 4,
       top: rect.top - 4,
-      width: selectedImage.offsetWidth + 8,
-      height: selectedImage.offsetHeight + 8
-    });
-  }, [selectedImage]);
+      width: img.offsetWidth + 8,
+      height: img.offsetHeight + 8
+    };
+  }, []);
+
+  if (selectedImage !== prevSelectedImage) {
+    setPrevSelectedImage(selectedImage);
+    if (selectedImage) {
+      const newPos = computeOverlayPosition(selectedImage);
+      setOverlayPosition(newPos);
+    } else {
+      setOverlayPosition(null);
+    }
+  }
 
   useEffect(() => {
-    if (selectedImage) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      updateOverlayPosition();
-      window.addEventListener('scroll', updateOverlayPosition, true);
-      window.addEventListener('resize', updateOverlayPosition);
-      return () => {
-        window.removeEventListener('scroll', updateOverlayPosition, true);
-        window.removeEventListener('resize', updateOverlayPosition);
-      };
-    }
-  }, [selectedImage, updateOverlayPosition]);
+    if (!selectedImage) return;
+
+    const handlePositionUpdate = () => {
+      setOverlayPosition(computeOverlayPosition(selectedImage));
+    };
+
+    window.addEventListener('scroll', handlePositionUpdate, true);
+    window.addEventListener('resize', handlePositionUpdate);
+    return () => {
+      window.removeEventListener('scroll', handlePositionUpdate, true);
+      window.removeEventListener('resize', handlePositionUpdate);
+    };
+  }, [selectedImage, computeOverlayPosition]);
 
   useEffect(() => {
     const editorElement = document.querySelector('.ProseMirror');
