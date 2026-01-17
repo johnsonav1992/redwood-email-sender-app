@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { STATUS_COLORS, STATUS_LABELS } from '@/lib/constants';
@@ -13,6 +13,7 @@ interface CampaignListPageProps {
 
 export default function CampaignListPage({ initialCampaigns }: CampaignListPageProps) {
   const router = useRouter();
+  const [deleteId, setDeleteId] = useState<string | null>(null);
 
   const {
     campaigns,
@@ -31,9 +32,10 @@ export default function CampaignListPage({ initialCampaigns }: CampaignListPageP
     router.push(`/compose?edit=${campaign.id}`);
   };
 
-  const handleDelete = async (id: string) => {
-    if (confirm('Are you sure you want to delete this campaign?')) {
-      await deleteCampaign(id);
+  const handleDeleteConfirm = async () => {
+    if (deleteId) {
+      await deleteCampaign(deleteId);
+      setDeleteId(null);
     }
   };
 
@@ -74,8 +76,9 @@ export default function CampaignListPage({ initialCampaigns }: CampaignListPageP
   }
 
   return (
-    <div className="space-y-2">
-      {campaigns.map((campaign) => {
+    <>
+      <div className="space-y-2">
+        {campaigns.map((campaign) => {
         const progress = campaign.total_recipients > 0
           ? Math.round(((campaign.sent_count + campaign.failed_count) / campaign.total_recipients) * 100)
           : 0;
@@ -143,7 +146,7 @@ export default function CampaignListPage({ initialCampaigns }: CampaignListPageP
                 )}
                 {canDelete && (
                   <button
-                    onClick={() => handleDelete(campaign.id)}
+                    onClick={() => setDeleteId(campaign.id)}
                     className="text-sm px-3 py-1.5 rounded border border-gray-300 text-gray-600 hover:bg-gray-50 cursor-pointer"
                   >
                     Delete
@@ -154,6 +157,38 @@ export default function CampaignListPage({ initialCampaigns }: CampaignListPageP
           </div>
         );
       })}
-    </div>
+      </div>
+
+      {deleteId && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div
+            className="absolute inset-0 bg-black/50"
+            onClick={() => setDeleteId(null)}
+          />
+          <div className="relative bg-white rounded-lg shadow-xl p-6 max-w-sm w-full mx-4">
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">
+              Delete Campaign
+            </h3>
+            <p className="text-gray-600 mb-6">
+              Are you sure you want to delete this campaign? This action cannot be undone.
+            </p>
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => setDeleteId(null)}
+                className="px-4 py-2 text-sm text-gray-600 hover:text-gray-900 cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDeleteConfirm}
+                className="px-4 py-2 text-sm bg-red-600 text-white rounded hover:bg-red-700 cursor-pointer"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 }
