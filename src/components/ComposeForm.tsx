@@ -14,7 +14,11 @@ import SignatureEditor from './SignatureEditor';
 import RichTextEditor from './RichTextEditor';
 import CampaignProgress from './CampaignProgress';
 import CampaignControls from './CampaignControls';
-import type { ParsedEmailResult, CampaignWithProgress, CampaignStatus } from '@/types/campaign';
+import type {
+  ParsedEmailResult,
+  CampaignWithProgress,
+  CampaignStatus
+} from '@/types/campaign';
 
 interface ComposeFormProps {
   initialCampaigns?: CampaignWithProgress[];
@@ -31,11 +35,16 @@ export default function ComposeForm({ initialCampaigns }: ComposeFormProps) {
   const [recipientList, setRecipientList] = useState<string[]>([]);
   const [batchSize, setBatchSize] = useState(30);
   const [batchDelaySeconds, setBatchDelaySeconds] = useState(60);
-  const [uploadResult, setUploadResult] = useState<ParsedEmailResult | null>(null);
-  const [confirmedResult, setConfirmedResult] = useState<ParsedEmailResult | null>(null);
+  const [uploadResult, setUploadResult] = useState<ParsedEmailResult | null>(
+    null
+  );
+  const [confirmedResult, setConfirmedResult] =
+    useState<ParsedEmailResult | null>(null);
   const [campaignId, setCampaignId] = useState<string | null>(null);
   const campaignIdRef = useRef<string | null>(null);
   const [initialized, setInitialized] = useState(false);
+  const [sendingTest, setSendingTest] = useState(false);
+  const [testSent, setTestSent] = useState(false);
 
   const {
     campaigns,
@@ -45,7 +54,7 @@ export default function ComposeForm({ initialCampaigns }: ComposeFormProps) {
     fetchCampaign,
     createCampaign,
     updateCampaignStatus,
-    sendNextBatch,
+    sendNextBatch
   } = useCampaignPersistence({ initialCampaigns });
 
   const handleStatusChange = useCallback(
@@ -76,12 +85,12 @@ export default function ComposeForm({ initialCampaigns }: ComposeFormProps) {
     resumeCampaign,
     stopCampaign,
     setInitialStatus,
-    setInitialProgress,
+    setInitialProgress
   } = useCampaignStream({
     campaignId,
     batchDelaySeconds,
     onStatusChange: handleStatusChange,
-    onSendBatch: handleSendBatch,
+    onSendBatch: handleSendBatch
   });
 
   useEffect(() => {
@@ -104,7 +113,7 @@ export default function ComposeForm({ initialCampaigns }: ComposeFormProps) {
           total: campaign.total_recipients,
           sent: campaign.sent_count,
           failed: campaign.failed_count,
-          pending: campaign.pending_count,
+          pending: campaign.pending_count
         });
         setBatchSize(campaign.batch_size);
         setBatchDelaySeconds(campaign.batch_delay_seconds);
@@ -117,7 +126,14 @@ export default function ComposeForm({ initialCampaigns }: ComposeFormProps) {
     } else if (!editId) {
       setInitialized(true);
     }
-  }, [searchParams, campaigns, fetchCampaign, setInitialStatus, setInitialProgress, initialized]);
+  }, [
+    searchParams,
+    campaigns,
+    fetchCampaign,
+    setInitialStatus,
+    setInitialProgress,
+    initialized
+  ]);
 
   const handleUploadComplete = (result: ParsedEmailResult) => {
     setUploadResult(result);
@@ -146,7 +162,7 @@ export default function ComposeForm({ initialCampaigns }: ComposeFormProps) {
       signature: signature || undefined,
       batchSize,
       batchDelaySeconds,
-      recipients: recipientList,
+      recipients: recipientList
     });
 
     if (campaign) {
@@ -177,23 +193,72 @@ export default function ComposeForm({ initialCampaigns }: ComposeFormProps) {
     setConfirmedResult(null);
   };
 
+  const handleSendTest = async () => {
+    if (!subject.trim() || !htmlBody.trim()) return;
+
+    setSendingTest(true);
+    setTestSent(false);
+
+    try {
+      const fullBody = signature ? `${htmlBody}<br><br>${signature}` : htmlBody;
+      const response = await fetch('/api/send-test', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ subject, htmlBody: fullBody })
+      });
+
+      if (response.ok) {
+        setTestSent(true);
+        setTimeout(() => setTestSent(false), 3000);
+      }
+    } catch (error) {
+      console.error('Failed to send test email:', error);
+    } finally {
+      setSendingTest(false);
+    }
+  };
+
   if (!session) {
     return null;
   }
 
-  const progress = streamProgress.total > 0
-    ? streamProgress
-    : currentCampaign?.progress || { total: recipientList.length, sent: 0, failed: 0, pending: recipientList.length };
-  const canStart = !campaignId && subject.trim() !== '' && htmlBody.trim() !== '' && recipientList.length > 0;
+  const progress =
+    streamProgress.total > 0
+      ? streamProgress
+      : currentCampaign?.progress || {
+          total: recipientList.length,
+          sent: 0,
+          failed: 0,
+          pending: recipientList.length
+        };
+  const canStart =
+    !campaignId &&
+    subject.trim() !== '' &&
+    htmlBody.trim() !== '' &&
+    recipientList.length > 0;
 
   return (
     <div className={cn('space-y-6')}>
       <div className={cn('bg-white', 'rounded-xl', 'shadow-sm', 'p-6')}>
         {campaignId && (
-          <div className={cn('flex', 'items-center', 'justify-between', 'mb-6', 'pb-4', 'border-b', 'border-gray-200')}>
+          <div
+            className={cn(
+              'flex',
+              'items-center',
+              'justify-between',
+              'mb-6',
+              'pb-4',
+              'border-b',
+              'border-gray-200'
+            )}
+          >
             <div>
-              <span className={cn('text-sm', 'text-gray-500')}>Editing campaign</span>
-              <h3 className={cn('font-medium', 'text-gray-900')}>{subject || 'Untitled'}</h3>
+              <span className={cn('text-sm', 'text-gray-500')}>
+                Editing campaign
+              </span>
+              <h3 className={cn('font-medium', 'text-gray-900')}>
+                {subject || 'Untitled'}
+              </h3>
             </div>
             <button
               onClick={handleNewCampaign}
@@ -214,13 +279,15 @@ export default function ComposeForm({ initialCampaigns }: ComposeFormProps) {
             </button>
           </div>
         )}
-        <div className="space-y-4">
+        <div className="space-y-6">
           <div>
-            <label className="mb-2 block text-sm font-semibold text-gray-700">Subject</label>
+            <label className="mb-2 block text-sm font-semibold text-gray-700">
+              Subject
+            </label>
             <input
               type="text"
               value={subject}
-              onChange={(e) => setSubject(e.target.value)}
+              onChange={e => setSubject(e.target.value)}
               placeholder="Email subject"
               disabled={isRunning || isPaused}
               className={cn(
@@ -249,8 +316,27 @@ export default function ComposeForm({ initialCampaigns }: ComposeFormProps) {
             disabled={isRunning || isPaused}
           />
 
-          <div className="border-t pt-4">
-            <label className="mb-2 block text-sm font-semibold text-gray-700">Recipients</label>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={handleSendTest}
+              disabled={!subject.trim() || !htmlBody.trim() || sendingTest}
+              className={cn(
+                'px-3 py-1.5 text-sm rounded border transition-colors cursor-pointer',
+                'border-gray-300 text-gray-600 hover:bg-gray-50',
+                'disabled:opacity-50 disabled:cursor-not-allowed'
+              )}
+            >
+              {sendingTest ? 'Sending...' : 'Send Test Email'}
+            </button>
+            {testSent && (
+              <span className="text-sm text-green-600">Sent to {session?.user?.email}</span>
+            )}
+          </div>
+
+          <div className="border-t pt-6">
+            <label className="mb-2 block text-sm font-semibold text-gray-700">
+              Recipients
+            </label>
             {uploadResult ? (
               <EmailValidator
                 result={uploadResult}
@@ -277,7 +363,7 @@ export default function ComposeForm({ initialCampaigns }: ComposeFormProps) {
             )}
           </div>
 
-          <div className="border-t pt-4">
+          <div className="border-t pt-6">
             <BatchSettings
               batchSize={batchSize}
               batchDelaySeconds={batchDelaySeconds}
@@ -297,7 +383,7 @@ export default function ComposeForm({ initialCampaigns }: ComposeFormProps) {
         )}
 
         {lastError && (
-          <div className="p-3 bg-red-50 rounded-lg">
+          <div className="rounded-lg bg-red-50 p-3">
             <p className="text-red-700">{lastError}</p>
           </div>
         )}
