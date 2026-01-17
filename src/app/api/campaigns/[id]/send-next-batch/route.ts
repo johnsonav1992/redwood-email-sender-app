@@ -12,6 +12,7 @@ import {
   getCampaignProgress,
   getCampaignImages,
   getTodaySentCount,
+  recordSentEmail,
 } from '@/lib/db';
 
 interface SendBatchResponse {
@@ -149,6 +150,11 @@ export async function POST(
       );
 
       await markRecipientsAsSent(recipientIds, batchNumber);
+
+      // Record each sent email for quota tracking (persists even if campaign is deleted)
+      await Promise.all(
+        bccEmails.map(email => recordSentEmail(session.user!.email, email, id))
+      );
 
       const newProgress = await getCampaignProgress(id);
       await updateCampaignCounts(id, newProgress.sent, newProgress.failed);

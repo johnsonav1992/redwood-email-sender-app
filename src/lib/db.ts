@@ -370,7 +370,20 @@ export async function getUserTokens(userEmail: string): Promise<{
   };
 }
 
-// Get count of emails sent today by a user (across all their campaigns)
+// Record a sent email for quota tracking (persists even if campaign is deleted)
+export async function recordSentEmail(
+  userEmail: string,
+  recipientEmail: string,
+  campaignId: string
+): Promise<void> {
+  await db.execute({
+    sql: `INSERT INTO sent_emails (id, user_email, recipient_email, campaign_id, sent_at)
+          VALUES (?, ?, ?, ?, ?)`,
+    args: [generateId(), userEmail, recipientEmail, campaignId, now()],
+  });
+}
+
+// Get count of emails sent today by a user (independent of campaign deletions)
 // This is more accurate than Gmail API for BCC emails since each recipient = 1 quota
 export async function getTodaySentCount(userEmail: string): Promise<number> {
   // Get start of today in UTC
@@ -380,11 +393,9 @@ export async function getTodaySentCount(userEmail: string): Promise<number> {
 
   const result = await db.execute({
     sql: `SELECT COUNT(*) as count
-          FROM recipients r
-          JOIN campaigns c ON r.campaign_id = c.id
-          WHERE c.user_email = ?
-            AND r.status = 'sent'
-            AND r.sent_at >= ?`,
+          FROM sent_emails
+          WHERE user_email = ?
+            AND sent_at >= ?`,
     args: [userEmail, todayStart],
   });
 

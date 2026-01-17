@@ -11,6 +11,7 @@ import {
   getCampaignImages,
   getUserTokens,
   getTodaySentCount,
+  recordSentEmail,
 } from '@/lib/db';
 import type { Campaign } from '@/types/campaign';
 
@@ -89,6 +90,12 @@ async function processCampaign(campaign: Campaign): Promise<{ sent: number; fail
       );
 
       await markRecipientsAsSent(recipientIds, batchNumber);
+
+      // Record each sent email for quota tracking (persists even if campaign is deleted)
+      await Promise.all(
+        bccEmails.map(email => recordSentEmail(campaign.user_email, email, campaign.id))
+      );
+
       const newProgress = await getCampaignProgress(campaign.id);
       await updateCampaignCounts(campaign.id, newProgress.sent, newProgress.failed);
 

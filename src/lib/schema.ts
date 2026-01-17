@@ -49,10 +49,20 @@ CREATE TABLE IF NOT EXISTS user_tokens (
   updated_at TEXT NOT NULL
 );
 
+-- sent_emails table (for quota tracking independent of campaigns)
+CREATE TABLE IF NOT EXISTS sent_emails (
+  id TEXT PRIMARY KEY,
+  user_email TEXT NOT NULL,
+  recipient_email TEXT NOT NULL,
+  campaign_id TEXT,
+  sent_at TEXT NOT NULL
+);
+
 -- indexes for performance
 CREATE INDEX IF NOT EXISTS idx_campaigns_user_email ON campaigns(user_email);
 CREATE INDEX IF NOT EXISTS idx_campaigns_status ON campaigns(status);
 CREATE INDEX IF NOT EXISTS idx_recipients_campaign_id ON recipients(campaign_id);
 CREATE INDEX IF NOT EXISTS idx_recipients_campaign_status ON recipients(campaign_id, status);
 CREATE INDEX IF NOT EXISTS idx_campaign_images_campaign_id ON campaign_images(campaign_id);
+CREATE INDEX IF NOT EXISTS idx_sent_emails_user_date ON sent_emails(user_email, sent_at);
 `;
