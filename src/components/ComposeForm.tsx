@@ -309,6 +309,7 @@ export default function ComposeForm({ initialCampaigns }: ComposeFormProps) {
               onChange={setHtmlBody}
               disabled={isRunning || isPaused}
               placeholder="Write your email content..."
+              enableImageResize={true}
             />
           </div>
 

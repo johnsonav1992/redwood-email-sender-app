@@ -181,19 +181,93 @@ export const LinkWithStyles = Link.extend({
   addAttributes() {
     return {
       ...this.parent?.(),
-      style: styleAttribute,
+      style: {
+        default: null,
+        parseHTML: (element: HTMLElement) => element.getAttribute('style'),
+        renderHTML: (attributes: Record<string, unknown>) => {
+          const existingStyle = attributes.style as string | null;
+          const baseStyle = 'color: inherit; text-decoration: none; cursor: pointer;';
+          const finalStyle = existingStyle ? `${baseStyle} ${existingStyle}` : baseStyle;
+          return { style: finalStyle };
+        },
+      },
       class: classAttribute,
     };
   },
 });
 
+// Image extension WITH resize handles (for email body editor)
+export const ImageWithResize = Image.configure({
+  inline: true,
+  allowBase64: true,
+  resize: {
+    enabled: true,
+    directions: ['bottom-left', 'bottom-right', 'top-left', 'top-right'],
+    minWidth: 50,
+    minHeight: 50,
+    alwaysPreserveAspectRatio: true,
+  },
+}).extend({
+  addAttributes() {
+    return {
+      ...this.parent?.(),
+      style: {
+        default: null,
+        parseHTML: (element: HTMLElement) => element.getAttribute('style'),
+        renderHTML: (attributes: Record<string, unknown>) => {
+          const existingStyle = attributes.style as string | null;
+
+          // Always include base display properties
+          let baseStyle = 'display: inline; vertical-align: middle;';
+
+          // Check if style already contains width/height (from resize)
+          const hasExplicitDimensions = existingStyle &&
+            (existingStyle.includes('width:') || existingStyle.includes('height:'));
+
+          if (!hasExplicitDimensions) {
+            // No explicit dimensions, use responsive defaults
+            baseStyle += ' max-width: 100%; height: auto;';
+          }
+
+          const finalStyle = existingStyle ? `${baseStyle} ${existingStyle}` : baseStyle;
+          return { style: finalStyle };
+        },
+      },
+      width: widthAttribute,
+      height: heightAttribute,
+    };
+  },
+});
+
+// Image extension WITHOUT resize (for signature editor)
 export const ImageWithStyles = Image.extend({
   inline: true,
   group: 'inline',
   addAttributes() {
     return {
       ...this.parent?.(),
-      style: styleAttribute,
+      style: {
+        default: null,
+        parseHTML: (element: HTMLElement) => element.getAttribute('style'),
+        renderHTML: (attributes: Record<string, unknown>) => {
+          const existingStyle = attributes.style as string | null;
+
+          // Always include base display properties
+          let baseStyle = 'display: inline; vertical-align: middle;';
+
+          // Check if style already contains width/height (from resize)
+          const hasExplicitDimensions = existingStyle &&
+            (existingStyle.includes('width:') || existingStyle.includes('height:'));
+
+          if (!hasExplicitDimensions) {
+            // No explicit dimensions, use responsive defaults
+            baseStyle += ' max-width: 100%; height: auto;';
+          }
+
+          const finalStyle = existingStyle ? `${baseStyle} ${existingStyle}` : baseStyle;
+          return { style: finalStyle };
+        },
+      },
       width: widthAttribute,
       height: heightAttribute,
     };

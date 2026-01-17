@@ -1,7 +1,7 @@
 /* eslint-disable react/no-unknown-property */
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import {
@@ -25,7 +25,8 @@ import {
   TableRowWithStyles,
   TableWithStyles,
   LinkWithStyles,
-  ImageWithStyles
+  ImageWithStyles,
+  ImageWithResize
 } from '@/lib/editor-extensions';
 
 interface RichTextEditorProps {
@@ -34,6 +35,7 @@ interface RichTextEditorProps {
   disabled?: boolean;
   placeholder?: string;
   minHeight?: number;
+  enableImageResize?: boolean;
 }
 
 export default function RichTextEditor({
@@ -41,25 +43,10 @@ export default function RichTextEditor({
   onChange,
   disabled = false,
   placeholder = 'Write your email content...',
-  minHeight = 200
+  minHeight = 200,
+  enableImageResize = false
 }: RichTextEditorProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [selectedImage, setSelectedImage] = useState<HTMLImageElement | null>(
-    null
-  );
-  const [overlayPosition, setOverlayPosition] = useState<{
-    left: number;
-    top: number;
-    width: number;
-    height: number;
-  } | null>(null);
-  const [prevSelectedImage, setPrevSelectedImage] = useState<HTMLImageElement | null>(null);
-  const resizeStartRef = useRef<{
-    width: number;
-    height: number;
-    x: number;
-    y: number;
-  } | null>(null);
 
   const handleImageFile = useCallback(
     async (file: File, editorInstance: ReturnType<typeof useEditor> | null) => {
@@ -84,10 +71,9 @@ export default function RichTextEditor({
       }),
       Gapcursor,
       ParagraphWithStyles,
-      ImageWithStyles.configure({
-        inline: true,
-        allowBase64: true
-      }),
+      enableImageResize
+        ? ImageWithResize
+        : ImageWithStyles.configure({ inline: true, allowBase64: true }),
       TextStyle,
       Color,
       FontFamily,
@@ -213,135 +199,12 @@ export default function RichTextEditor({
     }
   }, [disabled, editor]);
 
-  const computeOverlayPosition = useCallback((img: HTMLImageElement) => {
-    const rect = img.getBoundingClientRect();
-    return {
-      left: rect.left - 4,
-      top: rect.top - 4,
-      width: img.offsetWidth + 8,
-      height: img.offsetHeight + 8
-    };
-  }, []);
-
-  if (selectedImage !== prevSelectedImage) {
-    setPrevSelectedImage(selectedImage);
-    if (selectedImage) {
-      const newPos = computeOverlayPosition(selectedImage);
-      setOverlayPosition(newPos);
-    } else {
-      setOverlayPosition(null);
-    }
-  }
-
-  useEffect(() => {
-    if (!selectedImage) return;
-
-    const handlePositionUpdate = () => {
-      setOverlayPosition(computeOverlayPosition(selectedImage));
-    };
-
-    window.addEventListener('scroll', handlePositionUpdate, true);
-    window.addEventListener('resize', handlePositionUpdate);
-    return () => {
-      window.removeEventListener('scroll', handlePositionUpdate, true);
-      window.removeEventListener('resize', handlePositionUpdate);
-    };
-  }, [selectedImage, computeOverlayPosition]);
-
-  useEffect(() => {
-    const editorElement = document.querySelector('.ProseMirror');
-    if (!editorElement) return;
-
-    const handleImageClick = (e: Event) => {
-      const target = e.target as HTMLElement;
-      if (target.tagName === 'IMG') {
-        e.preventDefault();
-        setSelectedImage(target as HTMLImageElement);
-      } else if (!target.closest('.image-resize-handle')) {
-        setSelectedImage(null);
-      }
-    };
-
-    editorElement.addEventListener('click', handleImageClick);
-    return () => editorElement.removeEventListener('click', handleImageClick);
-  }, [editor]);
-
-  const handleResizeStart = (e: React.MouseEvent, corner: string) => {
-    if (!selectedImage) return;
-    e.preventDefault();
-    e.stopPropagation();
-
-    resizeStartRef.current = {
-      width: selectedImage.offsetWidth,
-      height: selectedImage.offsetHeight,
-      x: e.clientX,
-      y: e.clientY
-    };
-
-    const handleMouseMove = (moveEvent: MouseEvent) => {
-      if (!resizeStartRef.current || !selectedImage) return;
-
-      const deltaX = moveEvent.clientX - resizeStartRef.current.x;
-      const deltaY = moveEvent.clientY - resizeStartRef.current.y;
-
-      let newWidth = resizeStartRef.current.width;
-      let newHeight = resizeStartRef.current.height;
-
-      if (corner.includes('e'))
-        newWidth = Math.max(50, resizeStartRef.current.width + deltaX);
-      if (corner.includes('w'))
-        newWidth = Math.max(50, resizeStartRef.current.width - deltaX);
-      if (corner.includes('s'))
-        newHeight = Math.max(50, resizeStartRef.current.height + deltaY);
-      if (corner.includes('n'))
-        newHeight = Math.max(50, resizeStartRef.current.height - deltaY);
-
-      if (moveEvent.shiftKey) {
-        const aspectRatio =
-          resizeStartRef.current.width / resizeStartRef.current.height;
-        if (Math.abs(deltaX) > Math.abs(deltaY)) {
-          newHeight = newWidth / aspectRatio;
-        } else {
-          newWidth = newHeight * aspectRatio;
-        }
-      }
-
-      selectedImage.style.width = `${newWidth}px`;
-      selectedImage.style.height = `${newHeight}px`;
-
-      setOverlayPosition({
-        left: selectedImage.getBoundingClientRect().left - 4,
-        top: selectedImage.getBoundingClientRect().top - 4,
-        width: newWidth + 8,
-        height: newHeight + 8
-      });
-    };
-
-    const handleMouseUp = () => {
-      resizeStartRef.current = null;
-
-      if (selectedImage && editor) {
-        const newWidth = selectedImage.style.width;
-        const newHeight = selectedImage.style.height;
-        selectedImage.setAttribute('width', newWidth);
-        selectedImage.setAttribute('height', newHeight);
-        onChange(editor.getHTML());
-      }
-
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseup', handleMouseUp);
-    };
-
-    document.addEventListener('mousemove', handleMouseMove);
-    document.addEventListener('mouseup', handleMouseUp);
-  };
-
   if (!editor) {
     return null;
   }
 
   return (
-    <div className="relative">
+    <div className="relative rich-text-editor-with-resize">
       <div
         className={cn(
           'overflow-hidden rounded-lg border-2 transition',
@@ -541,40 +404,8 @@ export default function RichTextEditor({
         disabled={disabled}
       />
 
-      {selectedImage && !disabled && overlayPosition && (
-        <div
-          className="pointer-events-none fixed"
-          style={{
-            left: overlayPosition.left,
-            top: overlayPosition.top,
-            width: overlayPosition.width,
-            height: overlayPosition.height
-          }}
-        >
-          <div className="pointer-events-none absolute inset-0 border-2 border-blue-500" />
-          {(['nw', 'ne', 'sw', 'se'] as const).map(corner => (
-            <div
-              key={corner}
-              className={cn(
-                'image-resize-handle pointer-events-auto absolute h-3 w-3 cursor-pointer rounded-sm border border-white bg-blue-500',
-                corner === 'nw' &&
-                  'top-0 left-0 -translate-x-1/2 -translate-y-1/2 cursor-nw-resize',
-                corner === 'ne' &&
-                  'top-0 right-0 translate-x-1/2 -translate-y-1/2 cursor-ne-resize',
-                corner === 'sw' &&
-                  'bottom-0 left-0 -translate-x-1/2 translate-y-1/2 cursor-sw-resize',
-                corner === 'se' &&
-                  'right-0 bottom-0 translate-x-1/2 translate-y-1/2 cursor-se-resize'
-              )}
-              onMouseDown={e => handleResizeStart(e, corner)}
-            />
-          ))}
-        </div>
-      )}
-
       <p className="mt-1.5 text-xs text-gray-500">
-        Drag & drop or paste images. Click an image to resize it. Hold Shift to
-        maintain aspect ratio.
+        Drag & drop or paste images. Click an image to resize it with the corner handles.
       </p>
 
       <style jsx global>{`
@@ -590,12 +421,75 @@ export default function RichTextEditor({
         .ProseMirror img {
           max-width: 100%;
           height: auto;
-          cursor: pointer;
           display: inline !important;
           vertical-align: middle;
         }
-        .ProseMirror img.ProseMirror-selectednode {
+
+        /* TipTap ResizableNodeView styles - only in RichTextEditor */
+        .rich-text-editor-with-resize [data-resize-container] {
+          position: relative;
+          display: inline-block;
+        }
+
+        .rich-text-editor-with-resize [data-resize-wrapper] {
+          position: relative;
+          display: inline-block;
+        }
+
+        /* Hide handles by default */
+        .rich-text-editor-with-resize [data-resize-handle] {
+          display: none;
+          position: absolute;
+          width: 12px;
+          height: 12px;
+          background: #3b82f6;
+          border: 1px solid white;
+          border-radius: 1px;
+          z-index: 10;
+          box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+        }
+
+        /* Show handles when container is hovered or has selected state */
+        .rich-text-editor-with-resize [data-resize-container]:hover [data-resize-handle],
+        .rich-text-editor-with-resize [data-resize-container].ProseMirror-selectednode [data-resize-handle],
+        .rich-text-editor-with-resize [data-resize-state="resizing"] [data-resize-handle] {
+          display: block;
+        }
+
+        .rich-text-editor-with-resize [data-resize-handle="bottom-left"] {
+          bottom: -6px;
+          left: -6px;
+          cursor: sw-resize;
+        }
+
+        .rich-text-editor-with-resize [data-resize-handle="bottom-right"] {
+          bottom: -6px;
+          right: -6px;
+          cursor: se-resize;
+        }
+
+        .rich-text-editor-with-resize [data-resize-handle="top-left"] {
+          top: -6px;
+          left: -6px;
+          cursor: nw-resize;
+        }
+
+        .rich-text-editor-with-resize [data-resize-handle="top-right"] {
+          top: -6px;
+          right: -6px;
+          cursor: ne-resize;
+        }
+
+        /* Border around image when selected */
+        .rich-text-editor-with-resize [data-resize-container]:hover [data-resize-wrapper],
+        .rich-text-editor-with-resize [data-resize-container].ProseMirror-selectednode [data-resize-wrapper] {
           outline: 2px solid #3b82f6;
+          outline-offset: -2px;
+        }
+
+        .rich-text-editor-with-resize [data-resize-state="resizing"] [data-resize-wrapper] {
+          outline: 2px solid #3b82f6;
+          outline-offset: -2px;
         }
         .ProseMirror ul:not([style]),
         .ProseMirror ol:not([style]) {
