@@ -9,6 +9,7 @@ import Underline from '@tiptap/extension-underline';
 import Link from '@tiptap/extension-link';
 import TextAlign from '@tiptap/extension-text-align';
 import { Table, TableRow, TableCell, TableHeader } from '@tiptap/extension-table';
+import Gapcursor from '@tiptap/extension-gapcursor';
 import { cn } from '@/lib/utils';
 
 const SpanMark = Mark.create({
@@ -63,7 +64,7 @@ const ParagraphWithStyles = Paragraph.extend({
 const DivNode = Node.create({
   name: 'div',
   group: 'block',
-  content: 'block*',
+  content: 'inline*',
   parseHTML() {
     return [{ tag: 'div' }];
   },
@@ -104,6 +105,38 @@ const TableCellWithStyles = TableCell.extend({
           return { style: attributes.style };
         },
       },
+      width: {
+        default: null,
+        parseHTML: (element) => element.getAttribute('width'),
+        renderHTML: (attributes) => {
+          if (!attributes.width) return {};
+          return { width: attributes.width };
+        },
+      },
+      valign: {
+        default: null,
+        parseHTML: (element) => element.getAttribute('valign'),
+        renderHTML: (attributes) => {
+          if (!attributes.valign) return {};
+          return { valign: attributes.valign };
+        },
+      },
+      align: {
+        default: null,
+        parseHTML: (element) => element.getAttribute('align'),
+        renderHTML: (attributes) => {
+          if (!attributes.align) return {};
+          return { align: attributes.align };
+        },
+      },
+      nowrap: {
+        default: null,
+        parseHTML: (element) => element.hasAttribute('nowrap') ? 'nowrap' : null,
+        renderHTML: (attributes) => {
+          if (!attributes.nowrap) return {};
+          return { nowrap: '' };
+        },
+      },
     };
   },
 });
@@ -118,6 +151,30 @@ const TableHeaderWithStyles = TableHeader.extend({
         renderHTML: (attributes) => {
           if (!attributes.style) return {};
           return { style: attributes.style };
+        },
+      },
+      width: {
+        default: null,
+        parseHTML: (element) => element.getAttribute('width'),
+        renderHTML: (attributes) => {
+          if (!attributes.width) return {};
+          return { width: attributes.width };
+        },
+      },
+      valign: {
+        default: null,
+        parseHTML: (element) => element.getAttribute('valign'),
+        renderHTML: (attributes) => {
+          if (!attributes.valign) return {};
+          return { valign: attributes.valign };
+        },
+      },
+      align: {
+        default: null,
+        parseHTML: (element) => element.getAttribute('align'),
+        renderHTML: (attributes) => {
+          if (!attributes.align) return {};
+          return { align: attributes.align };
         },
       },
     };
@@ -152,11 +209,44 @@ const TableWithStyles = Table.extend({
           return { style: attributes.style };
         },
       },
+      width: {
+        default: null,
+        parseHTML: (element) => element.getAttribute('width'),
+        renderHTML: (attributes) => {
+          if (!attributes.width) return {};
+          return { width: attributes.width };
+        },
+      },
+      border: {
+        default: null,
+        parseHTML: (element) => element.getAttribute('border'),
+        renderHTML: (attributes) => {
+          if (!attributes.border) return {};
+          return { border: attributes.border };
+        },
+      },
+      cellpadding: {
+        default: null,
+        parseHTML: (element) => element.getAttribute('cellpadding'),
+        renderHTML: (attributes) => {
+          if (!attributes.cellpadding) return {};
+          return { cellpadding: attributes.cellpadding };
+        },
+      },
+      cellspacing: {
+        default: null,
+        parseHTML: (element) => element.getAttribute('cellspacing'),
+        renderHTML: (attributes) => {
+          if (!attributes.cellspacing) return {};
+          return { cellspacing: attributes.cellspacing };
+        },
+      },
     };
   },
 });
 
 const LinkWithStyles = Link.extend({
+  inclusive: false,
   addAttributes() {
     return {
       ...this.parent?.(),
@@ -168,11 +258,22 @@ const LinkWithStyles = Link.extend({
           return { style: attributes.style };
         },
       },
+      class: {
+        default: null,
+        parseHTML: (element) => element.getAttribute('class'),
+        renderHTML: (attributes) => {
+          if (!attributes.class) return {};
+          return { class: attributes.class };
+        },
+      },
     };
   },
 });
 
 const ImageWithStyles = Image.extend({
+  inline: true,
+  group: 'inline',
+
   addAttributes() {
     return {
       ...this.parent?.(),
@@ -182,6 +283,22 @@ const ImageWithStyles = Image.extend({
         renderHTML: (attributes) => {
           if (!attributes.style) return {};
           return { style: attributes.style };
+        },
+      },
+      width: {
+        default: null,
+        parseHTML: (element) => element.getAttribute('width'),
+        renderHTML: (attributes) => {
+          if (!attributes.width) return {};
+          return { width: attributes.width };
+        },
+      },
+      height: {
+        default: null,
+        parseHTML: (element) => element.getAttribute('height'),
+        renderHTML: (attributes) => {
+          if (!attributes.height) return {};
+          return { height: attributes.height };
         },
       },
     };
@@ -222,14 +339,16 @@ export default function RichTextEditor({
     extensions: [
       StarterKit.configure({
         paragraph: false,
+        hardBreak: {
+          keepMarks: true,
+        },
+        gapcursor: false,
       }),
+      Gapcursor,
       ParagraphWithStyles,
       ImageWithStyles.configure({
         inline: true,
         allowBase64: true,
-        HTMLAttributes: {
-          class: 'resizable-image',
-        },
       }),
       TextStyle,
       Color,
@@ -294,6 +413,38 @@ export default function RichTextEditor({
         }
         return false;
       },
+      transformPastedHTML(html) {
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(html, 'text/html');
+
+        doc.querySelectorAll('p').forEach(p => {
+          const imgs = p.querySelectorAll('img');
+          imgs.forEach(img => {
+            img.style.display = 'inline';
+            img.style.verticalAlign = 'middle';
+          });
+        });
+
+        doc.querySelectorAll('table').forEach(table => {
+          const width = table.getAttribute('width');
+          if (width) {
+            table.style.width = width + (width.includes('%') ? '' : 'px');
+            table.style.maxWidth = '100%';
+          }
+        });
+
+        doc.querySelectorAll('td, th').forEach(cell => {
+          const width = cell.getAttribute('width');
+          if (width) {
+            (cell as HTMLElement).style.width = width + (width.includes('%') ? '' : 'px');
+          }
+        });
+
+        return doc.body.innerHTML;
+      },
+    },
+    parseOptions: {
+      preserveWhitespace: 'full',
     },
   });
 
@@ -621,6 +772,8 @@ export default function RichTextEditor({
           max-width: 100%;
           height: auto;
           cursor: pointer;
+          display: inline !important;
+          vertical-align: middle;
         }
         .ProseMirror img.ProseMirror-selectednode {
           outline: 2px solid #3b82f6;
@@ -633,9 +786,9 @@ export default function RichTextEditor({
         .ProseMirror li:not([style]) {
           margin: 0.25em 0;
         }
-        .ProseMirror a:not([style]) {
-          color: #2563eb;
-          text-decoration: underline;
+        .ProseMirror a {
+          color: inherit;
+          text-decoration: none;
         }
         .ProseMirror table {
           border-collapse: collapse;
@@ -644,6 +797,14 @@ export default function RichTextEditor({
         .ProseMirror td:not([style]),
         .ProseMirror th:not([style]) {
           vertical-align: top;
+        }
+        .ProseMirror p {
+          white-space: normal;
+          word-wrap: break-word;
+        }
+        .ProseMirror td {
+          white-space: normal;
+          word-wrap: break-word;
         }
       `}</style>
     </div>
