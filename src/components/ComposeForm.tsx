@@ -11,6 +11,7 @@ import EmailValidator from './EmailValidator';
 import RecipientsList from './RecipientsList';
 import BatchSettings from './BatchSettings';
 import SignatureEditor from './SignatureEditor';
+import RichTextEditor from './RichTextEditor';
 import CampaignProgress from './CampaignProgress';
 import CampaignControls from './CampaignControls';
 import type { ParsedEmailResult, CampaignWithProgress, CampaignStatus } from '@/types/campaign';
@@ -232,19 +233,13 @@ export default function ComposeForm({ initialCampaigns }: ComposeFormProps) {
 
           <div>
             <label className="mb-2 block text-sm font-semibold text-gray-700">
-              Email Body (HTML)
+              Email Body
             </label>
-            <textarea
+            <RichTextEditor
               value={htmlBody}
-              onChange={(e) => setHtmlBody(e.target.value)}
-              rows={8}
-              placeholder="<p>Hello!</p>"
+              onChange={setHtmlBody}
               disabled={isRunning || isPaused}
-              className={cn(
-                'w-full rounded-lg border-2 border-gray-200 px-4 py-2 font-mono text-sm transition',
-                'focus:border-blue-500 focus:outline-none',
-                'disabled:cursor-not-allowed disabled:bg-gray-50'
-              )}
+              placeholder="Write your email content..."
             />
           </div>
 
