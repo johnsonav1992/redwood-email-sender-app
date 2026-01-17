@@ -80,6 +80,8 @@ export default function ComposeForm({ initialCampaigns }: ComposeFormProps) {
     lastError,
     isRunning,
     isPaused,
+    nextBatchIn,
+    nextBatchEmails,
     startCampaign,
     pauseCampaign,
     resumeCampaign,
@@ -379,6 +381,9 @@ export default function ComposeForm({ initialCampaigns }: ComposeFormProps) {
             progress={progress}
             isRunning={isRunning}
             isConnected={isConnected}
+            nextBatchIn={nextBatchIn}
+            nextBatchEmails={nextBatchEmails}
+            batchSize={batchSize}
           />
         )}
 

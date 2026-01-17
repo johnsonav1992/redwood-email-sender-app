@@ -7,17 +7,33 @@ interface CampaignProgressProps {
   progress: Progress;
   isRunning: boolean;
   isConnected?: boolean;
+  nextBatchIn?: number | null;
+  nextBatchEmails?: string[];
+  batchSize?: number;
+}
+
+function formatCountdown(seconds: number): string {
+  const mins = Math.floor(seconds / 60);
+  const secs = seconds % 60;
+  if (mins > 0) {
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  }
+  return `${secs}s`;
 }
 
 export default function CampaignProgress({
   progress,
   isRunning,
   isConnected,
+  nextBatchIn,
+  nextBatchEmails = [],
+  batchSize = 30,
 }: CampaignProgressProps) {
   if (progress.total === 0) {
     return null;
   }
 
+  const remaining = progress.total - progress.sent - progress.failed;
   const progressPercent =
     progress.total > 0
       ? ((progress.sent + progress.failed) / progress.total) * 100
@@ -31,160 +47,102 @@ export default function CampaignProgress({
     progress.sent > 0;
 
   return (
-    <div
-      className={cn(
-        'rounded-lg',
-        'border-2',
-        'border-gray-200',
-        'bg-gray-50',
-        'p-6'
-      )}
-    >
-      <div className={cn('mb-4', 'flex', 'items-center', 'justify-between')}>
-        <h3 className={cn('text-lg', 'font-bold', 'text-gray-900')}>
+    <div className="rounded-lg border border-slate-200 bg-slate-50 p-6 mt-6">
+      <div className="mb-4 flex items-center justify-between">
+        <h3 className="text-lg font-semibold text-slate-800">
           Campaign Progress
         </h3>
         {isRunning && (
           <div
             className={cn(
-              'flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold',
-              isConnected ? 'bg-blue-100 text-blue-800' : 'bg-yellow-100 text-yellow-800'
+              'flex items-center gap-2 rounded-full px-4 py-1.5 text-sm font-medium',
+              isConnected
+                ? 'bg-slate-700 text-white'
+                : 'bg-slate-200 text-slate-600'
             )}
           >
-            <span className={cn('w-2 h-2 rounded-full', isConnected ? 'bg-blue-500 animate-pulse' : 'bg-yellow-500')} />
-            {isConnected ? 'Processing...' : 'Connecting...'}
+            <span
+              className={cn(
+                'w-2 h-2 rounded-full',
+                isConnected ? 'bg-emerald-400 animate-pulse' : 'bg-slate-400'
+              )}
+            />
+            {isConnected ? 'Sending...' : 'Connecting...'}
           </div>
         )}
         {isCompleted && (
-          <div
-            className={cn(
-              'rounded-full',
-              'bg-green-100',
-              'px-4',
-              'py-2',
-              'text-sm',
-              'font-semibold',
-              'text-green-800'
-            )}
-          >
+          <div className="rounded-full bg-emerald-100 px-4 py-1.5 text-sm font-medium text-emerald-700">
             Completed
           </div>
         )}
         {isPaused && (
-          <div
-            className={cn(
-              'rounded-full',
-              'bg-yellow-100',
-              'px-4',
-              'py-2',
-              'text-sm',
-              'font-semibold',
-              'text-yellow-800'
-            )}
-          >
+          <div className="rounded-full bg-amber-100 px-4 py-1.5 text-sm font-medium text-amber-700">
             Paused
           </div>
         )}
       </div>
 
-      <div
-        className={cn(
-          'relative',
-          'mb-4',
-          'h-8',
-          'overflow-hidden',
-          'rounded-full',
-          'bg-gray-200'
-        )}
-      >
+      <div className="relative mb-4 h-3 overflow-hidden rounded-full bg-slate-200">
         <div
           className={cn(
-            'h-full',
-            'bg-gradient-to-r',
-            'from-green-500',
-            'to-blue-500',
-            'transition-all',
-            'duration-500'
+            'h-full rounded-full transition-all duration-500',
+            isCompleted ? 'bg-emerald-500' : 'bg-redwood'
           )}
           style={{ width: `${progressPercent}%` }}
         />
-        <span
-          className={cn(
-            'absolute',
-            'inset-0',
-            'flex',
-            'items-center',
-            'justify-center',
-            'text-sm',
-            'font-bold',
-            'text-gray-900'
-          )}
-        >
-          {Math.round(progressPercent)}%
-        </span>
       </div>
 
-      <div className={cn('grid', 'grid-cols-4', 'gap-4')}>
-        <div
-          className={cn(
-            'rounded-lg',
-            'border-2',
-            'border-gray-200',
-            'bg-white',
-            'p-4',
-            'text-center'
+      {isRunning && nextBatchIn != null && nextBatchIn > 0 && remaining > 0 && (
+        <div className="mb-4 rounded-lg bg-white border border-slate-200 px-4 py-3">
+          <div className="flex items-center justify-between mb-2">
+            <div className="text-sm text-slate-600">
+              Next batch: <span className="font-medium text-slate-800">{Math.min(batchSize, remaining)} emails</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-slate-500">Sending in</span>
+              <span className="font-mono text-lg font-semibold text-redwood">{formatCountdown(nextBatchIn)}</span>
+            </div>
+          </div>
+          {nextBatchEmails.length > 0 && (
+            <div className="text-xs text-slate-500 font-mono truncate">
+              {nextBatchEmails.slice(0, 5).join(', ')}
+              {nextBatchEmails.length > 5 && ` +${nextBatchEmails.length - 5} more`}
+            </div>
           )}
-        >
-          <div className={cn('mb-1', 'text-xs', 'text-gray-600')}>Total</div>
-          <div className={cn('text-2xl', 'font-bold', 'text-gray-900')}>
+        </div>
+      )}
+
+      <div className="grid grid-cols-4 gap-3">
+        <div className="rounded-lg bg-white border border-slate-200 p-3 text-center">
+          <div className="text-xs font-medium text-slate-500 uppercase tracking-wide">
+            Total
+          </div>
+          <div className="text-xl font-bold text-slate-800 mt-1">
             {progress.total}
           </div>
         </div>
-        <div
-          className={cn(
-            'rounded-lg',
-            'border-2',
-            'border-green-500',
-            'bg-white',
-            'p-4',
-            'text-center'
-          )}
-        >
-          <div className={cn('mb-1', 'text-xs', 'text-gray-600')}>Sent</div>
-          <div className={cn('text-2xl', 'font-bold', 'text-gray-900')}>
+        <div className="rounded-lg bg-white border border-slate-200 p-3 text-center">
+          <div className="text-xs font-medium text-emerald-600 uppercase tracking-wide">
+            Sent
+          </div>
+          <div className="text-xl font-bold text-slate-800 mt-1">
             {progress.sent}
           </div>
         </div>
-        <div
-          className={cn(
-            'rounded-lg',
-            'border-2',
-            'border-red-500',
-            'bg-white',
-            'p-4',
-            'text-center'
-          )}
-        >
-          <div className={cn('mb-1', 'text-xs', 'text-gray-600')}>Failed</div>
-          <div className={cn('text-2xl', 'font-bold', 'text-gray-900')}>
+        <div className="rounded-lg bg-white border border-slate-200 p-3 text-center">
+          <div className="text-xs font-medium text-red-600 uppercase tracking-wide">
+            Failed
+          </div>
+          <div className="text-xl font-bold text-slate-800 mt-1">
             {progress.failed}
           </div>
         </div>
-        <div
-          className={cn(
-            'rounded-lg',
-            'border-2',
-            'border-yellow-500',
-            'bg-white',
-            'p-4',
-            'text-center'
-          )}
-        >
-          <div className={cn('mb-1', 'text-xs', 'text-gray-600')}>
+        <div className="rounded-lg bg-white border border-slate-200 p-3 text-center">
+          <div className="text-xs font-medium text-slate-500 uppercase tracking-wide">
             Remaining
           </div>
-          <div className={cn('text-2xl', 'font-bold', 'text-gray-900')}>
-            {progress.total - progress.sent - progress.failed}
+          <div className="text-xl font-bold text-slate-800 mt-1">
+            {remaining}
           </div>
         </div>
       </div>

@@ -31,16 +31,16 @@ export default function CampaignControls({
 
   if (isCompleted) {
     return (
-      <div className="text-center py-4 px-6 bg-green-50 rounded-lg">
-        <p className="text-green-700 font-medium">Campaign completed!</p>
+      <div className="text-center py-4 px-6 bg-emerald-50 border border-emerald-200 rounded-lg">
+        <p className="text-emerald-700 font-medium">Campaign completed successfully</p>
       </div>
     );
   }
 
   if (isStopped) {
     return (
-      <div className="text-center py-4 px-6 bg-gray-50 rounded-lg">
-        <p className="text-gray-700 font-medium">Campaign stopped</p>
+      <div className="text-center py-4 px-6 bg-slate-50 border border-slate-200 rounded-lg">
+        <p className="text-slate-600 font-medium">Campaign stopped</p>
       </div>
     );
   }
@@ -51,7 +51,7 @@ export default function CampaignControls({
         <button
           onClick={onPause}
           className={cn(
-            'flex-1 rounded-lg bg-yellow-500 px-6 py-4 text-lg font-bold text-white transition hover:bg-yellow-600 cursor-pointer'
+            'flex-1 rounded-lg bg-slate-600 px-6 py-4 text-lg font-semibold text-white transition hover:bg-slate-700 cursor-pointer'
           )}
         >
           Pause Campaign
@@ -59,7 +59,7 @@ export default function CampaignControls({
         <button
           onClick={onStop}
           className={cn(
-            'rounded-lg bg-red-600 px-6 py-4 text-lg font-bold text-white transition hover:bg-red-700 cursor-pointer'
+            'rounded-lg border-2 border-slate-300 bg-white px-6 py-4 text-lg font-semibold text-slate-600 transition hover:bg-slate-50 cursor-pointer'
           )}
         >
           Stop
@@ -74,7 +74,7 @@ export default function CampaignControls({
         <button
           onClick={onResume}
           className={cn(
-            'flex-1 rounded-lg bg-blue-600 px-6 py-4 text-lg font-bold text-white transition hover:bg-blue-700 cursor-pointer'
+            'flex-1 rounded-lg bg-redwood px-6 py-4 text-lg font-semibold text-white transition hover:bg-redwood-light cursor-pointer'
           )}
         >
           Resume Campaign
@@ -82,7 +82,7 @@ export default function CampaignControls({
         <button
           onClick={onStop}
           className={cn(
-            'rounded-lg bg-red-600 px-6 py-4 text-lg font-bold text-white transition hover:bg-red-700 cursor-pointer'
+            'rounded-lg border-2 border-slate-300 bg-white px-6 py-4 text-lg font-semibold text-slate-600 transition hover:bg-slate-50 cursor-pointer'
           )}
         >
           Stop
@@ -96,8 +96,8 @@ export default function CampaignControls({
       onClick={onStart}
       disabled={!canStart || recipientCount === 0}
       className={cn(
-        'w-full rounded-lg bg-blue-600 px-6 py-4 text-lg font-bold text-white transition hover:bg-blue-700 cursor-pointer',
-        'disabled:cursor-not-allowed disabled:bg-gray-300'
+        'w-full rounded-lg bg-redwood px-6 py-4 text-lg font-semibold text-white transition hover:bg-redwood-light cursor-pointer',
+        'disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-500'
       )}
     >
       Start Campaign ({recipientCount} recipients, {batchSize} per batch)

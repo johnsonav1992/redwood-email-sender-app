@@ -12,6 +12,7 @@ interface StreamUpdate {
   type: 'update' | 'deleted';
   status?: CampaignStatus;
   progress?: CampaignProgress;
+  nextBatch?: string[];
 }
 
 interface UseCampaignStreamProps {
@@ -27,10 +28,13 @@ export function useCampaignStream({ campaignId, batchDelaySeconds = 60, onStatus
   const [isConnected, setIsConnected] = useState(false);
   const [lastError, setLastError] = useState<string | null>(null);
   const [shouldConnect, setShouldConnect] = useState(false);
+  const [nextBatchIn, setNextBatchIn] = useState<number | null>(null);
+  const [nextBatchEmails, setNextBatchEmails] = useState<string[]>([]);
 
   const eventSourceRef = useRef<EventSource | null>(null);
   const retryTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const batchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const countdownIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const shouldConnectRef = useRef(false);
   const statusRef = useRef<CampaignStatus>('draft');
 
@@ -42,26 +46,49 @@ export function useCampaignStream({ campaignId, batchDelaySeconds = 60, onStatus
     statusRef.current = status;
   }, [status]);
 
-  // Clear batch timeout when status changes away from running
-  useEffect(() => {
-    if (status !== 'running' && batchTimeoutRef.current) {
-      clearTimeout(batchTimeoutRef.current);
-      batchTimeoutRef.current = null;
+  const clearCountdown = useCallback(() => {
+    if (countdownIntervalRef.current) {
+      clearInterval(countdownIntervalRef.current);
+      countdownIntervalRef.current = null;
     }
-  }, [status]);
+    setNextBatchIn(null);
+  }, []);
 
-  // Schedule the next batch for local development (when cron isn't available)
+  const startCountdown = useCallback((seconds: number) => {
+    clearCountdown();
+    setNextBatchIn(seconds);
+    countdownIntervalRef.current = setInterval(() => {
+      setNextBatchIn((prev) => {
+        if (prev === null || prev <= 1) {
+          return null;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+  }, [clearCountdown]);
+
+  useEffect(() => {
+    if (status !== 'running') {
+      clearCountdown();
+      if (batchTimeoutRef.current) {
+        clearTimeout(batchTimeoutRef.current);
+        batchTimeoutRef.current = null;
+      }
+    }
+  }, [status, clearCountdown]);
+
   const scheduleNextBatch = useCallback((id: string, delayMs: number, pendingCount: number) => {
-    // Only schedule if there are pending recipients, we're running, and no batch is already scheduled
     if (pendingCount > 0 && statusRef.current === 'running' && !batchTimeoutRef.current) {
+      startCountdown(Math.floor(delayMs / 1000));
       batchTimeoutRef.current = setTimeout(() => {
-        batchTimeoutRef.current = null; // Clear ref so next batch can be scheduled
+        batchTimeoutRef.current = null;
+        clearCountdown();
         if (statusRef.current === 'running' && onSendBatch) {
           onSendBatch(id);
         }
       }, delayMs);
     }
-  }, [onSendBatch]);
+  }, [onSendBatch, startCountdown, clearCountdown]);
 
   useEffect(() => {
     if (!shouldConnect || !campaignId) {
@@ -77,6 +104,7 @@ export function useCampaignStream({ campaignId, batchDelaySeconds = 60, onStatus
         clearTimeout(batchTimeoutRef.current);
         batchTimeoutRef.current = null;
       }
+      clearCountdown();
       return;
     }
 
@@ -104,17 +132,18 @@ export function useCampaignStream({ campaignId, batchDelaySeconds = 60, onStatus
 
           if (data.status) {
             setStatus(data.status);
-            // Stop reconnecting when campaign is done
             if (data.status === 'completed' || data.status === 'stopped') {
               setShouldConnect(false);
             }
           }
           if (data.progress) {
             setProgress(data.progress);
-            // Schedule next batch if there are pending recipients (for local dev without cron)
             if (data.progress.pending > 0 && data.status === 'running' && campaignId) {
               scheduleNextBatch(campaignId, batchDelaySeconds * 1000, data.progress.pending);
             }
+          }
+          if (data.nextBatch) {
+            setNextBatchEmails(data.nextBatch);
           }
         } catch (error) {
           console.error('Failed to parse SSE message:', error);
@@ -148,8 +177,9 @@ export function useCampaignStream({ campaignId, batchDelaySeconds = 60, onStatus
         clearTimeout(batchTimeoutRef.current);
         batchTimeoutRef.current = null;
       }
+      clearCountdown();
     };
-  }, [shouldConnect, campaignId, batchDelaySeconds, scheduleNextBatch]);
+  }, [shouldConnect, campaignId, batchDelaySeconds, scheduleNextBatch, clearCountdown]);
 
   const startCampaign = useCallback(async (overrideCampaignId?: string) => {
     const id = overrideCampaignId || campaignId;
@@ -170,8 +200,9 @@ export function useCampaignStream({ campaignId, batchDelaySeconds = 60, onStatus
     const success = await onStatusChange?.('paused');
     if (success !== false) {
       setStatus('paused');
+      clearCountdown();
     }
-  }, [campaignId, onStatusChange]);
+  }, [campaignId, onStatusChange, clearCountdown]);
 
   const resumeCampaign = useCallback(async () => {
     if (!campaignId || status !== 'paused') return;
@@ -192,8 +223,9 @@ export function useCampaignStream({ campaignId, batchDelaySeconds = 60, onStatus
     if (success !== false) {
       setStatus('stopped');
       setShouldConnect(false);
+      clearCountdown();
     }
-  }, [campaignId, onStatusChange]);
+  }, [campaignId, onStatusChange, clearCountdown]);
 
   const setInitialStatus = useCallback((newStatus: CampaignStatus) => {
     setStatus(newStatus);
@@ -211,6 +243,8 @@ export function useCampaignStream({ campaignId, batchDelaySeconds = 60, onStatus
     progress,
     isConnected,
     lastError,
+    nextBatchIn,
+    nextBatchEmails,
     isRunning: status === 'running',
     isPaused: status === 'paused',
     isCompleted: status === 'completed',

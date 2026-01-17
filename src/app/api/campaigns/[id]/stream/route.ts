@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
-import { getCampaignById, getCampaignProgress } from '@/lib/db';
+import { getCampaignById, getCampaignProgress, getPendingRecipients } from '@/lib/db';
 
 type RouteContext = { params: Promise<{ id: string }> };
 
@@ -93,6 +93,11 @@ export async function GET(req: NextRequest, context: RouteContext) {
             lastFailed = progress.failed;
             lastPending = effectivePending;
 
+            // Get the next batch of pending recipients for display
+            const nextBatchRecipients = currentCampaign.status === 'running' && effectivePending > 0
+              ? await getPendingRecipients(id, currentCampaign.batch_size)
+              : [];
+
             const data = {
               type: 'update',
               status: currentCampaign.status,
@@ -102,6 +107,7 @@ export async function GET(req: NextRequest, context: RouteContext) {
                 failed: progress.failed,
                 pending: effectivePending,
               },
+              nextBatch: nextBatchRecipients.map(r => r.email),
             };
 
             if (!safeEnqueue(encoder.encode(`data: ${JSON.stringify(data)}\n\n`))) {

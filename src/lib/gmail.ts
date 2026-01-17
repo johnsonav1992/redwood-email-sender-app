@@ -26,10 +26,13 @@ export async function sendEmail(
   subject: string,
   htmlBody: string
 ) {
+  const profile = await gmail.users.getProfile({ userId: 'me' });
+  const from = profile.data.emailAddress || '';
   const utf8Subject = `=?utf-8?B?${Buffer.from(subject).toString('base64')}?=`;
 
   const messageParts = [
     'MIME-Version: 1.0',
+    `From: ${from}`,
     `To: ${to}`,
     `Subject: ${utf8Subject}`,
     'Content-Type: text/html; charset=utf-8',
