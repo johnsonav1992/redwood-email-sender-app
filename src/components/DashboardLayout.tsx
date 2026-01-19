@@ -180,7 +180,7 @@ export default function DashboardLayout({
               )}
             >
               <svg
-                className={cn('w-4', 'h-4')}
+                className={cn('w-5', 'h-5')}
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"

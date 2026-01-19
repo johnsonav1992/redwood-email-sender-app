@@ -297,13 +297,9 @@ export default function RichTextEditor({
               stroke="currentColor"
               viewBox="0 0 24 24"
             >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M10 4h4m-2 0v16m-4 0h8"
-                transform="skewX(-10)"
-              />
+              <line x1="19" y1="4" x2="10" y2="4" strokeWidth={2} strokeLinecap="round" />
+              <line x1="14" y1="20" x2="5" y2="20" strokeWidth={2} strokeLinecap="round" />
+              <line x1="15" y1="4" x2="9" y2="20" strokeWidth={2} strokeLinecap="round" />
             </svg>
           </button>
           <button
@@ -318,16 +314,23 @@ export default function RichTextEditor({
           >
             <svg
               className="h-4 w-4"
+              viewBox="0 0 24 24"
               fill="none"
               stroke="currentColor"
-              viewBox="0 0 24 24"
             >
               <path
                 strokeLinecap="round"
                 strokeLinejoin="round"
                 strokeWidth={2}
-                d="M17 12H7m10 0a4 4 0 10-4-4m4 4a4 4 0 01-4 4"
+                d="M16 8c0-2.2-1.8-4-4-4s-4 1.8-4 4c0 1.5.8 2.8 2 3.5"
               />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M8 16c0 2.2 1.8 4 4 4s4-1.8 4-4c0-1.5-.8-2.8-2-3.5"
+              />
+              <line x1="4" y1="12" x2="20" y2="12" strokeWidth={2} strokeLinecap="round" />
             </svg>
           </button>
 
