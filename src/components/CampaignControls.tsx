@@ -51,11 +51,12 @@ export default function CampaignControls({
 
   if (isRunning) {
     return (
-      <div className="flex gap-3">
+      <div className="flex flex-col sm:flex-row gap-3">
         <button
           onClick={onPause}
           className={cn(
-            'flex-1 rounded-lg bg-slate-600 px-6 py-4 text-lg font-semibold text-white transition hover:bg-slate-700 cursor-pointer'
+            'flex-1 rounded-lg bg-slate-600 px-6 py-4 text-base sm:text-lg font-semibold text-white transition',
+            'hover:bg-slate-700 active:bg-slate-800 cursor-pointer'
           )}
         >
           Pause Campaign
@@ -63,7 +64,8 @@ export default function CampaignControls({
         <button
           onClick={onStop}
           className={cn(
-            'rounded-lg border-2 border-slate-300 bg-white px-6 py-4 text-lg font-semibold text-slate-600 transition hover:bg-slate-50 cursor-pointer'
+            'rounded-lg border-2 border-slate-300 bg-white px-6 py-4 text-base sm:text-lg font-semibold text-slate-600 transition',
+            'hover:bg-slate-50 active:bg-slate-100 cursor-pointer'
           )}
         >
           Stop
@@ -74,11 +76,12 @@ export default function CampaignControls({
 
   if (isPaused) {
     return (
-      <div className="flex gap-3">
+      <div className="flex flex-col sm:flex-row gap-3">
         <button
           onClick={onResume}
           className={cn(
-            'flex-1 rounded-lg bg-redwood px-6 py-4 text-lg font-semibold text-white transition hover:bg-redwood-light cursor-pointer'
+            'flex-1 rounded-lg bg-redwood px-6 py-4 text-base sm:text-lg font-semibold text-white transition',
+            'hover:bg-redwood-light active:bg-redwood-dark cursor-pointer'
           )}
         >
           Resume Campaign
@@ -86,7 +89,8 @@ export default function CampaignControls({
         <button
           onClick={onStop}
           className={cn(
-            'rounded-lg border-2 border-slate-300 bg-white px-6 py-4 text-lg font-semibold text-slate-600 transition hover:bg-slate-50 cursor-pointer'
+            'rounded-lg border-2 border-slate-300 bg-white px-6 py-4 text-base sm:text-lg font-semibold text-slate-600 transition',
+            'hover:bg-slate-50 active:bg-slate-100 cursor-pointer'
           )}
         >
           Stop
@@ -96,12 +100,13 @@ export default function CampaignControls({
   }
 
   return (
-    <div className="flex gap-3">
+    <div className="flex flex-col sm:flex-row gap-3">
       {canSaveDraft && (
         <button
           onClick={onSaveDraft}
           className={cn(
-            'rounded-lg border-2 border-slate-300 bg-white px-6 py-4 text-lg font-semibold text-slate-600 transition hover:bg-slate-50 cursor-pointer'
+            'rounded-lg border-2 border-slate-300 bg-white px-6 py-4 text-base sm:text-lg font-semibold text-slate-600 transition',
+            'hover:bg-slate-50 active:bg-slate-100 cursor-pointer'
           )}
         >
           Save Draft
@@ -111,7 +116,8 @@ export default function CampaignControls({
         onClick={onStart}
         disabled={!canStart || recipientCount === 0}
         className={cn(
-          'flex-1 rounded-lg bg-redwood px-6 py-4 text-lg font-semibold text-white transition hover:bg-redwood-light cursor-pointer',
+          'flex-1 rounded-lg bg-redwood px-6 py-4 text-base sm:text-lg font-semibold text-white transition',
+          'hover:bg-redwood-light active:bg-redwood-dark cursor-pointer',
           'disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-500'
         )}
       >

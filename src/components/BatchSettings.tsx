@@ -45,9 +45,9 @@ export default function BatchSettings({
   };
 
   return (
-    <div className="grid grid-cols-2 gap-4">
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
+        <label className="block text-sm font-medium text-gray-700 mb-1.5">
           Batch Size (recipients per email)
         </label>
         <input
@@ -59,19 +59,19 @@ export default function BatchSettings({
           onBlur={handleBatchSizeBlur}
           disabled={disabled}
           className={cn(
-            'w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-slate-400 focus:border-slate-400',
+            'w-full px-4 py-3 text-base border rounded-lg focus:ring-2 focus:ring-slate-400 focus:border-slate-400',
             disabled && 'bg-gray-100 text-gray-500',
             batchSizeError && 'border-red-500 focus:ring-red-500 focus:border-red-500'
           )}
         />
         {batchSizeError ? (
-          <p className="text-xs text-red-500 mt-1">{batchSizeError}</p>
+          <p className="text-xs text-red-500 mt-1.5">{batchSizeError}</p>
         ) : (
-          <p className="text-xs text-gray-500 mt-1">How many recipients to BCC per email (1-100)</p>
+          <p className="text-xs text-gray-500 mt-1.5">How many recipients to BCC per email (1-100)</p>
         )}
       </div>
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
+        <label className="block text-sm font-medium text-gray-700 mb-1.5">
           Delay Between Batches
         </label>
         <select
@@ -79,7 +79,7 @@ export default function BatchSettings({
           onChange={(e) => onBatchDelayChange(parseInt(e.target.value))}
           disabled={disabled}
           className={cn(
-            'w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-slate-400 focus:border-slate-400',
+            'w-full px-4 py-3 text-base border rounded-lg focus:ring-2 focus:ring-slate-400 focus:border-slate-400',
             disabled && 'bg-gray-100 text-gray-500'
           )}
         >
@@ -89,7 +89,7 @@ export default function BatchSettings({
           <option value={180}>3 minutes</option>
           <option value={300}>5 minutes</option>
         </select>
-        <p className="text-xs text-gray-500 mt-1">Wait time between sending batches</p>
+        <p className="text-xs text-gray-500 mt-1.5">Wait time between sending batches</p>
       </div>
     </div>
   );

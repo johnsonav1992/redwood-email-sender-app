@@ -214,7 +214,7 @@ export default function CampaignListPage({ initialCampaigns }: CampaignListPageP
                 {canResume && (
                   <button
                     onClick={() => handleSelect(campaign)}
-                    className="text-sm px-3 py-1.5 rounded bg-slate-700 text-white hover:bg-slate-800 cursor-pointer"
+                    className="text-sm px-4 py-2.5 rounded-lg bg-slate-700 text-white hover:bg-slate-800 active:bg-slate-900 cursor-pointer"
                   >
                     Resume
                   </button>
@@ -222,7 +222,7 @@ export default function CampaignListPage({ initialCampaigns }: CampaignListPageP
                 {campaign.status === 'draft' && (
                   <button
                     onClick={() => handleSelect(campaign)}
-                    className="text-sm px-3 py-1.5 rounded bg-slate-700 text-white hover:bg-slate-800 cursor-pointer"
+                    className="text-sm px-4 py-2.5 rounded-lg bg-slate-700 text-white hover:bg-slate-800 active:bg-slate-900 cursor-pointer"
                   >
                     Edit
                   </button>
@@ -230,7 +230,7 @@ export default function CampaignListPage({ initialCampaigns }: CampaignListPageP
                 {canDelete && (
                   <button
                     onClick={() => setDeleteId(campaign.id)}
-                    className="text-sm px-3 py-1.5 rounded border border-gray-300 text-gray-600 hover:bg-gray-50 cursor-pointer"
+                    className="text-sm px-4 py-2.5 rounded-lg border border-gray-300 text-gray-600 hover:bg-gray-50 active:bg-gray-100 cursor-pointer"
                   >
                     Delete
                   </button>
@@ -258,13 +258,13 @@ export default function CampaignListPage({ initialCampaigns }: CampaignListPageP
             <div className="flex justify-end gap-3">
               <button
                 onClick={() => setDeleteId(null)}
-                className="px-4 py-2 text-sm text-gray-600 hover:text-gray-900 cursor-pointer"
+                className="px-5 py-2.5 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-100 active:bg-gray-200 rounded-lg cursor-pointer"
               >
                 Cancel
               </button>
               <button
                 onClick={handleDeleteConfirm}
-                className="px-4 py-2 text-sm bg-red-600 text-white rounded hover:bg-red-700 cursor-pointer"
+                className="px-5 py-2.5 text-sm bg-red-600 text-white rounded-lg hover:bg-red-700 active:bg-red-800 cursor-pointer"
               >
                 Delete
               </button>
