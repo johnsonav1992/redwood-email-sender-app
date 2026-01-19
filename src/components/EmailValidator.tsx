@@ -62,7 +62,6 @@ export default function EmailValidator({ result, onConfirm, onCancel }: EmailVal
           <p className={cn('text-sm', result.duplicates.length > 0 ? 'text-yellow-700' : 'text-gray-500')}>Duplicates</p>
         </div>
       </div>
-
       {showInvalid && result.invalid.length > 0 && (
         <div className="mt-4 p-3 bg-white rounded border border-red-200 max-h-40 overflow-y-auto">
           <p className="text-sm font-medium text-red-700 mb-2">Invalid Emails:</p>
@@ -76,7 +75,6 @@ export default function EmailValidator({ result, onConfirm, onCancel }: EmailVal
           </ul>
         </div>
       )}
-
       {showDuplicates && result.duplicates.length > 0 && (
         <div className="mt-4 p-3 bg-white rounded border border-yellow-200 max-h-40 overflow-y-auto">
           <p className="text-sm font-medium text-yellow-700 mb-2">Duplicate Emails (removed):</p>
@@ -87,7 +85,6 @@ export default function EmailValidator({ result, onConfirm, onCancel }: EmailVal
           </ul>
         </div>
       )}
-
       <div className="flex gap-3 pt-2">
         <button
           onClick={handleConfirm}

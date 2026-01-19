@@ -67,7 +67,6 @@ export default function RecipientsList({
           </svg>
         </div>
       </div>
-
       {isExpanded && (
         <div className="border-t">
           <div className="flex border-b bg-gray-50">
@@ -109,7 +108,6 @@ export default function RecipientsList({
               </button>
             )}
           </div>
-
           <div className="max-h-48 overflow-y-auto p-2">
             {activeTab === 'valid' && (
               <ul className="space-y-1">
@@ -120,7 +118,6 @@ export default function RecipientsList({
                 ))}
               </ul>
             )}
-
             {activeTab === 'invalid' && (
               <ul className="space-y-1">
                 {invalidEmails.map((item, idx) => (
@@ -131,7 +128,6 @@ export default function RecipientsList({
                 ))}
               </ul>
             )}
-
             {activeTab === 'duplicates' && (
               <ul className="space-y-1">
                 {duplicates.map((email, idx) => (

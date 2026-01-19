@@ -70,7 +70,6 @@ export default function BatchSettings({
           <p className="text-xs text-gray-500 mt-1">How many recipients to BCC per email (1-100)</p>
         )}
       </div>
-
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">
           Delay Between Batches

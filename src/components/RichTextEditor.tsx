@@ -333,9 +333,7 @@ export default function RichTextEditor({
               <line x1="4" y1="12" x2="20" y2="12" strokeWidth={2} strokeLinecap="round" />
             </svg>
           </button>
-
           <div className="mx-1 h-5 w-px bg-gray-300" />
-
           <button
             type="button"
             onClick={() => editor.chain().focus().toggleBulletList().run()}
@@ -393,9 +391,7 @@ export default function RichTextEditor({
               </text>
             </svg>
           </button>
-
           <div className="mx-1 h-5 w-px bg-gray-300" />
-
           <button
             type="button"
             onClick={handleAddImageClick}
@@ -418,7 +414,6 @@ export default function RichTextEditor({
             </svg>
             <span className="text-xs">Image</span>
           </button>
-
           {isImageSelected && (
             <button
               type="button"
@@ -447,7 +442,6 @@ export default function RichTextEditor({
             </button>
           )}
         </div>
-
         <div className="relative">
           <EditorContent editor={editor} />
           {!editor.getText() && !disabled && (

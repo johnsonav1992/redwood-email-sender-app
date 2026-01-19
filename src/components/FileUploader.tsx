@@ -125,7 +125,6 @@ export default function FileUploader({ onUploadComplete, disabled }: FileUploade
           onChange={handleFileChange}
           disabled={disabled}
         />
-
         {isUploading ? (
           <div className="text-gray-600">
             <svg
@@ -170,7 +169,6 @@ export default function FileUploader({ onUploadComplete, disabled }: FileUploade
           </div>
         )}
       </div>
-
       {error && <p className="text-red-600 text-sm">{error}</p>}
     </div>
   );

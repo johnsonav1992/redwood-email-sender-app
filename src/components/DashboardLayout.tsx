@@ -77,12 +77,9 @@ export default function DashboardLayout({
             className={cn('h-auto', 'w-auto', 'max-h-16')}
           />
         </div>
-
         <div className={cn('flex-1')} />
-
         <QuotaDisplay initialQuota={initialQuota} />
       </header>
-
       <div className={cn('flex', 'pt-20')}>
         <aside
           className={cn(
@@ -123,7 +120,6 @@ export default function DashboardLayout({
               </Link>
             ))}
           </nav>
-
           <div className={cn('p-4', 'border-t', 'border-gray-200')}>
             <div className={cn('flex', 'items-center', 'gap-3', 'mb-3')}>
               {showFallbackAvatar ? (
@@ -196,7 +192,6 @@ export default function DashboardLayout({
             </button>
           </div>
         </aside>
-
         <main className={cn('flex-1', 'ml-64', 'p-8')}>
           <h1 className={cn('text-2xl', 'font-semibold', 'text-gray-900', 'mb-6')}>
             {NAV_ITEMS.find((item) => item.id === activeNav)?.label || 'Dashboard'}

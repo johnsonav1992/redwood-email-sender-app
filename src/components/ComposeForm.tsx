@@ -381,7 +381,6 @@ export default function ComposeForm({ initialCampaigns }: ComposeFormProps) {
               )}
             />
           </div>
-
           <div>
             <label className="mb-2 block text-sm font-semibold text-gray-700">
               Email Body
@@ -394,13 +393,11 @@ export default function ComposeForm({ initialCampaigns }: ComposeFormProps) {
               enableImageResize={true}
             />
           </div>
-
           <SignatureEditor
             signature={signature}
             onSignatureChange={setSignature}
             disabled={isRunning || isPaused}
           />
-
           <div className="flex items-center gap-3">
             <button
               onClick={handleSendTest}
@@ -417,7 +414,6 @@ export default function ComposeForm({ initialCampaigns }: ComposeFormProps) {
               <span className="text-sm text-green-600">Sent to {session?.user?.email}</span>
             )}
           </div>
-
           <div className="border-t pt-6">
             <label className="mb-2 block text-sm font-semibold text-gray-700">
               Recipients
@@ -447,7 +443,6 @@ export default function ComposeForm({ initialCampaigns }: ComposeFormProps) {
               </>
             )}
           </div>
-
           <div className="border-t pt-6">
             <BatchSettings
               batchSize={batchSize}
@@ -458,7 +453,6 @@ export default function ComposeForm({ initialCampaigns }: ComposeFormProps) {
             />
           </div>
         </div>
-
         {(isRunning || isPaused || campaignId) && (
           <CampaignProgress
             progress={progress}
@@ -469,13 +463,11 @@ export default function ComposeForm({ initialCampaigns }: ComposeFormProps) {
             batchSize={batchSize}
           />
         )}
-
         {lastError && (
           <div className="rounded-lg bg-red-50 p-3">
             <p className="text-red-700">{lastError}</p>
           </div>
         )}
-
         <div className="mt-8">
           <CampaignControls
             status={status}
@@ -491,7 +483,6 @@ export default function ComposeForm({ initialCampaigns }: ComposeFormProps) {
           />
         </div>
       </div>
-
       <AlertModal
         isOpen={alertModal.isOpen}
         onClose={closeAlert}

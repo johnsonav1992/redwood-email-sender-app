@@ -162,7 +162,6 @@ export default function QuotaDisplay({ initialQuota, onRefreshReady }: QuotaDisp
           </div>
         </div>
       </div>
-
       <button
         onClick={fetchQuota}
         className={cn(

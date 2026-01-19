@@ -81,7 +81,6 @@ export default function CampaignProgress({
           </div>
         )}
       </div>
-
       <div className="relative mb-4 h-3 overflow-hidden rounded-full bg-slate-200">
         <div
           className={cn(
@@ -91,7 +90,6 @@ export default function CampaignProgress({
           style={{ width: `${progressPercent}%` }}
         />
       </div>
-
       {isRunning && nextBatchIn != null && nextBatchIn > 0 && remaining > 0 && (
         <div className="mb-4 rounded-lg bg-white border border-slate-200 px-4 py-3">
           <div className="flex items-center justify-between mb-2">
@@ -111,7 +109,6 @@ export default function CampaignProgress({
           )}
         </div>
       )}
-
       <div className="grid grid-cols-4 gap-3">
         <div className="rounded-lg bg-white border border-slate-200 p-3 text-center">
           <div className="text-xs font-medium text-slate-500 uppercase tracking-wide">
