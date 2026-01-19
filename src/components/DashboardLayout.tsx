@@ -1,6 +1,6 @@
 'use client';
 
-import { ReactNode } from 'react';
+import { ReactNode, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -45,6 +45,9 @@ export default function DashboardLayout({
   const { data: session } = useSession();
   const pathname = usePathname();
   const activeNav = pathname.startsWith('/campaigns') ? 'campaigns' : 'compose';
+  const [avatarError, setAvatarError] = useState(false);
+
+  const showFallbackAvatar = !session?.user?.image || avatarError;
 
   return (
     <div className={cn('min-h-screen', 'bg-gray-100')}>
@@ -123,14 +126,7 @@ export default function DashboardLayout({
 
           <div className={cn('p-4', 'border-t', 'border-gray-200')}>
             <div className={cn('flex', 'items-center', 'gap-3', 'mb-3')}>
-              {session?.user?.image ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={session.user.image}
-                  alt=""
-                  className={cn('w-10', 'h-10', 'rounded-full')}
-                />
-              ) : (
+              {showFallbackAvatar ? (
                 <div
                   className={cn(
                     'w-10',
@@ -146,6 +142,14 @@ export default function DashboardLayout({
                     {session?.user?.name?.[0] || session?.user?.email?.[0] || '?'}
                   </span>
                 </div>
+              ) : (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={session.user!.image!}
+                  alt=""
+                  className={cn('w-10', 'h-10', 'rounded-full')}
+                  onError={() => setAvatarError(true)}
+                />
               )}
               <div className={cn('flex-1', 'min-w-0')}>
                 <p className={cn('text-sm', 'font-medium', 'text-gray-900', 'truncate')}>
