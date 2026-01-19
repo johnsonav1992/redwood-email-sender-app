@@ -153,7 +153,7 @@ export async function POST(
 
       // Record each sent email for quota tracking (persists even if campaign is deleted)
       await Promise.all(
-        bccEmails.map(email => recordSentEmail(session.user!.email, email, id))
+        bccEmails.map(email => recordSentEmail(campaign.user_email, email, id))
       );
 
       const newProgress = await getCampaignProgress(id);
