@@ -10,7 +10,7 @@ export default function LandingPage() {
     <main
       className={cn(
         'min-h-screen',
-        'bg-gradient-to-br',
+        'bg-linear-to-br',
         'from-blue-50',
         'via-white',
         'to-gray-50'

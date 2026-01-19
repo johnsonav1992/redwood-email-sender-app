@@ -114,7 +114,7 @@ export default function DashboardLayout({
                   'text-left',
                   'transition-colors',
                   activeNav === item.id
-                    ? 'bg-blue-50 text-blue-700 font-medium'
+                    ? 'bg-slate-100 text-slate-900 font-medium'
                     : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
                 )}
               >
@@ -132,13 +132,13 @@ export default function DashboardLayout({
                     'w-10',
                     'h-10',
                     'rounded-full',
-                    'bg-blue-100',
+                    'bg-slate-200',
                     'flex',
                     'items-center',
                     'justify-center'
                   )}
                 >
-                  <span className={cn('text-blue-700', 'font-medium')}>
+                  <span className={cn('text-slate-700', 'font-medium')}>
                     {session?.user?.name?.[0] || session?.user?.email?.[0] || '?'}
                   </span>
                 </div>
