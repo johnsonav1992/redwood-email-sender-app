@@ -90,6 +90,7 @@ export function useCampaignPersistence({
       subject: string;
       htmlBody: string;
       signature?: string;
+      toEmail?: string;
       batchSize?: number;
       batchDelaySeconds?: number;
       recipients: string[];
