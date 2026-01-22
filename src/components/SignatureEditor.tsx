@@ -11,7 +11,7 @@ interface SignatureEditorProps {
 export default function SignatureEditor({
   signature,
   onSignatureChange,
-  disabled,
+  disabled
 }: SignatureEditorProps) {
   return (
     <div className="space-y-2">

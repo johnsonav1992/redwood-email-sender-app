@@ -37,7 +37,7 @@ export function buildMimeMessage(message: EmailMessage): string {
   const headers: string[] = [
     'MIME-Version: 1.0',
     `From: ${message.from}`,
-    `To: ${message.to}`,
+    `To: ${message.to}`
   ];
 
   if (message.bcc.length > 0) {
@@ -60,7 +60,9 @@ export function buildMimeMessage(message: EmailMessage): string {
     parts.push('Content-Type: text/html; charset=utf-8');
     parts.push('Content-Transfer-Encoding: base64');
     parts.push('');
-    parts.push(...chunkString(Buffer.from(message.htmlBody).toString('base64'), 76));
+    parts.push(
+      ...chunkString(Buffer.from(message.htmlBody).toString('base64'), 76)
+    );
 
     for (const img of message.inlineImages!) {
       parts.push(`--${boundary}`);
@@ -74,7 +76,9 @@ export function buildMimeMessage(message: EmailMessage): string {
 
     parts.push(`--${boundary}--`);
   } else {
-    parts.push(...chunkString(Buffer.from(message.htmlBody).toString('base64'), 76));
+    parts.push(
+      ...chunkString(Buffer.from(message.htmlBody).toString('base64'), 76)
+    );
   }
 
   const rawMessage = [...headers, '', ...parts].join('\r\n');
@@ -103,10 +107,13 @@ export function extractImagesFromHtml(html: string): {
         contentId,
         filename: `image_${imageCounter}.${extension}`,
         mimeType,
-        base64Data,
+        base64Data
       });
 
-      return match.replace(/src=["']data:[^"']+["']/i, `src="cid:${contentId}"`);
+      return match.replace(
+        /src=["']data:[^"']+["']/i,
+        `src="cid:${contentId}"`
+      );
     }
   );
 

@@ -1,7 +1,11 @@
 import { NextRequest } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
-import { getCampaignById, getCampaignProgress, getPendingRecipients } from '@/lib/db';
+import {
+  getCampaignById,
+  getCampaignProgress,
+  getPendingRecipients
+} from '@/lib/db';
 
 type RouteContext = { params: Promise<{ id: string }> };
 
@@ -74,7 +78,9 @@ export async function GET(req: NextRequest, context: RouteContext) {
           if (isClosed) return false;
 
           if (!currentCampaign) {
-            safeEnqueue(encoder.encode(`data: ${JSON.stringify({ type: 'deleted' })}\n\n`));
+            safeEnqueue(
+              encoder.encode(`data: ${JSON.stringify({ type: 'deleted' })}\n\n`)
+            );
             safeClose();
             return false;
           }
@@ -99,9 +105,10 @@ export async function GET(req: NextRequest, context: RouteContext) {
             lastNextBatchAt = currentNextBatchAt;
 
             // Get the next batch of pending recipients for display
-            const nextBatchRecipients = currentCampaign.status === 'running' && effectivePending > 0
-              ? await getPendingRecipients(id, currentCampaign.batch_size)
-              : [];
+            const nextBatchRecipients =
+              currentCampaign.status === 'running' && effectivePending > 0
+                ? await getPendingRecipients(id, currentCampaign.batch_size)
+                : [];
 
             const data = {
               type: 'update',
@@ -110,18 +117,23 @@ export async function GET(req: NextRequest, context: RouteContext) {
                 total: progress.total,
                 sent: progress.sent,
                 failed: progress.failed,
-                pending: effectivePending,
+                pending: effectivePending
               },
               nextBatch: nextBatchRecipients.map(r => r.email),
-              nextBatchAt: currentCampaign.next_batch_at,
+              nextBatchAt: currentCampaign.next_batch_at
             };
 
-            if (!safeEnqueue(encoder.encode(`data: ${JSON.stringify(data)}\n\n`))) {
+            if (
+              !safeEnqueue(encoder.encode(`data: ${JSON.stringify(data)}\n\n`))
+            ) {
               return false;
             }
           }
 
-          if (currentCampaign.status === 'completed' || currentCampaign.status === 'stopped') {
+          if (
+            currentCampaign.status === 'completed' ||
+            currentCampaign.status === 'stopped'
+          ) {
             safeClose();
             return false;
           }
@@ -155,14 +167,14 @@ export async function GET(req: NextRequest, context: RouteContext) {
         clearInterval(intervalId);
         intervalId = null;
       }
-    },
+    }
   });
 
   return new Response(stream, {
     headers: {
       'Content-Type': 'text/event-stream',
       'Cache-Control': 'no-cache',
-      Connection: 'keep-alive',
-    },
+      Connection: 'keep-alive'
+    }
   });
 }

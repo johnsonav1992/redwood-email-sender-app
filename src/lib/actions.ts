@@ -11,7 +11,7 @@ import {
   getCampaignById,
   getCampaignsByUser,
   initializeSchema,
-  getTodaySentCount,
+  getTodaySentCount
 } from '@/lib/db';
 import { getGmailClient, getQuotaInfo, type QuotaInfo } from '@/lib/gmail';
 import { triggerImmediateBatch } from '@/lib/qstash';
@@ -33,7 +33,11 @@ export async function getInitialData(): Promise<{
 }> {
   const session = await getServerSession(authOptions);
 
-  if (!session?.user?.email || !session?.accessToken || !session?.refreshToken) {
+  if (
+    !session?.user?.email ||
+    !session?.accessToken ||
+    !session?.refreshToken
+  ) {
     return { campaigns: [], quota: null, error: 'Unauthorized' };
   }
 
@@ -46,7 +50,7 @@ export async function getInitialData(): Promise<{
     const [campaigns, gmailQuota, dbSentCount] = await Promise.all([
       getCampaignsByUser(session.user.email),
       getQuotaInfo(gmail, isWorkspace),
-      getTodaySentCount(session.user.email),
+      getTodaySentCount(session.user.email)
     ]);
 
     const sentToday = Math.max(gmailQuota.sentToday, dbSentCount);
@@ -59,8 +63,8 @@ export async function getInitialData(): Promise<{
         sentToday,
         limit,
         remaining,
-        resetTime: gmailQuota.resetTime,
-      },
+        resetTime: gmailQuota.resetTime
+      }
     };
   } catch (error) {
     console.error('Get initial data error:', error);
@@ -94,7 +98,11 @@ export async function fetchQuota(): Promise<{
 }> {
   const session = await getServerSession(authOptions);
 
-  if (!session?.user?.email || !session?.accessToken || !session?.refreshToken) {
+  if (
+    !session?.user?.email ||
+    !session?.accessToken ||
+    !session?.refreshToken
+  ) {
     return { quota: null, error: 'Unauthorized' };
   }
 
@@ -104,7 +112,7 @@ export async function fetchQuota(): Promise<{
 
     const [gmailQuota, dbSentCount] = await Promise.all([
       getQuotaInfo(gmail, isWorkspace),
-      getTodaySentCount(session.user.email),
+      getTodaySentCount(session.user.email)
     ]);
 
     const sentToday = Math.max(gmailQuota.sentToday, dbSentCount);
@@ -116,8 +124,8 @@ export async function fetchQuota(): Promise<{
         sentToday,
         limit,
         remaining,
-        resetTime: gmailQuota.resetTime,
-      },
+        resetTime: gmailQuota.resetTime
+      }
     };
   } catch (error) {
     console.error('Fetch quota error:', error);
@@ -151,7 +159,7 @@ export async function createCampaign(data: {
       signature: data.signature,
       batch_size: data.batchSize || 30,
       batch_delay_seconds: data.batchDelaySeconds || 60,
-      recipients: data.recipients,
+      recipients: data.recipients
     });
 
     revalidatePath('/compose');

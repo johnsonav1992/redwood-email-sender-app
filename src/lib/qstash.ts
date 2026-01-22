@@ -32,7 +32,7 @@ export async function scheduleNextBatch(
     const result = await qstash.publishJSON({
       url: targetUrl,
       delay: delaySeconds,
-      body: { campaignId },
+      body: { campaignId }
     });
 
     console.log(`[QStash] Message scheduled successfully: ${result.messageId}`);
@@ -43,7 +43,9 @@ export async function scheduleNextBatch(
   }
 }
 
-export async function triggerImmediateBatch(campaignId: string): Promise<string | null> {
+export async function triggerImmediateBatch(
+  campaignId: string
+): Promise<string | null> {
   console.log(`[QStash] Triggering immediate batch for campaign ${campaignId}`);
   return scheduleNextBatch(campaignId, 0);
 }

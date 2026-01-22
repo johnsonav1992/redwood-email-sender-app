@@ -8,14 +8,18 @@ interface TooltipProps {
   position?: 'top' | 'bottom';
 }
 
-export default function Tooltip({ content, children, position = 'top' }: TooltipProps) {
+export default function Tooltip({
+  content,
+  children,
+  position = 'top'
+}: TooltipProps) {
   return (
-    <span className="relative group inline-flex">
+    <span className="group relative inline-flex">
       {children}
       <span
         className={cn(
-          'absolute left-1/2 -translate-x-1/2 px-2 py-1 text-xs text-white bg-slate-800 rounded whitespace-nowrap',
-          'opacity-0 group-hover:opacity-100 transition-opacity duration-150 pointer-events-none z-10',
+          'absolute left-1/2 -translate-x-1/2 rounded bg-slate-800 px-2 py-1 text-xs whitespace-nowrap text-white',
+          'pointer-events-none z-10 opacity-0 transition-opacity duration-150 group-hover:opacity-100',
           position === 'top' ? 'bottom-full mb-1.5' : 'top-full mt-1.5'
         )}
       >

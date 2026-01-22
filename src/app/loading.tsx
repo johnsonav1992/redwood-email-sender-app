@@ -14,9 +14,27 @@ export default function Loading() {
       <div className={cn('mx-auto', 'max-w-6xl', 'px-4', 'py-12')}>
         <div className={cn('mb-12', 'text-center')}>
           <div className={cn('mb-8', 'flex', 'justify-center')}>
-            <div className={cn('h-24', 'w-80', 'bg-gray-200', 'rounded', 'animate-pulse')} />
+            <div
+              className={cn(
+                'h-24',
+                'w-80',
+                'bg-gray-200',
+                'rounded',
+                'animate-pulse'
+              )}
+            />
           </div>
-          <div className={cn('h-9', 'w-64', 'bg-gray-200', 'rounded', 'animate-pulse', 'mx-auto', 'mb-4')} />
+          <div
+            className={cn(
+              'h-9',
+              'w-64',
+              'bg-gray-200',
+              'rounded',
+              'animate-pulse',
+              'mx-auto',
+              'mb-4'
+            )}
+          />
         </div>
         <div className={cn('mx-auto', 'max-w-lg')}>
           <div
@@ -30,9 +48,38 @@ export default function Loading() {
               'text-center'
             )}
           >
-            <div className={cn('h-8', 'w-24', 'bg-gray-200', 'rounded', 'animate-pulse', 'mx-auto', 'mb-4')} />
-            <div className={cn('h-5', 'w-64', 'bg-gray-100', 'rounded', 'animate-pulse', 'mx-auto', 'mb-8')} />
-            <div className={cn('h-14', 'w-56', 'bg-gray-200', 'rounded-lg', 'animate-pulse', 'mx-auto')} />
+            <div
+              className={cn(
+                'h-8',
+                'w-24',
+                'bg-gray-200',
+                'rounded',
+                'animate-pulse',
+                'mx-auto',
+                'mb-4'
+              )}
+            />
+            <div
+              className={cn(
+                'h-5',
+                'w-64',
+                'bg-gray-100',
+                'rounded',
+                'animate-pulse',
+                'mx-auto',
+                'mb-8'
+              )}
+            />
+            <div
+              className={cn(
+                'h-14',
+                'w-56',
+                'bg-gray-200',
+                'rounded-lg',
+                'animate-pulse',
+                'mx-auto'
+              )}
+            />
           </div>
         </div>
       </div>

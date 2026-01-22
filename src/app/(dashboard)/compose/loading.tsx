@@ -5,52 +5,237 @@ export default function ComposeLoading() {
     <div className={cn('bg-white', 'rounded-xl', 'shadow-sm', 'p-6')}>
       <div className={cn('space-y-6')}>
         <div>
-          <div className={cn('h-4', 'w-16', 'bg-gray-200', 'rounded', 'animate-pulse', 'mb-2')} />
-          <div className={cn('h-10', 'w-full', 'bg-gray-100', 'rounded-lg', 'animate-pulse')} />
+          <div
+            className={cn(
+              'h-4',
+              'w-16',
+              'bg-gray-200',
+              'rounded',
+              'animate-pulse',
+              'mb-2'
+            )}
+          />
+          <div
+            className={cn(
+              'h-10',
+              'w-full',
+              'bg-gray-100',
+              'rounded-lg',
+              'animate-pulse'
+            )}
+          />
         </div>
         <div>
-          <div className={cn('h-4', 'w-20', 'bg-gray-200', 'rounded', 'animate-pulse', 'mb-2')} />
-          <div className={cn('border-2', 'border-gray-200', 'rounded-lg', 'overflow-hidden')}>
-            <div className={cn('flex', 'items-center', 'gap-1', 'p-2', 'border-b', 'border-gray-200', 'bg-gray-50')}>
-              {[1, 2, 3, 4, 5, 6].map((i) => (
-                <div key={i} className={cn('h-7', 'w-7', 'bg-gray-200', 'rounded', 'animate-pulse')} />
+          <div
+            className={cn(
+              'h-4',
+              'w-20',
+              'bg-gray-200',
+              'rounded',
+              'animate-pulse',
+              'mb-2'
+            )}
+          />
+          <div
+            className={cn(
+              'border-2',
+              'border-gray-200',
+              'rounded-lg',
+              'overflow-hidden'
+            )}
+          >
+            <div
+              className={cn(
+                'flex',
+                'items-center',
+                'gap-1',
+                'p-2',
+                'border-b',
+                'border-gray-200',
+                'bg-gray-50'
+              )}
+            >
+              {[1, 2, 3, 4, 5, 6].map(i => (
+                <div
+                  key={i}
+                  className={cn(
+                    'h-7',
+                    'w-7',
+                    'bg-gray-200',
+                    'rounded',
+                    'animate-pulse'
+                  )}
+                />
               ))}
               <div className={cn('w-px', 'h-6', 'bg-gray-200', 'mx-1')} />
-              {[7, 8, 9].map((i) => (
-                <div key={i} className={cn('h-7', 'w-7', 'bg-gray-200', 'rounded', 'animate-pulse')} />
+              {[7, 8, 9].map(i => (
+                <div
+                  key={i}
+                  className={cn(
+                    'h-7',
+                    'w-7',
+                    'bg-gray-200',
+                    'rounded',
+                    'animate-pulse'
+                  )}
+                />
               ))}
             </div>
             <div className={cn('h-64', 'p-4')}>
-              <div className={cn('h-4', 'w-3/4', 'bg-gray-100', 'rounded', 'animate-pulse', 'mb-3')} />
-              <div className={cn('h-4', 'w-1/2', 'bg-gray-100', 'rounded', 'animate-pulse', 'mb-3')} />
-              <div className={cn('h-4', 'w-2/3', 'bg-gray-100', 'rounded', 'animate-pulse')} />
+              <div
+                className={cn(
+                  'h-4',
+                  'w-3/4',
+                  'bg-gray-100',
+                  'rounded',
+                  'animate-pulse',
+                  'mb-3'
+                )}
+              />
+              <div
+                className={cn(
+                  'h-4',
+                  'w-1/2',
+                  'bg-gray-100',
+                  'rounded',
+                  'animate-pulse',
+                  'mb-3'
+                )}
+              />
+              <div
+                className={cn(
+                  'h-4',
+                  'w-2/3',
+                  'bg-gray-100',
+                  'rounded',
+                  'animate-pulse'
+                )}
+              />
             </div>
           </div>
         </div>
         <div>
-          <div className={cn('h-4', 'w-24', 'bg-gray-200', 'rounded', 'animate-pulse', 'mb-2')} />
-          <div className={cn('h-20', 'w-full', 'bg-gray-100', 'rounded-lg', 'animate-pulse')} />
+          <div
+            className={cn(
+              'h-4',
+              'w-24',
+              'bg-gray-200',
+              'rounded',
+              'animate-pulse',
+              'mb-2'
+            )}
+          />
+          <div
+            className={cn(
+              'h-20',
+              'w-full',
+              'bg-gray-100',
+              'rounded-lg',
+              'animate-pulse'
+            )}
+          />
         </div>
-        <div className={cn('h-9', 'w-32', 'bg-gray-200', 'rounded', 'animate-pulse')} />
+        <div
+          className={cn(
+            'h-9',
+            'w-32',
+            'bg-gray-200',
+            'rounded',
+            'animate-pulse'
+          )}
+        />
         <div className={cn('border-t', 'pt-6')}>
-          <div className={cn('h-4', 'w-20', 'bg-gray-200', 'rounded', 'animate-pulse', 'mb-2')} />
-          <div className={cn('border-2', 'border-dashed', 'border-gray-200', 'rounded-lg', 'p-8')}>
+          <div
+            className={cn(
+              'h-4',
+              'w-20',
+              'bg-gray-200',
+              'rounded',
+              'animate-pulse',
+              'mb-2'
+            )}
+          />
+          <div
+            className={cn(
+              'border-2',
+              'border-dashed',
+              'border-gray-200',
+              'rounded-lg',
+              'p-8'
+            )}
+          >
             <div className={cn('flex', 'flex-col', 'items-center', 'gap-3')}>
-              <div className={cn('h-12', 'w-12', 'bg-gray-200', 'rounded-full', 'animate-pulse')} />
-              <div className={cn('h-4', 'w-48', 'bg-gray-200', 'rounded', 'animate-pulse')} />
-              <div className={cn('h-3', 'w-32', 'bg-gray-100', 'rounded', 'animate-pulse')} />
+              <div
+                className={cn(
+                  'h-12',
+                  'w-12',
+                  'bg-gray-200',
+                  'rounded-full',
+                  'animate-pulse'
+                )}
+              />
+              <div
+                className={cn(
+                  'h-4',
+                  'w-48',
+                  'bg-gray-200',
+                  'rounded',
+                  'animate-pulse'
+                )}
+              />
+              <div
+                className={cn(
+                  'h-3',
+                  'w-32',
+                  'bg-gray-100',
+                  'rounded',
+                  'animate-pulse'
+                )}
+              />
             </div>
           </div>
         </div>
         <div className={cn('border-t', 'pt-6')}>
           <div className={cn('flex', 'items-center', 'gap-6')}>
             <div className={cn('flex', 'items-center', 'gap-2')}>
-              <div className={cn('h-4', 'w-20', 'bg-gray-200', 'rounded', 'animate-pulse')} />
-              <div className={cn('h-10', 'w-20', 'bg-gray-100', 'rounded-lg', 'animate-pulse')} />
+              <div
+                className={cn(
+                  'h-4',
+                  'w-20',
+                  'bg-gray-200',
+                  'rounded',
+                  'animate-pulse'
+                )}
+              />
+              <div
+                className={cn(
+                  'h-10',
+                  'w-20',
+                  'bg-gray-100',
+                  'rounded-lg',
+                  'animate-pulse'
+                )}
+              />
             </div>
             <div className={cn('flex', 'items-center', 'gap-2')}>
-              <div className={cn('h-4', 'w-32', 'bg-gray-200', 'rounded', 'animate-pulse')} />
-              <div className={cn('h-10', 'w-20', 'bg-gray-100', 'rounded-lg', 'animate-pulse')} />
+              <div
+                className={cn(
+                  'h-4',
+                  'w-32',
+                  'bg-gray-200',
+                  'rounded',
+                  'animate-pulse'
+                )}
+              />
+              <div
+                className={cn(
+                  'h-10',
+                  'w-20',
+                  'bg-gray-100',
+                  'rounded-lg',
+                  'animate-pulse'
+                )}
+              />
             </div>
           </div>
         </div>

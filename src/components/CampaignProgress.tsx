@@ -25,7 +25,7 @@ export default function CampaignProgress({
   isRunning,
   isConnected,
   nextBatchIn,
-  batchSize = 30,
+  batchSize = 30
 }: CampaignProgressProps) {
   if (progress.total === 0) {
     return null;
@@ -45,7 +45,7 @@ export default function CampaignProgress({
     progress.sent > 0;
 
   return (
-    <div className="rounded-lg border border-slate-200 bg-slate-50 p-6 mt-6">
+    <div className="mt-6 rounded-lg border border-slate-200 bg-slate-50 p-6">
       <div className="mb-4 flex items-center justify-between">
         <h3 className="text-lg font-semibold text-slate-800">
           Campaign Progress
@@ -61,8 +61,8 @@ export default function CampaignProgress({
           >
             <span
               className={cn(
-                'w-2 h-2 rounded-full',
-                isConnected ? 'bg-emerald-400 animate-pulse' : 'bg-slate-400'
+                'h-2 w-2 rounded-full',
+                isConnected ? 'animate-pulse bg-emerald-400' : 'bg-slate-400'
               )}
             />
             {isConnected ? 'Sending...' : 'Connecting...'}
@@ -89,48 +89,54 @@ export default function CampaignProgress({
         />
       </div>
       {isRunning && nextBatchIn != null && nextBatchIn > 0 && remaining > 0 && (
-        <div className="mb-4 rounded-lg bg-white border border-slate-200 px-4 py-3">
+        <div className="mb-4 rounded-lg border border-slate-200 bg-white px-4 py-3">
           <div className="flex items-center justify-between">
             <div className="text-sm text-slate-600">
-              Next batch: <span className="font-medium text-slate-800">{Math.min(batchSize, remaining)} {Math.min(batchSize, remaining) === 1 ? 'email' : 'emails'}</span>
+              Next batch:{' '}
+              <span className="font-medium text-slate-800">
+                {Math.min(batchSize, remaining)}{' '}
+                {Math.min(batchSize, remaining) === 1 ? 'email' : 'emails'}
+              </span>
             </div>
             <div className="flex items-center gap-2">
               <span className="text-sm text-slate-500">Sending in</span>
-              <span className="font-mono text-lg font-semibold text-redwood">{formatCountdown(nextBatchIn)}</span>
+              <span className="text-redwood font-mono text-lg font-semibold">
+                {formatCountdown(nextBatchIn)}
+              </span>
             </div>
           </div>
         </div>
       )}
       <div className="grid grid-cols-4 gap-3">
-        <div className="rounded-lg bg-white border border-slate-200 p-3 text-center">
-          <div className="text-xs font-medium text-slate-500 uppercase tracking-wide">
+        <div className="rounded-lg border border-slate-200 bg-white p-3 text-center">
+          <div className="text-xs font-medium tracking-wide text-slate-500 uppercase">
             Total
           </div>
-          <div className="text-xl font-bold text-slate-800 mt-1">
+          <div className="mt-1 text-xl font-bold text-slate-800">
             {progress.total}
           </div>
         </div>
-        <div className="rounded-lg bg-white border border-slate-200 p-3 text-center">
-          <div className="text-xs font-medium text-emerald-600 uppercase tracking-wide">
+        <div className="rounded-lg border border-slate-200 bg-white p-3 text-center">
+          <div className="text-xs font-medium tracking-wide text-emerald-600 uppercase">
             Sent
           </div>
-          <div className="text-xl font-bold text-slate-800 mt-1">
+          <div className="mt-1 text-xl font-bold text-slate-800">
             {progress.sent}
           </div>
         </div>
-        <div className="rounded-lg bg-white border border-slate-200 p-3 text-center">
-          <div className="text-xs font-medium text-red-600 uppercase tracking-wide">
+        <div className="rounded-lg border border-slate-200 bg-white p-3 text-center">
+          <div className="text-xs font-medium tracking-wide text-red-600 uppercase">
             Failed
           </div>
-          <div className="text-xl font-bold text-slate-800 mt-1">
+          <div className="mt-1 text-xl font-bold text-slate-800">
             {progress.failed}
           </div>
         </div>
-        <div className="rounded-lg bg-white border border-slate-200 p-3 text-center">
-          <div className="text-xs font-medium text-slate-500 uppercase tracking-wide">
+        <div className="rounded-lg border border-slate-200 bg-white p-3 text-center">
+          <div className="text-xs font-medium tracking-wide text-slate-500 uppercase">
             Remaining
           </div>
-          <div className="text-xl font-bold text-slate-800 mt-1">
+          <div className="mt-1 text-xl font-bold text-slate-800">
             {remaining}
           </div>
         </div>

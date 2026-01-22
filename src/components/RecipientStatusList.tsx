@@ -22,7 +22,7 @@ export default function RecipientStatusList({
   campaignId,
   initialRecipients,
   initialTotal,
-  progress,
+  progress
 }: RecipientStatusListProps) {
   const [filter, setFilter] = useState<FilterStatus>('all');
   const [recipients, setRecipients] = useState<Recipient[]>(initialRecipients);
@@ -30,35 +30,38 @@ export default function RecipientStatusList({
   const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 
-  const fetchRecipients = useCallback(async (
-    status: FilterStatus,
-    offset: number = 0,
-    append: boolean = false
-  ) => {
-    setLoading(true);
-    try {
-      const params = new URLSearchParams({
-        status,
-        limit: '50',
-        offset: offset.toString(),
-      });
-      const response = await fetch(`/api/campaigns/${campaignId}?${params}`);
-      const data = await response.json();
+  const fetchRecipients = useCallback(
+    async (
+      status: FilterStatus,
+      offset: number = 0,
+      append: boolean = false
+    ) => {
+      setLoading(true);
+      try {
+        const params = new URLSearchParams({
+          status,
+          limit: '50',
+          offset: offset.toString()
+        });
+        const response = await fetch(`/api/campaigns/${campaignId}?${params}`);
+        const data = await response.json();
 
-      if (response.ok) {
-        if (append) {
-          setRecipients(prev => [...prev, ...data.recipients]);
-        } else {
-          setRecipients(data.recipients);
+        if (response.ok) {
+          if (append) {
+            setRecipients(prev => [...prev, ...data.recipients]);
+          } else {
+            setRecipients(data.recipients);
+          }
+          setTotal(data.recipientsTotal);
         }
-        setTotal(data.recipientsTotal);
+      } catch (error) {
+        console.error('Failed to fetch recipients:', error);
+      } finally {
+        setLoading(false);
       }
-    } catch (error) {
-      console.error('Failed to fetch recipients:', error);
-    } finally {
-      setLoading(false);
-    }
-  }, [campaignId]);
+    },
+    [campaignId]
+  );
 
   const handleFilterChange = (newFilter: FilterStatus) => {
     if (newFilter === filter) return;
@@ -72,36 +75,58 @@ export default function RecipientStatusList({
   };
 
   const filteredBySearch = searchQuery
-    ? recipients.filter(r => r.email.toLowerCase().includes(searchQuery.toLowerCase()))
+    ? recipients.filter(r =>
+        r.email.toLowerCase().includes(searchQuery.toLowerCase())
+      )
     : recipients;
 
   const statusConfig = {
-    sent: { label: 'Sent', color: 'text-green-600', bg: 'bg-green-50', border: 'border-green-200' },
-    sending: { label: 'Sending', color: 'text-blue-600', bg: 'bg-blue-50', border: 'border-blue-200' },
-    pending: { label: 'Pending', color: 'text-gray-500', bg: 'bg-gray-50', border: 'border-gray-200' },
-    failed: { label: 'Failed', color: 'text-red-600', bg: 'bg-red-50', border: 'border-red-200' },
+    sent: {
+      label: 'Sent',
+      color: 'text-green-600',
+      bg: 'bg-green-50',
+      border: 'border-green-200'
+    },
+    sending: {
+      label: 'Sending',
+      color: 'text-blue-600',
+      bg: 'bg-blue-50',
+      border: 'border-blue-200'
+    },
+    pending: {
+      label: 'Pending',
+      color: 'text-gray-500',
+      bg: 'bg-gray-50',
+      border: 'border-gray-200'
+    },
+    failed: {
+      label: 'Failed',
+      color: 'text-red-600',
+      bg: 'bg-red-50',
+      border: 'border-red-200'
+    }
   };
 
   const hasMore = recipients.length < total;
 
   return (
     <div className="rounded-lg border border-slate-200 bg-white">
-      <div className="p-4 border-b border-slate-200">
-        <div className="flex items-center justify-between mb-3">
+      <div className="border-b border-slate-200 p-4">
+        <div className="mb-3 flex items-center justify-between">
           <h3 className="font-semibold text-slate-800">Recipients</h3>
           <span className="text-sm text-slate-500">{progress.total} total</span>
         </div>
 
-        <div className="flex flex-wrap gap-2 mb-3">
+        <div className="mb-3 flex flex-wrap gap-2">
           <button
             onClick={() => handleFilterChange('all')}
             disabled={loading}
             className={cn(
-              'px-3 py-1.5 text-xs font-medium rounded-full transition-colors',
+              'rounded-full px-3 py-1.5 text-xs font-medium transition-colors',
               filter === 'all'
                 ? 'bg-slate-700 text-white'
                 : 'bg-slate-100 text-slate-600 hover:bg-slate-200',
-              loading && 'opacity-50 cursor-not-allowed'
+              loading && 'cursor-not-allowed opacity-50'
             )}
           >
             All ({progress.total})
@@ -110,11 +135,11 @@ export default function RecipientStatusList({
             onClick={() => handleFilterChange('sent')}
             disabled={loading}
             className={cn(
-              'px-3 py-1.5 text-xs font-medium rounded-full transition-colors',
+              'rounded-full px-3 py-1.5 text-xs font-medium transition-colors',
               filter === 'sent'
                 ? 'bg-green-600 text-white'
                 : 'bg-green-50 text-green-700 hover:bg-green-100',
-              loading && 'opacity-50 cursor-not-allowed'
+              loading && 'cursor-not-allowed opacity-50'
             )}
           >
             Sent ({progress.sent})
@@ -123,11 +148,11 @@ export default function RecipientStatusList({
             onClick={() => handleFilterChange('pending')}
             disabled={loading}
             className={cn(
-              'px-3 py-1.5 text-xs font-medium rounded-full transition-colors',
+              'rounded-full px-3 py-1.5 text-xs font-medium transition-colors',
               filter === 'pending'
                 ? 'bg-slate-600 text-white'
                 : 'bg-slate-100 text-slate-600 hover:bg-slate-200',
-              loading && 'opacity-50 cursor-not-allowed'
+              loading && 'cursor-not-allowed opacity-50'
             )}
           >
             Pending ({progress.pending})
@@ -137,11 +162,11 @@ export default function RecipientStatusList({
               onClick={() => handleFilterChange('failed')}
               disabled={loading}
               className={cn(
-                'px-3 py-1.5 text-xs font-medium rounded-full transition-colors',
+                'rounded-full px-3 py-1.5 text-xs font-medium transition-colors',
                 filter === 'failed'
                   ? 'bg-red-600 text-white'
                   : 'bg-red-50 text-red-700 hover:bg-red-100',
-                loading && 'opacity-50 cursor-not-allowed'
+                loading && 'cursor-not-allowed opacity-50'
               )}
             >
               Failed ({progress.failed})
@@ -153,8 +178,8 @@ export default function RecipientStatusList({
           type="text"
           placeholder="Search loaded emails..."
           value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-transparent"
+          onChange={e => setSearchQuery(e.target.value)}
+          className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-transparent focus:ring-2 focus:ring-slate-500 focus:outline-none"
         />
       </div>
 
@@ -169,31 +194,36 @@ export default function RecipientStatusList({
           </div>
         ) : (
           <ul className="divide-y divide-slate-100">
-            {filteredBySearch.map((recipient) => {
+            {filteredBySearch.map(recipient => {
               const config = statusConfig[recipient.status];
               return (
-                <li key={recipient.id} className="px-4 py-2.5 hover:bg-slate-50">
+                <li
+                  key={recipient.id}
+                  className="px-4 py-2.5 hover:bg-slate-50"
+                >
                   <div className="flex items-center justify-between gap-2">
-                    <span className="text-sm text-slate-700 truncate flex-1">
+                    <span className="flex-1 truncate text-sm text-slate-700">
                       {recipient.email}
                     </span>
-                    <span className={cn(
-                      'text-xs px-2 py-0.5 rounded-full shrink-0',
-                      config.bg,
-                      config.color,
-                      config.border,
-                      'border'
-                    )}>
+                    <span
+                      className={cn(
+                        'shrink-0 rounded-full px-2 py-0.5 text-xs',
+                        config.bg,
+                        config.color,
+                        config.border,
+                        'border'
+                      )}
+                    >
                       {config.label}
                     </span>
                   </div>
                   {recipient.status === 'failed' && recipient.error_message && (
-                    <p className="text-xs text-red-500 mt-1 truncate">
+                    <p className="mt-1 truncate text-xs text-red-500">
                       {recipient.error_message}
                     </p>
                   )}
                   {recipient.status === 'sent' && recipient.sent_at && (
-                    <p className="text-xs text-slate-400 mt-0.5">
+                    <p className="mt-0.5 text-xs text-slate-400">
                       {new Date(recipient.sent_at).toLocaleString()}
                     </p>
                   )}
@@ -205,17 +235,19 @@ export default function RecipientStatusList({
       </div>
 
       {hasMore && !searchQuery && (
-        <div className="p-3 border-t border-slate-200">
+        <div className="border-t border-slate-200 p-3">
           <button
             onClick={handleLoadMore}
             disabled={loading}
             className={cn(
-              'w-full py-2 text-sm font-medium text-slate-600 bg-slate-100 rounded-lg',
-              'hover:bg-slate-200 transition-colors',
-              loading && 'opacity-50 cursor-not-allowed'
+              'w-full rounded-lg bg-slate-100 py-2 text-sm font-medium text-slate-600',
+              'transition-colors hover:bg-slate-200',
+              loading && 'cursor-not-allowed opacity-50'
             )}
           >
-            {loading ? 'Loading...' : `Load more (${recipients.length} of ${total})`}
+            {loading
+              ? 'Loading...'
+              : `Load more (${recipients.length} of ${total})`}
           </button>
         </div>
       )}

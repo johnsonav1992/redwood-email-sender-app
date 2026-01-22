@@ -57,7 +57,7 @@ export default function ManualEmailEntry({
         <input
           type="email"
           value={email}
-          onChange={(e) => {
+          onChange={e => {
             setEmail(e.target.value);
             setError(null);
           }}
@@ -65,7 +65,7 @@ export default function ManualEmailEntry({
           placeholder="Enter email address manually"
           disabled={disabled}
           className={cn(
-            'flex-1 px-3 py-2 text-sm border rounded-lg transition',
+            'flex-1 rounded-lg border px-3 py-2 text-sm transition',
             'focus:border-slate-400 focus:outline-none',
             'disabled:cursor-not-allowed disabled:bg-gray-50',
             error ? 'border-red-300' : 'border-gray-200'
@@ -75,17 +75,15 @@ export default function ManualEmailEntry({
           onClick={handleAdd}
           disabled={disabled || !email.trim()}
           className={cn(
-            'px-4 py-2 text-sm font-medium rounded-lg transition-colors cursor-pointer',
+            'cursor-pointer rounded-lg px-4 py-2 text-sm font-medium transition-colors',
             'bg-slate-600 text-white hover:bg-slate-700 active:bg-slate-800',
-            'disabled:opacity-50 disabled:cursor-not-allowed'
+            'disabled:cursor-not-allowed disabled:opacity-50'
           )}
         >
           Add
         </button>
       </div>
-      {error && (
-        <p className="text-xs text-red-500 mt-1">{error}</p>
-      )}
+      {error && <p className="mt-1 text-xs text-red-500">{error}</p>}
     </div>
   );
 }

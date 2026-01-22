@@ -26,7 +26,7 @@ export default function CampaignControls({
   onSaveDraft,
   onPause,
   onResume,
-  onStop,
+  onStop
 }: CampaignControlsProps) {
   const isRunning = status === 'running';
   const isPaused = status === 'paused';
@@ -35,28 +35,30 @@ export default function CampaignControls({
 
   if (isCompleted) {
     return (
-      <div className="text-center py-4 px-6 bg-emerald-50 border border-emerald-200 rounded-lg">
-        <p className="text-emerald-700 font-medium">Campaign completed successfully</p>
+      <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-6 py-4 text-center">
+        <p className="font-medium text-emerald-700">
+          Campaign completed successfully
+        </p>
       </div>
     );
   }
 
   if (isStopped) {
     return (
-      <div className="text-center py-4 px-6 bg-slate-50 border border-slate-200 rounded-lg">
-        <p className="text-slate-600 font-medium">Campaign stopped</p>
+      <div className="rounded-lg border border-slate-200 bg-slate-50 px-6 py-4 text-center">
+        <p className="font-medium text-slate-600">Campaign stopped</p>
       </div>
     );
   }
 
   if (isRunning) {
     return (
-      <div className="flex flex-col sm:flex-row gap-3">
+      <div className="flex flex-col gap-3 sm:flex-row">
         <button
           onClick={onPause}
           className={cn(
-            'flex-1 rounded-lg bg-slate-600 px-6 py-4 text-base sm:text-lg font-semibold text-white transition',
-            'hover:bg-slate-700 active:bg-slate-800 cursor-pointer'
+            'flex-1 rounded-lg bg-slate-600 px-6 py-4 text-base font-semibold text-white transition sm:text-lg',
+            'cursor-pointer hover:bg-slate-700 active:bg-slate-800'
           )}
         >
           Pause Campaign
@@ -64,8 +66,8 @@ export default function CampaignControls({
         <button
           onClick={onStop}
           className={cn(
-            'rounded-lg border-2 border-slate-300 bg-white px-6 py-4 text-base sm:text-lg font-semibold text-slate-600 transition',
-            'hover:bg-slate-50 active:bg-slate-100 cursor-pointer'
+            'rounded-lg border-2 border-slate-300 bg-white px-6 py-4 text-base font-semibold text-slate-600 transition sm:text-lg',
+            'cursor-pointer hover:bg-slate-50 active:bg-slate-100'
           )}
         >
           Stop
@@ -76,11 +78,11 @@ export default function CampaignControls({
 
   if (isPaused) {
     return (
-      <div className="flex flex-col sm:flex-row gap-3">
+      <div className="flex flex-col gap-3 sm:flex-row">
         <button
           onClick={onResume}
           className={cn(
-            'flex-1 rounded-lg bg-redwood px-6 py-4 text-base sm:text-lg font-semibold text-white transition',
+            'bg-redwood flex-1 rounded-lg px-6 py-4 text-base font-semibold text-white transition sm:text-lg',
             'hover:bg-redwood-light active:bg-redwood-dark cursor-pointer'
           )}
         >
@@ -89,8 +91,8 @@ export default function CampaignControls({
         <button
           onClick={onStop}
           className={cn(
-            'rounded-lg border-2 border-slate-300 bg-white px-6 py-4 text-base sm:text-lg font-semibold text-slate-600 transition',
-            'hover:bg-slate-50 active:bg-slate-100 cursor-pointer'
+            'rounded-lg border-2 border-slate-300 bg-white px-6 py-4 text-base font-semibold text-slate-600 transition sm:text-lg',
+            'cursor-pointer hover:bg-slate-50 active:bg-slate-100'
           )}
         >
           Stop
@@ -100,13 +102,13 @@ export default function CampaignControls({
   }
 
   return (
-    <div className="flex flex-col sm:flex-row gap-3">
+    <div className="flex flex-col gap-3 sm:flex-row">
       {canSaveDraft && (
         <button
           onClick={onSaveDraft}
           className={cn(
-            'rounded-lg border-2 border-slate-300 bg-white px-6 py-4 text-base sm:text-lg font-semibold text-slate-600 transition',
-            'hover:bg-slate-50 active:bg-slate-100 cursor-pointer'
+            'rounded-lg border-2 border-slate-300 bg-white px-6 py-4 text-base font-semibold text-slate-600 transition sm:text-lg',
+            'cursor-pointer hover:bg-slate-50 active:bg-slate-100'
           )}
         >
           Save Draft
@@ -116,7 +118,7 @@ export default function CampaignControls({
         onClick={onStart}
         disabled={!canStart || recipientCount === 0}
         className={cn(
-          'flex-1 rounded-lg bg-redwood px-6 py-4 text-base sm:text-lg font-semibold text-white transition',
+          'bg-redwood flex-1 rounded-lg px-6 py-4 text-base font-semibold text-white transition sm:text-lg',
           'hover:bg-redwood-light active:bg-redwood-dark cursor-pointer',
           'disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-500'
         )}

@@ -9,7 +9,10 @@ interface FileUploaderProps {
   disabled?: boolean;
 }
 
-export default function FileUploader({ onUploadComplete, disabled }: FileUploaderProps) {
+export default function FileUploader({
+  onUploadComplete,
+  disabled
+}: FileUploaderProps) {
   const [isDragging, setIsDragging] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -21,11 +24,11 @@ export default function FileUploader({ onUploadComplete, disabled }: FileUploade
         'text/csv',
         'application/vnd.ms-excel',
         'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-        'text/plain',
+        'text/plain'
       ];
 
       const validExtensions = ['.csv', '.xlsx', '.xls', '.txt'];
-      const hasValidExtension = validExtensions.some((ext) =>
+      const hasValidExtension = validExtensions.some(ext =>
         file.name.toLowerCase().endsWith(ext)
       );
 
@@ -43,7 +46,7 @@ export default function FileUploader({ onUploadComplete, disabled }: FileUploade
 
         const response = await fetch('/api/upload', {
           method: 'POST',
-          body: formData,
+          body: formData
         });
 
         const data = await response.json();
@@ -107,9 +110,9 @@ export default function FileUploader({ onUploadComplete, disabled }: FileUploade
     <div className="space-y-2">
       <div
         className={cn(
-          'border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors',
+          'cursor-pointer rounded-lg border-2 border-dashed p-8 text-center transition-colors',
           isDragging && 'border-blue-500 bg-blue-50',
-          disabled && 'opacity-50 cursor-not-allowed',
+          disabled && 'cursor-not-allowed opacity-50',
           !isDragging && !disabled && 'border-gray-300 hover:border-gray-400'
         )}
         onDragOver={handleDragOver}
@@ -128,7 +131,7 @@ export default function FileUploader({ onUploadComplete, disabled }: FileUploade
         {isUploading ? (
           <div className="text-gray-600">
             <svg
-              className="animate-spin h-8 w-8 mx-auto mb-2 text-blue-500"
+              className="mx-auto mb-2 h-8 w-8 animate-spin text-blue-500"
               xmlns="http://www.w3.org/2000/svg"
               fill="none"
               viewBox="0 0 24 24"
@@ -152,7 +155,7 @@ export default function FileUploader({ onUploadComplete, disabled }: FileUploade
         ) : (
           <div className="text-gray-600">
             <svg
-              className="h-10 w-10 mx-auto mb-3 text-gray-400"
+              className="mx-auto mb-3 h-10 w-10 text-gray-400"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -164,12 +167,16 @@ export default function FileUploader({ onUploadComplete, disabled }: FileUploade
                 d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
               />
             </svg>
-            <p className="font-medium">Drop your file here or click to browse</p>
-            <p className="text-sm text-gray-500 mt-1">Supports CSV, Excel (.xlsx, .xls), or text files</p>
+            <p className="font-medium">
+              Drop your file here or click to browse
+            </p>
+            <p className="mt-1 text-sm text-gray-500">
+              Supports CSV, Excel (.xlsx, .xls), or text files
+            </p>
           </div>
         )}
       </div>
-      {error && <p className="text-red-600 text-sm">{error}</p>}
+      {error && <p className="text-sm text-red-600">{error}</p>}
     </div>
   );
 }

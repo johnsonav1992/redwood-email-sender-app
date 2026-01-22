@@ -4,7 +4,7 @@ import { authOptions } from '@/lib/auth';
 import {
   parseCSVBuffer,
   parseExcelBuffer,
-  parseAndValidateEmails,
+  parseAndValidateEmails
 } from '@/lib/email-parser';
 import type { ParsedEmailResult } from '@/types/campaign';
 
@@ -24,7 +24,10 @@ export async function POST(
   const session = await getServerSession(authOptions);
 
   if (!session?.accessToken) {
-    return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+    return NextResponse.json(
+      { success: false, error: 'Unauthorized' },
+      { status: 401 }
+    );
   }
 
   try {
@@ -51,11 +54,14 @@ export async function POST(
       const content = buffer.toString('utf-8');
       rawEmails = content
         .split(/[\n\r,;]+/)
-        .map((line) => line.trim())
-        .filter((line) => line.length > 0);
+        .map(line => line.trim())
+        .filter(line => line.length > 0);
     } else {
       return NextResponse.json(
-        { success: false, error: 'Unsupported file type. Use .csv, .xlsx, .xls, or .txt' },
+        {
+          success: false,
+          error: 'Unsupported file type. Use .csv, .xlsx, .xls, or .txt'
+        },
         { status: 400 }
       );
     }

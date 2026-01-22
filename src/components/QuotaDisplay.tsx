@@ -15,7 +15,10 @@ interface QuotaDisplayProps {
   onRefreshReady?: (refreshFn: () => void) => void;
 }
 
-export default function QuotaDisplay({ initialQuota, onRefreshReady }: QuotaDisplayProps) {
+export default function QuotaDisplay({
+  initialQuota,
+  onRefreshReady
+}: QuotaDisplayProps) {
   const [quota, setQuota] = useState<QuotaData | null>(initialQuota ?? null);
   const [loading, setLoading] = useState(!initialQuota);
   const [error, setError] = useState<string | null>(null);
@@ -77,11 +80,38 @@ export default function QuotaDisplay({ initialQuota, onRefreshReady }: QuotaDisp
             )}
           />
           <div className={cn('flex', 'flex-col')}>
-            <div className={cn('text-xs', 'text-gray-600', 'leading-tight')}>Daily Quota</div>
-            <div className={cn('flex', 'items-baseline', 'gap-1', 'whitespace-nowrap')}>
-              <div className={cn('h-4', 'w-8', 'bg-gray-200', 'rounded', 'animate-pulse', 'self-center')} />
+            <div className={cn('text-xs', 'text-gray-600', 'leading-tight')}>
+              Daily Quota
+            </div>
+            <div
+              className={cn(
+                'flex',
+                'items-baseline',
+                'gap-1',
+                'whitespace-nowrap'
+              )}
+            >
+              <div
+                className={cn(
+                  'h-4',
+                  'w-8',
+                  'bg-gray-200',
+                  'rounded',
+                  'animate-pulse',
+                  'self-center'
+                )}
+              />
               <span className={cn('text-xs', 'text-gray-300')}>/</span>
-              <div className={cn('h-3', 'w-8', 'bg-gray-200', 'rounded', 'animate-pulse', 'self-center')} />
+              <div
+                className={cn(
+                  'h-3',
+                  'w-8',
+                  'bg-gray-200',
+                  'rounded',
+                  'animate-pulse',
+                  'self-center'
+                )}
+              />
             </div>
           </div>
         </div>
@@ -155,10 +185,30 @@ export default function QuotaDisplay({ initialQuota, onRefreshReady }: QuotaDisp
           )}
         />
         <div className={cn('flex', 'flex-col')}>
-          <div className={cn('text-xs', 'text-gray-600', 'leading-tight')}>Daily Quota</div>
-          <div className={cn('flex', 'items-baseline', 'gap-1', 'whitespace-nowrap')}>
-            <span className={cn('text-base', 'font-bold', 'text-gray-900', 'tabular-nums')}>{quota.remaining.toLocaleString()}</span>
-            <span className={cn('text-xs', 'text-gray-400', 'tabular-nums')}>/ {quota.limit.toLocaleString()}</span>
+          <div className={cn('text-xs', 'text-gray-600', 'leading-tight')}>
+            Daily Quota
+          </div>
+          <div
+            className={cn(
+              'flex',
+              'items-baseline',
+              'gap-1',
+              'whitespace-nowrap'
+            )}
+          >
+            <span
+              className={cn(
+                'text-base',
+                'font-bold',
+                'text-gray-900',
+                'tabular-nums'
+              )}
+            >
+              {quota.remaining.toLocaleString()}
+            </span>
+            <span className={cn('text-xs', 'text-gray-400', 'tabular-nums')}>
+              / {quota.limit.toLocaleString()}
+            </span>
           </div>
         </div>
       </div>

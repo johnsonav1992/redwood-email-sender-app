@@ -2,9 +2,15 @@ export interface IDBDatabase {
   name: string;
   version: number;
   objectStoreNames: DOMStringList;
-  createObjectStore(name: string, options?: IDBObjectStoreParameters): IDBObjectStore;
+  createObjectStore(
+    name: string,
+    options?: IDBObjectStoreParameters
+  ): IDBObjectStore;
   deleteObjectStore(name: string): void;
-  transaction(storeNames: string | string[], mode?: IDBTransactionMode): IDBTransaction;
+  transaction(
+    storeNames: string | string[],
+    mode?: IDBTransactionMode
+  ): IDBTransaction;
   close(): void;
 }
 
@@ -18,7 +24,11 @@ export interface IDBObjectStore {
   delete(key: IDBValidKey | IDBKeyRange): IDBRequest;
   get(key: IDBValidKey | IDBKeyRange): IDBRequest;
   put(value: unknown, key?: IDBValidKey): IDBRequest;
-  createIndex(name: string, keyPath: string | string[], options?: IDBIndexParameters): IDBIndex;
+  createIndex(
+    name: string,
+    keyPath: string | string[],
+    options?: IDBIndexParameters
+  ): IDBIndex;
 }
 
 export interface IDBTransaction {
@@ -43,7 +53,9 @@ export interface IDBRequest {
 }
 
 export interface IDBOpenDBRequest extends IDBRequest {
-  onupgradeneeded: ((this: IDBOpenDBRequest, ev: IDBVersionChangeEvent) => void) | null;
+  onupgradeneeded:
+    | ((this: IDBOpenDBRequest, ev: IDBVersionChangeEvent) => void)
+    | null;
   onblocked: ((this: IDBOpenDBRequest, ev: Event) => void) | null;
 }
 

@@ -8,7 +8,7 @@ import {
   getCampaignProgress,
   updateCampaignStatus,
   deleteCampaign,
-  updateCampaignDraft,
+  updateCampaignDraft
 } from '@/lib/db';
 import { triggerImmediateBatch } from '@/lib/qstash';
 import type { Campaign, Recipient, CampaignStatus } from '@/types/campaign';
@@ -53,14 +53,22 @@ export async function GET(
     const { id } = await context.params;
     const { searchParams } = new URL(req.url);
 
-    const status = searchParams.get('status') as 'all' | 'sent' | 'pending' | 'failed' | null;
+    const status = searchParams.get('status') as
+      | 'all'
+      | 'sent'
+      | 'pending'
+      | 'failed'
+      | null;
     const limit = parseInt(searchParams.get('limit') || '50', 10);
     const offset = parseInt(searchParams.get('offset') || '0', 10);
 
     const campaign = await getCampaignById(id);
 
     if (!campaign) {
-      return NextResponse.json({ error: 'Campaign not found' }, { status: 404 });
+      return NextResponse.json(
+        { error: 'Campaign not found' },
+        { status: 404 }
+      );
     }
 
     if (campaign.user_email !== session.user.email) {
@@ -69,18 +77,21 @@ export async function GET(
 
     const [recipientsResult, progress] = await Promise.all([
       getRecipientsByCampaign(id, { status: status || 'all', limit, offset }),
-      getCampaignProgress(id),
+      getCampaignProgress(id)
     ]);
 
     return NextResponse.json({
       campaign,
       recipients: recipientsResult.recipients,
       recipientsTotal: recipientsResult.total,
-      progress,
+      progress
     });
   } catch (error) {
     console.error('Failed to fetch campaign:', error);
-    return NextResponse.json({ error: 'Failed to fetch campaign' }, { status: 500 });
+    return NextResponse.json(
+      { error: 'Failed to fetch campaign' },
+      { status: 500 }
+    );
   }
 }
 
@@ -99,7 +110,10 @@ export async function PATCH(
     const campaign = await getCampaignById(id);
 
     if (!campaign) {
-      return NextResponse.json({ error: 'Campaign not found' }, { status: 404 });
+      return NextResponse.json(
+        { error: 'Campaign not found' },
+        { status: 404 }
+      );
     }
 
     if (campaign.user_email !== session.user.email) {
@@ -107,7 +121,16 @@ export async function PATCH(
     }
 
     const body = await req.json();
-    const { status, name, subject, body: emailBody, signature, batch_size, batch_delay_seconds, recipients } = body as {
+    const {
+      status,
+      name,
+      subject,
+      body: emailBody,
+      signature,
+      batch_size,
+      batch_delay_seconds,
+      recipients
+    } = body as {
       status?: CampaignStatus;
       name?: string;
       subject?: string;
@@ -124,7 +147,7 @@ export async function PATCH(
         running: ['paused', 'stopped', 'completed'],
         paused: ['running', 'stopped'],
         completed: [],
-        stopped: [],
+        stopped: []
       };
 
       if (!validTransitions[campaign.status]?.includes(status)) {
@@ -147,7 +170,16 @@ export async function PATCH(
       }
     }
 
-    if (campaign.status === 'draft' && (name !== undefined || subject !== undefined || emailBody !== undefined || signature !== undefined || batch_size !== undefined || batch_delay_seconds !== undefined || recipients !== undefined)) {
+    if (
+      campaign.status === 'draft' &&
+      (name !== undefined ||
+        subject !== undefined ||
+        emailBody !== undefined ||
+        signature !== undefined ||
+        batch_size !== undefined ||
+        batch_delay_seconds !== undefined ||
+        recipients !== undefined)
+    ) {
       await updateCampaignDraft(id, {
         name,
         subject,
@@ -164,7 +196,10 @@ export async function PATCH(
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error('Failed to update campaign:', error);
-    return NextResponse.json({ error: 'Failed to update campaign' }, { status: 500 });
+    return NextResponse.json(
+      { error: 'Failed to update campaign' },
+      { status: 500 }
+    );
   }
 }
 
@@ -183,7 +218,10 @@ export async function DELETE(
     const campaign = await getCampaignById(id);
 
     if (!campaign) {
-      return NextResponse.json({ error: 'Campaign not found' }, { status: 404 });
+      return NextResponse.json(
+        { error: 'Campaign not found' },
+        { status: 404 }
+      );
     }
 
     if (campaign.user_email !== session.user.email) {
@@ -202,6 +240,9 @@ export async function DELETE(
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error('Failed to delete campaign:', error);
-    return NextResponse.json({ error: 'Failed to delete campaign' }, { status: 500 });
+    return NextResponse.json(
+      { error: 'Failed to delete campaign' },
+      { status: 500 }
+    );
   }
 }

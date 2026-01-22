@@ -12,7 +12,11 @@ interface ErrorResponse {
 export async function GET(): Promise<NextResponse<QuotaInfo | ErrorResponse>> {
   const session = await getServerSession(authOptions);
 
-  if (!session?.accessToken || !session?.refreshToken || !session?.user?.email) {
+  if (
+    !session?.accessToken ||
+    !session?.refreshToken ||
+    !session?.user?.email
+  ) {
     return NextResponse.json<ErrorResponse>(
       { error: 'Unauthorized' },
       { status: 401 }
@@ -26,7 +30,7 @@ export async function GET(): Promise<NextResponse<QuotaInfo | ErrorResponse>> {
     // Get both Gmail API count (for comparison) and our database count (accurate for BCC)
     const [gmailQuota, dbSentCount] = await Promise.all([
       getQuotaInfo(gmail, isWorkspace),
-      getTodaySentCount(session.user.email),
+      getTodaySentCount(session.user.email)
     ]);
 
     // Use the higher of the two counts to be conservative
@@ -39,7 +43,7 @@ export async function GET(): Promise<NextResponse<QuotaInfo | ErrorResponse>> {
       sentToday,
       limit,
       remaining,
-      resetTime: gmailQuota.resetTime,
+      resetTime: gmailQuota.resetTime
     });
   } catch (error) {
     console.error('Error fetching quota:', error);

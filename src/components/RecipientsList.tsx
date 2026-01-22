@@ -18,53 +18,63 @@ export default function RecipientsList({
   duplicates = [],
   onClear,
   onRemoveEmail,
-  disabled,
+  disabled
 }: RecipientsListProps) {
   const [isExpanded, setIsExpanded] = useState(false);
-  const [activeTab, setActiveTab] = useState<'valid' | 'invalid' | 'duplicates'>('valid');
+  const [activeTab, setActiveTab] = useState<
+    'valid' | 'invalid' | 'duplicates'
+  >('valid');
 
   const hasInvalid = invalidEmails.length > 0;
   const hasDuplicates = duplicates.length > 0;
 
   return (
-    <div className="mt-3 border rounded-lg overflow-hidden">
+    <div className="mt-3 overflow-hidden rounded-lg border">
       <div
-        className="p-3 bg-green-50 flex items-center justify-between cursor-pointer"
+        className="flex cursor-pointer items-center justify-between bg-green-50 p-3"
         onClick={() => setIsExpanded(!isExpanded)}
       >
         <div className="flex items-center gap-3">
-          <span className="text-green-700 font-medium">
+          <span className="font-medium text-green-700">
             {validEmails.length} recipients loaded
           </span>
           {hasInvalid && (
-            <span className="text-xs px-2 py-0.5 bg-red-100 text-red-700 rounded-full">
+            <span className="rounded-full bg-red-100 px-2 py-0.5 text-xs text-red-700">
               {invalidEmails.length} invalid
             </span>
           )}
           {hasDuplicates && (
-            <span className="text-xs px-2 py-0.5 bg-yellow-100 text-yellow-700 rounded-full">
+            <span className="rounded-full bg-yellow-100 px-2 py-0.5 text-xs text-yellow-700">
               {duplicates.length} duplicates
             </span>
           )}
         </div>
         <div className="flex items-center gap-2">
           <button
-            onClick={(e) => {
+            onClick={e => {
               e.stopPropagation();
               onClear();
             }}
             disabled={disabled}
-            className="text-sm text-gray-500 hover:text-gray-700 disabled:opacity-50 cursor-pointer"
+            className="cursor-pointer text-sm text-gray-500 hover:text-gray-700 disabled:opacity-50"
           >
             Clear
           </button>
           <svg
-            className={cn('w-5 h-5 text-gray-500 transition-transform', isExpanded && 'rotate-180')}
+            className={cn(
+              'h-5 w-5 text-gray-500 transition-transform',
+              isExpanded && 'rotate-180'
+            )}
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
           >
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M19 9l-7 7-7-7"
+            />
           </svg>
         </div>
       </div>
@@ -74,9 +84,9 @@ export default function RecipientsList({
             <button
               onClick={() => setActiveTab('valid')}
               className={cn(
-                'flex-1 px-4 py-2.5 text-sm font-medium transition-colors cursor-pointer',
+                'flex-1 cursor-pointer px-4 py-2.5 text-sm font-medium transition-colors',
                 activeTab === 'valid'
-                  ? 'bg-white border-b-2 border-green-500 text-green-700'
+                  ? 'border-b-2 border-green-500 bg-white text-green-700'
                   : 'text-gray-600 hover:text-gray-800'
               )}
             >
@@ -86,9 +96,9 @@ export default function RecipientsList({
               <button
                 onClick={() => setActiveTab('invalid')}
                 className={cn(
-                  'flex-1 px-4 py-2.5 text-sm font-medium transition-colors cursor-pointer',
+                  'flex-1 cursor-pointer px-4 py-2.5 text-sm font-medium transition-colors',
                   activeTab === 'invalid'
-                    ? 'bg-white border-b-2 border-red-500 text-red-700'
+                    ? 'border-b-2 border-red-500 bg-white text-red-700'
                     : 'text-gray-600 hover:text-gray-800'
                 )}
               >
@@ -99,9 +109,9 @@ export default function RecipientsList({
               <button
                 onClick={() => setActiveTab('duplicates')}
                 className={cn(
-                  'flex-1 px-4 py-2.5 text-sm font-medium transition-colors cursor-pointer',
+                  'flex-1 cursor-pointer px-4 py-2.5 text-sm font-medium transition-colors',
                   activeTab === 'duplicates'
-                    ? 'bg-white border-b-2 border-yellow-500 text-yellow-700'
+                    ? 'border-b-2 border-yellow-500 bg-white text-yellow-700'
                     : 'text-gray-600 hover:text-gray-800'
                 )}
               >
@@ -109,23 +119,33 @@ export default function RecipientsList({
               </button>
             )}
           </div>
-          <div className="max-h-80 sm:max-h-96 overflow-y-auto p-2">
+          <div className="max-h-80 overflow-y-auto p-2 sm:max-h-96">
             {activeTab === 'valid' && (
               <ul className="space-y-0.5">
                 {validEmails.map((email, idx) => (
                   <li
                     key={idx}
-                    className="text-sm text-gray-700 px-2 py-1.5 hover:bg-gray-50 rounded flex items-center justify-between group"
+                    className="group flex items-center justify-between rounded px-2 py-1.5 text-sm text-gray-700 hover:bg-gray-50"
                   >
                     <span className="truncate">{email}</span>
                     {onRemoveEmail && !disabled && (
                       <button
                         onClick={() => onRemoveEmail(email)}
-                        className="ml-2 p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 active:bg-red-100 rounded cursor-pointer shrink-0 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity"
+                        className="ml-2 shrink-0 cursor-pointer rounded p-1.5 text-gray-400 transition-opacity hover:bg-red-50 hover:text-red-500 active:bg-red-100 lg:opacity-0 lg:group-hover:opacity-100"
                         title="Remove email"
                       >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        <svg
+                          className="h-4 w-4"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M6 18L18 6M6 6l12 12"
+                          />
                         </svg>
                       </button>
                     )}
@@ -136,9 +156,14 @@ export default function RecipientsList({
             {activeTab === 'invalid' && (
               <ul className="space-y-0.5">
                 {invalidEmails.map((item, idx) => (
-                  <li key={idx} className="text-sm px-2 py-1.5 hover:bg-gray-50 rounded flex justify-between">
-                    <span className="text-gray-700 truncate">{item.email}</span>
-                    <span className="text-red-500 text-xs ml-2 whitespace-nowrap">{item.reason}</span>
+                  <li
+                    key={idx}
+                    className="flex justify-between rounded px-2 py-1.5 text-sm hover:bg-gray-50"
+                  >
+                    <span className="truncate text-gray-700">{item.email}</span>
+                    <span className="ml-2 text-xs whitespace-nowrap text-red-500">
+                      {item.reason}
+                    </span>
                   </li>
                 ))}
               </ul>
@@ -146,7 +171,10 @@ export default function RecipientsList({
             {activeTab === 'duplicates' && (
               <ul className="space-y-0.5">
                 {duplicates.map((email, idx) => (
-                  <li key={idx} className="text-sm text-gray-700 px-2 py-1.5 hover:bg-gray-50 rounded">
+                  <li
+                    key={idx}
+                    className="rounded px-2 py-1.5 text-sm text-gray-700 hover:bg-gray-50"
+                  >
                     {email}
                   </li>
                 ))}

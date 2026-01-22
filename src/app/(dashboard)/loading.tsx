@@ -2,9 +2,22 @@ import { cn } from '@/lib/utils';
 
 function NavItemSkeleton() {
   return (
-    <div className={cn('flex', 'items-center', 'gap-3', 'px-4', 'py-3', 'rounded-lg')}>
-      <div className={cn('h-5', 'w-5', 'bg-gray-200', 'rounded', 'animate-pulse')} />
-      <div className={cn('h-4', 'w-24', 'bg-gray-200', 'rounded', 'animate-pulse')} />
+    <div
+      className={cn(
+        'flex',
+        'items-center',
+        'gap-3',
+        'px-4',
+        'py-3',
+        'rounded-lg'
+      )}
+    >
+      <div
+        className={cn('h-5', 'w-5', 'bg-gray-200', 'rounded', 'animate-pulse')}
+      />
+      <div
+        className={cn('h-4', 'w-24', 'bg-gray-200', 'rounded', 'animate-pulse')}
+      />
     </div>
   );
 }
@@ -30,7 +43,15 @@ export default function DashboardLoading() {
         )}
       >
         <div className={cn('w-64', 'flex', 'items-center')}>
-          <div className={cn('h-12', 'w-40', 'bg-gray-200', 'rounded', 'animate-pulse')} />
+          <div
+            className={cn(
+              'h-12',
+              'w-40',
+              'bg-gray-200',
+              'rounded',
+              'animate-pulse'
+            )}
+          />
         </div>
         <div className={cn('flex-1')} />
         <div
@@ -47,17 +68,51 @@ export default function DashboardLoading() {
           )}
         >
           <div className={cn('flex', 'items-center', 'gap-2')}>
-            <div className={cn('h-2', 'w-2', 'animate-pulse', 'rounded-full', 'bg-gray-300')} />
+            <div
+              className={cn(
+                'h-2',
+                'w-2',
+                'animate-pulse',
+                'rounded-full',
+                'bg-gray-300'
+              )}
+            />
             <div className={cn('flex', 'flex-col')}>
               <div className={cn('text-xs', 'text-gray-400')}>Daily Quota</div>
               <div className={cn('flex', 'items-baseline', 'gap-1', 'h-7')}>
-                <div className={cn('h-5', 'w-10', 'bg-gray-200', 'rounded', 'animate-pulse', 'self-center')} />
+                <div
+                  className={cn(
+                    'h-5',
+                    'w-10',
+                    'bg-gray-200',
+                    'rounded',
+                    'animate-pulse',
+                    'self-center'
+                  )}
+                />
                 <span className={cn('text-sm', 'text-gray-300')}>/</span>
-                <div className={cn('h-4', 'w-10', 'bg-gray-200', 'rounded', 'animate-pulse', 'self-center')} />
+                <div
+                  className={cn(
+                    'h-4',
+                    'w-10',
+                    'bg-gray-200',
+                    'rounded',
+                    'animate-pulse',
+                    'self-center'
+                  )}
+                />
               </div>
             </div>
           </div>
-          <div className={cn('h-4', 'w-4', 'bg-gray-200', 'rounded', 'animate-pulse')} />
+          <div
+            className={cn(
+              'h-4',
+              'w-4',
+              'bg-gray-200',
+              'rounded',
+              'animate-pulse'
+            )}
+          />
         </div>
       </header>
 
@@ -82,24 +137,88 @@ export default function DashboardLoading() {
           </nav>
           <div className={cn('p-4', 'border-t', 'border-gray-200')}>
             <div className={cn('flex', 'items-center', 'gap-3', 'mb-3')}>
-              <div className={cn('h-10', 'w-10', 'bg-gray-200', 'rounded-full', 'animate-pulse')} />
+              <div
+                className={cn(
+                  'h-10',
+                  'w-10',
+                  'bg-gray-200',
+                  'rounded-full',
+                  'animate-pulse'
+                )}
+              />
               <div className={cn('flex-1', 'min-w-0')}>
-                <div className={cn('h-4', 'w-20', 'bg-gray-200', 'rounded', 'animate-pulse')} />
-                <div className={cn('h-3', 'w-32', 'bg-gray-100', 'rounded', 'animate-pulse', 'mt-1')} />
+                <div
+                  className={cn(
+                    'h-4',
+                    'w-20',
+                    'bg-gray-200',
+                    'rounded',
+                    'animate-pulse'
+                  )}
+                />
+                <div
+                  className={cn(
+                    'h-3',
+                    'w-32',
+                    'bg-gray-100',
+                    'rounded',
+                    'animate-pulse',
+                    'mt-1'
+                  )}
+                />
               </div>
             </div>
-            <div className={cn('flex', 'items-center', 'gap-2', 'px-4', 'py-2')}>
-              <div className={cn('h-4', 'w-4', 'bg-gray-200', 'rounded', 'animate-pulse')} />
-              <div className={cn('h-4', 'w-16', 'bg-gray-200', 'rounded', 'animate-pulse')} />
+            <div
+              className={cn('flex', 'items-center', 'gap-2', 'px-4', 'py-2')}
+            >
+              <div
+                className={cn(
+                  'h-4',
+                  'w-4',
+                  'bg-gray-200',
+                  'rounded',
+                  'animate-pulse'
+                )}
+              />
+              <div
+                className={cn(
+                  'h-4',
+                  'w-16',
+                  'bg-gray-200',
+                  'rounded',
+                  'animate-pulse'
+                )}
+              />
             </div>
           </div>
         </aside>
 
         <main className={cn('flex-1', 'ml-64', 'p-8')}>
-          <div className={cn('h-8', 'w-32', 'bg-gray-200', 'rounded', 'animate-pulse', 'mb-6')} />
+          <div
+            className={cn(
+              'h-8',
+              'w-32',
+              'bg-gray-200',
+              'rounded',
+              'animate-pulse',
+              'mb-6'
+            )}
+          />
           <div className={cn('bg-white', 'rounded-xl', 'shadow-sm', 'p-6')}>
-            <div className={cn('h-64', 'flex', 'items-center', 'justify-center')}>
-              <div className={cn('h-8', 'w-8', 'border-2', 'border-gray-300', 'border-t-gray-600', 'rounded-full', 'animate-spin')} />
+            <div
+              className={cn('h-64', 'flex', 'items-center', 'justify-center')}
+            >
+              <div
+                className={cn(
+                  'h-8',
+                  'w-8',
+                  'border-2',
+                  'border-gray-300',
+                  'border-t-gray-600',
+                  'rounded-full',
+                  'animate-spin'
+                )}
+              />
             </div>
           </div>
         </main>

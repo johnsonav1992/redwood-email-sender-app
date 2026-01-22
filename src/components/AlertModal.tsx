@@ -56,35 +56,32 @@ export default function AlertModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
+      <div className="absolute inset-0 bg-black/50" onClick={onClose} />
       <div
-        className="absolute inset-0 bg-black/50"
-        onClick={onClose}
-      />
-      <div className={cn(
-        'relative bg-white rounded-lg shadow-xl p-6 max-w-sm w-full mx-4 border-2',
-        color.border
-      )}>
-        <div className={cn('rounded-lg p-4 mb-4', color.bg)}>
-          <h3 className={cn('text-lg font-semibold mb-2', color.title)}>
+        className={cn(
+          'relative mx-4 w-full max-w-sm rounded-lg border-2 bg-white p-6 shadow-xl',
+          color.border
+        )}
+      >
+        <div className={cn('mb-4 rounded-lg p-4', color.bg)}>
+          <h3 className={cn('mb-2 text-lg font-semibold', color.title)}>
             {title}
           </h3>
-          <p className="text-gray-700">
-            {message}
-          </p>
+          <p className="text-gray-700">{message}</p>
         </div>
         <div className="flex justify-end gap-3">
           {onConfirm ? (
             <>
               <button
                 onClick={onClose}
-                className="px-6 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded transition cursor-pointer"
+                className="cursor-pointer rounded bg-gray-100 px-6 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-200"
               >
                 {cancelLabel}
               </button>
               <button
                 onClick={onConfirm}
                 className={cn(
-                  'px-6 py-2 text-sm font-medium text-white rounded transition cursor-pointer',
+                  'cursor-pointer rounded px-6 py-2 text-sm font-medium text-white transition',
                   color.button
                 )}
               >
@@ -95,7 +92,7 @@ export default function AlertModal({
             <button
               onClick={onClose}
               className={cn(
-                'px-6 py-2 text-sm font-medium text-white rounded transition cursor-pointer',
+                'cursor-pointer rounded px-6 py-2 text-sm font-medium text-white transition',
                 color.button
               )}
             >

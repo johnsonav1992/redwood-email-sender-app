@@ -2,7 +2,12 @@ import { Mark, Node } from '@tiptap/core';
 import Image from '@tiptap/extension-image';
 import Link from '@tiptap/extension-link';
 import Paragraph from '@tiptap/extension-paragraph';
-import { Table, TableRow, TableCell, TableHeader } from '@tiptap/extension-table';
+import {
+  Table,
+  TableRow,
+  TableCell,
+  TableHeader
+} from '@tiptap/extension-table';
 
 const styleAttribute = {
   default: null,
@@ -10,7 +15,7 @@ const styleAttribute = {
   renderHTML: (attributes: Record<string, unknown>) => {
     if (!attributes.style) return {};
     return { style: attributes.style };
-  },
+  }
 };
 
 const classAttribute = {
@@ -19,7 +24,7 @@ const classAttribute = {
   renderHTML: (attributes: Record<string, unknown>) => {
     if (!attributes.class) return {};
     return { class: attributes.class };
-  },
+  }
 };
 
 const widthAttribute = {
@@ -28,7 +33,7 @@ const widthAttribute = {
   renderHTML: (attributes: Record<string, unknown>) => {
     if (!attributes.width) return {};
     return { width: attributes.width };
-  },
+  }
 };
 
 const heightAttribute = {
@@ -37,7 +42,7 @@ const heightAttribute = {
   renderHTML: (attributes: Record<string, unknown>) => {
     if (!attributes.height) return {};
     return { height: attributes.height };
-  },
+  }
 };
 
 const valignAttribute = {
@@ -46,7 +51,7 @@ const valignAttribute = {
   renderHTML: (attributes: Record<string, unknown>) => {
     if (!attributes.valign) return {};
     return { valign: attributes.valign };
-  },
+  }
 };
 
 const alignAttribute = {
@@ -55,7 +60,7 @@ const alignAttribute = {
   renderHTML: (attributes: Record<string, unknown>) => {
     if (!attributes.align) return {};
     return { align: attributes.align };
-  },
+  }
 };
 
 export const SpanMark = Mark.create({
@@ -69,18 +74,18 @@ export const SpanMark = Mark.create({
   addAttributes() {
     return {
       style: styleAttribute,
-      class: classAttribute,
+      class: classAttribute
     };
-  },
+  }
 });
 
 export const ParagraphWithStyles = Paragraph.extend({
   addAttributes() {
     return {
       ...this.parent?.(),
-      style: styleAttribute,
+      style: styleAttribute
     };
-  },
+  }
 });
 
 export const DivNode = Node.create({
@@ -96,9 +101,9 @@ export const DivNode = Node.create({
   addAttributes() {
     return {
       style: styleAttribute,
-      class: classAttribute,
+      class: classAttribute
     };
-  },
+  }
 });
 
 export const TableCellWithStyles = TableCell.extend({
@@ -111,14 +116,15 @@ export const TableCellWithStyles = TableCell.extend({
       align: alignAttribute,
       nowrap: {
         default: null,
-        parseHTML: (element: HTMLElement) => element.hasAttribute('nowrap') ? 'nowrap' : null,
+        parseHTML: (element: HTMLElement) =>
+          element.hasAttribute('nowrap') ? 'nowrap' : null,
         renderHTML: (attributes: Record<string, unknown>) => {
           if (!attributes.nowrap) return {};
           return { nowrap: '' };
-        },
-      },
+        }
+      }
     };
-  },
+  }
 });
 
 export const TableHeaderWithStyles = TableHeader.extend({
@@ -128,18 +134,18 @@ export const TableHeaderWithStyles = TableHeader.extend({
       style: styleAttribute,
       width: widthAttribute,
       valign: valignAttribute,
-      align: alignAttribute,
+      align: alignAttribute
     };
-  },
+  }
 });
 
 export const TableRowWithStyles = TableRow.extend({
   addAttributes() {
     return {
       ...this.parent?.(),
-      style: styleAttribute,
+      style: styleAttribute
     };
-  },
+  }
 });
 
 export const TableWithStyles = Table.extend({
@@ -154,26 +160,28 @@ export const TableWithStyles = Table.extend({
         renderHTML: (attributes: Record<string, unknown>) => {
           if (!attributes.border) return {};
           return { border: attributes.border };
-        },
+        }
       },
       cellpadding: {
         default: null,
-        parseHTML: (element: HTMLElement) => element.getAttribute('cellpadding'),
+        parseHTML: (element: HTMLElement) =>
+          element.getAttribute('cellpadding'),
         renderHTML: (attributes: Record<string, unknown>) => {
           if (!attributes.cellpadding) return {};
           return { cellpadding: attributes.cellpadding };
-        },
+        }
       },
       cellspacing: {
         default: null,
-        parseHTML: (element: HTMLElement) => element.getAttribute('cellspacing'),
+        parseHTML: (element: HTMLElement) =>
+          element.getAttribute('cellspacing'),
         renderHTML: (attributes: Record<string, unknown>) => {
           if (!attributes.cellspacing) return {};
           return { cellspacing: attributes.cellspacing };
-        },
-      },
+        }
+      }
     };
-  },
+  }
 });
 
 export const LinkWithStyles = Link.extend({
@@ -186,14 +194,17 @@ export const LinkWithStyles = Link.extend({
         parseHTML: (element: HTMLElement) => element.getAttribute('style'),
         renderHTML: (attributes: Record<string, unknown>) => {
           const existingStyle = attributes.style as string | null;
-          const baseStyle = 'color: inherit; text-decoration: none; cursor: pointer;';
-          const finalStyle = existingStyle ? `${baseStyle} ${existingStyle}` : baseStyle;
+          const baseStyle =
+            'color: inherit; text-decoration: none; cursor: pointer;';
+          const finalStyle = existingStyle
+            ? `${baseStyle} ${existingStyle}`
+            : baseStyle;
           return { style: finalStyle };
-        },
+        }
       },
-      class: classAttribute,
+      class: classAttribute
     };
-  },
+  }
 });
 
 // Image extension WITH resize handles (for email body editor)
@@ -205,8 +216,8 @@ export const ImageWithResize = Image.configure({
     directions: ['bottom-left', 'bottom-right', 'top-left', 'top-right'],
     minWidth: 50,
     minHeight: 50,
-    alwaysPreserveAspectRatio: true,
-  },
+    alwaysPreserveAspectRatio: true
+  }
 }).extend({
   addAttributes() {
     return {
@@ -221,17 +232,21 @@ export const ImageWithResize = Image.configure({
           let baseStyle = 'display: inline; vertical-align: middle;';
 
           // Check if style already contains width/height (from resize)
-          const hasExplicitDimensions = existingStyle &&
-            (existingStyle.includes('width:') || existingStyle.includes('height:'));
+          const hasExplicitDimensions =
+            existingStyle &&
+            (existingStyle.includes('width:') ||
+              existingStyle.includes('height:'));
 
           if (!hasExplicitDimensions) {
             // No explicit dimensions, use responsive defaults
             baseStyle += ' max-width: 100%; height: auto;';
           }
 
-          const finalStyle = existingStyle ? `${baseStyle} ${existingStyle}` : baseStyle;
+          const finalStyle = existingStyle
+            ? `${baseStyle} ${existingStyle}`
+            : baseStyle;
           return { style: finalStyle };
-        },
+        }
       },
       width: widthAttribute,
       height: heightAttribute,
@@ -247,7 +262,7 @@ export const ImageWithResize = Image.configure({
         renderHTML: (attributes: Record<string, unknown>) => {
           if (!attributes.href) return {};
           return { href: attributes.href };
-        },
+        }
       },
       target: {
         default: null,
@@ -261,8 +276,8 @@ export const ImageWithResize = Image.configure({
         renderHTML: (attributes: Record<string, unknown>) => {
           if (!attributes.target) return {};
           return { target: attributes.target };
-        },
-      },
+        }
+      }
     };
   },
   renderHTML({ HTMLAttributes }) {
@@ -276,7 +291,7 @@ export const ImageWithResize = Image.configure({
     }
 
     return ['img', imgAttributes];
-  },
+  }
 });
 
 // Image extension WITHOUT resize (for signature editor)
@@ -296,17 +311,21 @@ export const ImageWithStyles = Image.extend({
           let baseStyle = 'display: inline; vertical-align: middle;';
 
           // Check if style already contains width/height (from resize)
-          const hasExplicitDimensions = existingStyle &&
-            (existingStyle.includes('width:') || existingStyle.includes('height:'));
+          const hasExplicitDimensions =
+            existingStyle &&
+            (existingStyle.includes('width:') ||
+              existingStyle.includes('height:'));
 
           if (!hasExplicitDimensions) {
             // No explicit dimensions, use responsive defaults
             baseStyle += ' max-width: 100%; height: auto;';
           }
 
-          const finalStyle = existingStyle ? `${baseStyle} ${existingStyle}` : baseStyle;
+          const finalStyle = existingStyle
+            ? `${baseStyle} ${existingStyle}`
+            : baseStyle;
           return { style: finalStyle };
-        },
+        }
       },
       width: widthAttribute,
       height: heightAttribute,
@@ -322,7 +341,7 @@ export const ImageWithStyles = Image.extend({
         renderHTML: (attributes: Record<string, unknown>) => {
           if (!attributes.href) return {};
           return { href: attributes.href };
-        },
+        }
       },
       target: {
         default: null,
@@ -336,8 +355,8 @@ export const ImageWithStyles = Image.extend({
         renderHTML: (attributes: Record<string, unknown>) => {
           if (!attributes.target) return {};
           return { target: attributes.target };
-        },
-      },
+        }
+      }
     };
   },
   renderHTML({ HTMLAttributes }) {
@@ -351,5 +370,5 @@ export const ImageWithStyles = Image.extend({
     }
 
     return ['img', imgAttributes];
-  },
+  }
 });

@@ -1,5 +1,10 @@
 import { useState } from 'react';
-import type { BatchSendResponse, EmailResult, FailedEmail, Progress } from '@/types/email';
+import type {
+  BatchSendResponse,
+  EmailResult,
+  FailedEmail,
+  Progress
+} from '@/types/email';
 
 export function useEmailSending(onBatchSent?: () => void) {
   const [sentEmails, setSentEmails] = useState<string[]>([]);

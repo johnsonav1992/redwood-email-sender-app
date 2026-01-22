@@ -6,7 +6,10 @@ import type { ParsedEmailResult } from '@/types/campaign';
 const EMAIL_REGEX =
   /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*\.[a-zA-Z]{2,}$/;
 
-export function validateEmail(email: string): { valid: boolean; error?: string } {
+export function validateEmail(email: string): {
+  valid: boolean;
+  error?: string;
+} {
   const trimmed = email.trim().toLowerCase();
 
   if (!trimmed) {
@@ -29,13 +32,23 @@ function extractEmailsFromData(data: Record<string, unknown>[]): string[] {
 
   for (const row of data) {
     // Look for email in common column names
-    const emailColumnNames = ['email', 'e-mail', 'email address', 'emailaddress', 'mail'];
+    const emailColumnNames = [
+      'email',
+      'e-mail',
+      'email address',
+      'emailaddress',
+      'mail'
+    ];
     let foundEmail: string | null = null;
 
     // Check each possible column name (case-insensitive)
     for (const [key, value] of Object.entries(row)) {
       const lowerKey = key.toLowerCase().trim();
-      if (emailColumnNames.includes(lowerKey) && typeof value === 'string' && value.trim()) {
+      if (
+        emailColumnNames.includes(lowerKey) &&
+        typeof value === 'string' &&
+        value.trim()
+      ) {
         foundEmail = value.trim();
         break;
       }
@@ -61,20 +74,20 @@ export function parseCSV(content: string): string[] {
   const result = Papa.parse<Record<string, unknown>>(content, {
     header: true,
     skipEmptyLines: true,
-    transformHeader: (header) => header.trim(),
+    transformHeader: header => header.trim()
   });
 
   if (result.errors.length > 0) {
     // Try parsing without headers (single column of emails)
     const noHeaderResult = Papa.parse<string[]>(content, {
       header: false,
-      skipEmptyLines: true,
+      skipEmptyLines: true
     });
 
     return noHeaderResult.data
       .flat()
-      .map((cell) => (typeof cell === 'string' ? cell.trim() : ''))
-      .filter((cell) => cell.includes('@'));
+      .map(cell => (typeof cell === 'string' ? cell.trim() : ''))
+      .filter(cell => cell.includes('@'));
   }
 
   return extractEmailsFromData(result.data);
@@ -98,7 +111,11 @@ export async function parseExcel(buffer: ArrayBuffer): Promise<string[]> {
 
     if (rowNumber === 1) {
       // First row as headers
-      headers = cells.map((cell) => String(cell ?? '').trim().toLowerCase());
+      headers = cells.map(cell =>
+        String(cell ?? '')
+          .trim()
+          .toLowerCase()
+      );
     } else {
       // Build row object with headers
       const rowData: Record<string, unknown> = {};
@@ -110,7 +127,7 @@ export async function parseExcel(buffer: ArrayBuffer): Promise<string[]> {
     }
 
     // Also collect all cells for fallback
-    cells.forEach((cell) => {
+    cells.forEach(cell => {
       if (cell != null) {
         allCells.push(String(cell).trim());
       }
@@ -122,7 +139,7 @@ export async function parseExcel(buffer: ArrayBuffer): Promise<string[]> {
 
   // If no emails found, try all cells (single column fallback)
   if (emails.length === 0) {
-    emails = allCells.filter((cell) => cell.includes('@'));
+    emails = allCells.filter(cell => cell.includes('@'));
   }
 
   return emails;

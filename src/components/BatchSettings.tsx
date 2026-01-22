@@ -16,7 +16,7 @@ export default function BatchSettings({
   batchDelaySeconds,
   onBatchSizeChange,
   onBatchDelayChange,
-  disabled,
+  disabled
 }: BatchSettingsProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editValue, setEditValue] = useState('');
@@ -54,9 +54,9 @@ export default function BatchSettings({
   };
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1.5">
+        <label className="mb-1.5 block text-sm font-medium text-gray-700">
           Batch Size (recipients per email)
         </label>
         <input
@@ -65,31 +65,34 @@ export default function BatchSettings({
           max={100}
           value={displayValue}
           onFocus={handleFocus}
-          onChange={(e) => handleBatchSizeChange(e.target.value)}
+          onChange={e => handleBatchSizeChange(e.target.value)}
           onBlur={handleBatchSizeBlur}
           disabled={disabled}
           className={cn(
-            'w-full px-4 py-3 text-base border rounded-lg focus:ring-2 focus:ring-slate-400 focus:border-slate-400',
+            'w-full rounded-lg border px-4 py-3 text-base focus:border-slate-400 focus:ring-2 focus:ring-slate-400',
             disabled && 'bg-gray-100 text-gray-500',
-            batchSizeError && 'border-red-500 focus:ring-red-500 focus:border-red-500'
+            batchSizeError &&
+              'border-red-500 focus:border-red-500 focus:ring-red-500'
           )}
         />
         {batchSizeError ? (
-          <p className="text-xs text-red-500 mt-1.5">{batchSizeError}</p>
+          <p className="mt-1.5 text-xs text-red-500">{batchSizeError}</p>
         ) : (
-          <p className="text-xs text-gray-500 mt-1.5">How many recipients to BCC per email (1-100)</p>
+          <p className="mt-1.5 text-xs text-gray-500">
+            How many recipients to BCC per email (1-100)
+          </p>
         )}
       </div>
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1.5">
+        <label className="mb-1.5 block text-sm font-medium text-gray-700">
           Delay Between Batches
         </label>
         <select
           value={batchDelaySeconds}
-          onChange={(e) => onBatchDelayChange(parseInt(e.target.value))}
+          onChange={e => onBatchDelayChange(parseInt(e.target.value))}
           disabled={disabled}
           className={cn(
-            'w-full px-4 py-3 text-base border rounded-lg focus:ring-2 focus:ring-slate-400 focus:border-slate-400',
+            'w-full rounded-lg border px-4 py-3 text-base focus:border-slate-400 focus:ring-2 focus:ring-slate-400',
             disabled && 'bg-gray-100 text-gray-500'
           )}
         >
@@ -99,7 +102,9 @@ export default function BatchSettings({
           <option value={180}>3 minutes</option>
           <option value={300}>5 minutes</option>
         </select>
-        <p className="text-xs text-gray-500 mt-1.5">Wait time between sending batches</p>
+        <p className="mt-1.5 text-xs text-gray-500">
+          Wait time between sending batches
+        </p>
       </div>
     </div>
   );

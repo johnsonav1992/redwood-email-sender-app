@@ -19,7 +19,11 @@ export async function POST(
 ): Promise<NextResponse<SendTestResponse | ErrorResponse>> {
   const session = await getServerSession(authOptions);
 
-  if (!session?.accessToken || !session?.refreshToken || !session?.user?.email) {
+  if (
+    !session?.accessToken ||
+    !session?.refreshToken ||
+    !session?.user?.email
+  ) {
     return NextResponse.json<ErrorResponse>(
       { error: 'Unauthorized' },
       { status: 401 }
@@ -42,11 +46,12 @@ export async function POST(
 
     return NextResponse.json<SendTestResponse>({
       success: true,
-      recipient: session.user.email,
+      recipient: session.user.email
     });
   } catch (error) {
     console.error('Error sending test email:', error);
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    const errorMessage =
+      error instanceof Error ? error.message : 'Unknown error';
     return NextResponse.json<ErrorResponse>(
       { error: 'Failed to send test email', details: errorMessage },
       { status: 500 }

@@ -37,7 +37,9 @@ export default function ComposeForm({ initialCampaigns }: ComposeFormProps) {
   const [signature, setSignature] = useState('');
   const [recipientList, setRecipientList] = useState<string[]>([]);
   const [userBatchSize, setUserBatchSize] = useState<number | null>(null);
-  const [userBatchDelaySeconds, setUserBatchDelaySeconds] = useState<number | null>(null);
+  const [userBatchDelaySeconds, setUserBatchDelaySeconds] = useState<
+    number | null
+  >(null);
   const [uploadResult, setUploadResult] = useState<ParsedEmailResult | null>(
     null
   );
@@ -71,8 +73,12 @@ export default function ComposeForm({ initialCampaigns }: ComposeFormProps) {
     updateCampaignStatus
   } = useCampaignPersistence({ initialCampaigns });
 
-  const batchSize = userBatchSize ?? currentCampaign?.campaign?.batch_size ?? 30;
-  const batchDelaySeconds = userBatchDelaySeconds ?? currentCampaign?.campaign?.batch_delay_seconds ?? 60;
+  const batchSize =
+    userBatchSize ?? currentCampaign?.campaign?.batch_size ?? 30;
+  const batchDelaySeconds =
+    userBatchDelaySeconds ??
+    currentCampaign?.campaign?.batch_delay_seconds ??
+    60;
 
   const handleStatusChange = useCallback(
     async (newStatus: CampaignStatus) => {
@@ -187,7 +193,11 @@ export default function ComposeForm({ initialCampaigns }: ComposeFormProps) {
     setUploadResult(null);
   };
 
-  const showAlert = (title: string, message: string, type: 'success' | 'error' | 'info' = 'info') => {
+  const showAlert = (
+    title: string,
+    message: string,
+    type: 'success' | 'error' | 'info' = 'info'
+  ) => {
     setAlertModal({ isOpen: true, title, message, type });
   };
 
@@ -219,13 +229,25 @@ export default function ComposeForm({ initialCampaigns }: ComposeFormProps) {
 
         if (response.ok) {
           await fetchCampaign(campaignId);
-          showAlert('Draft Saved', 'Your draft has been saved successfully!', 'success');
+          showAlert(
+            'Draft Saved',
+            'Your draft has been saved successfully!',
+            'success'
+          );
         } else {
-          showAlert('Save Failed', 'Failed to save draft. Please try again.', 'error');
+          showAlert(
+            'Save Failed',
+            'Failed to save draft. Please try again.',
+            'error'
+          );
         }
       } catch (error) {
         console.error('Failed to update draft:', error);
-        showAlert('Save Failed', 'Failed to save draft. Please try again.', 'error');
+        showAlert(
+          'Save Failed',
+          'Failed to save draft. Please try again.',
+          'error'
+        );
       }
       return;
     }
@@ -245,10 +267,18 @@ export default function ComposeForm({ initialCampaigns }: ComposeFormProps) {
       setCampaignId(campaign.id);
       setInitialStatus('draft');
       await fetchCampaign(campaign.id);
-      showAlert('Draft Created', 'Your draft has been created successfully!', 'success');
+      showAlert(
+        'Draft Created',
+        'Your draft has been created successfully!',
+        'success'
+      );
       router.push(`/compose?edit=${campaign.id}`);
     } else {
-      showAlert('Save Failed', 'Failed to create draft. Please try again.', 'error');
+      showAlert(
+        'Save Failed',
+        'Failed to create draft. Please try again.',
+        'error'
+      );
     }
   };
 
@@ -281,7 +311,11 @@ export default function ComposeForm({ initialCampaigns }: ComposeFormProps) {
 
   const handleCreateAndStart = async () => {
     if (!subject || !htmlBody || recipientList.length === 0) {
-      showAlert('Missing Information', 'Please fill in subject, body, and upload recipients', 'error');
+      showAlert(
+        'Missing Information',
+        'Please fill in subject, body, and upload recipients',
+        'error'
+      );
       return;
     }
 
@@ -397,14 +431,18 @@ export default function ComposeForm({ initialCampaigns }: ComposeFormProps) {
           pending: recipientList.length
         };
   const isDraft = status === 'draft';
-  const hasAnyContent = subject.trim() !== '' || htmlBody.trim() !== '' || recipientList.length > 0;
-  const hasAllContent = subject.trim() !== '' && htmlBody.trim() !== '' && recipientList.length > 0;
+  const hasAnyContent =
+    subject.trim() !== '' || htmlBody.trim() !== '' || recipientList.length > 0;
+  const hasAllContent =
+    subject.trim() !== '' && htmlBody.trim() !== '' && recipientList.length > 0;
   const canStart = (!campaignId || isDraft) && hasAllContent;
   const canSaveDraft = hasAnyContent && (!campaignId || isDraft);
 
   return (
     <div className={cn('space-y-4', 'sm:space-y-6')}>
-      <div className={cn('bg-white', 'rounded-xl', 'shadow-sm', 'p-4', 'sm:p-6')}>
+      <div
+        className={cn('bg-white', 'rounded-xl', 'shadow-sm', 'p-4', 'sm:p-6')}
+      >
         {campaignId && (
           <div
             className={cn(
@@ -484,15 +522,17 @@ export default function ComposeForm({ initialCampaigns }: ComposeFormProps) {
               onClick={handleSendTest}
               disabled={!subject.trim() || !htmlBody.trim() || sendingTest}
               className={cn(
-                'px-4 py-2.5 text-sm rounded-lg border transition-colors cursor-pointer',
+                'cursor-pointer rounded-lg border px-4 py-2.5 text-sm transition-colors',
                 'border-gray-300 text-gray-600 hover:bg-gray-50 active:bg-gray-100',
-                'disabled:opacity-50 disabled:cursor-not-allowed'
+                'disabled:cursor-not-allowed disabled:opacity-50'
               )}
             >
               {sendingTest ? 'Sending...' : 'Send Test Email'}
             </button>
             {testSent && (
-              <span className="text-sm text-green-600">Sent to {session?.user?.email}</span>
+              <span className="text-sm text-green-600">
+                Sent to {session?.user?.email}
+              </span>
             )}
           </div>
           <div className="border-t pt-6">

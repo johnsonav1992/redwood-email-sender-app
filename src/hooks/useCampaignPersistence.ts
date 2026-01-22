@@ -3,13 +3,13 @@ import {
   createCampaign as createCampaignAction,
   updateCampaignStatus as updateCampaignStatusAction,
   deleteCampaign as deleteCampaignAction,
-  fetchCampaigns as fetchCampaignsAction,
+  fetchCampaigns as fetchCampaignsAction
 } from '@/lib/actions';
 import type {
   Campaign,
   CampaignWithProgress,
   CampaignStatus,
-  Recipient,
+  Recipient
 } from '@/types/campaign';
 
 interface CampaignDetail {
@@ -28,9 +28,15 @@ interface UseCampaignPersistenceOptions {
   initialCampaigns?: CampaignWithProgress[];
 }
 
-export function useCampaignPersistence({ initialCampaigns }: UseCampaignPersistenceOptions = {}) {
-  const [campaigns, setCampaigns] = useState<CampaignWithProgress[]>(initialCampaigns ?? []);
-  const [currentCampaign, setCurrentCampaign] = useState<CampaignDetail | null>(null);
+export function useCampaignPersistence({
+  initialCampaigns
+}: UseCampaignPersistenceOptions = {}) {
+  const [campaigns, setCampaigns] = useState<CampaignWithProgress[]>(
+    initialCampaigns ?? []
+  );
+  const [currentCampaign, setCurrentCampaign] = useState<CampaignDetail | null>(
+    null
+  );
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
@@ -99,12 +105,16 @@ export function useCampaignPersistence({ initialCampaigns }: UseCampaignPersiste
         }
 
         if (result.campaign) {
-          setCampaigns((prev) => [result.campaign as CampaignWithProgress, ...prev]);
+          setCampaigns(prev => [
+            result.campaign as CampaignWithProgress,
+            ...prev
+          ]);
           return result.campaign as CampaignWithProgress;
         }
         return null;
       } catch (err) {
-        const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+        const errorMessage =
+          err instanceof Error ? err.message : 'Unknown error';
         setError(errorMessage);
         return null;
       } finally {
@@ -114,57 +124,65 @@ export function useCampaignPersistence({ initialCampaigns }: UseCampaignPersiste
     []
   );
 
-  const updateCampaignStatus = useCallback(async (id: string, status: CampaignStatus) => {
-    setError(null);
+  const updateCampaignStatus = useCallback(
+    async (id: string, status: CampaignStatus) => {
+      setError(null);
 
-    try {
-      const result = await updateCampaignStatusAction(id, status);
+      try {
+        const result = await updateCampaignStatusAction(id, status);
 
-      if (result.error) {
-        throw new Error(result.error);
-      }
+        if (result.error) {
+          throw new Error(result.error);
+        }
 
-      setCampaigns((prev) =>
-        prev.map((c) => (c.id === id ? { ...c, status } : c))
-      );
-
-      if (currentCampaign?.campaign.id === id) {
-        setCurrentCampaign((prev) =>
-          prev ? { ...prev, campaign: { ...prev.campaign, status } } : null
+        setCampaigns(prev =>
+          prev.map(c => (c.id === id ? { ...c, status } : c))
         );
+
+        if (currentCampaign?.campaign.id === id) {
+          setCurrentCampaign(prev =>
+            prev ? { ...prev, campaign: { ...prev.campaign, status } } : null
+          );
+        }
+
+        return true;
+      } catch (err) {
+        const errorMessage =
+          err instanceof Error ? err.message : 'Unknown error';
+        setError(errorMessage);
+        return false;
       }
+    },
+    [currentCampaign]
+  );
 
-      return true;
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Unknown error';
-      setError(errorMessage);
-      return false;
-    }
-  }, [currentCampaign]);
+  const deleteCampaign = useCallback(
+    async (id: string) => {
+      setError(null);
 
-  const deleteCampaign = useCallback(async (id: string) => {
-    setError(null);
+      try {
+        const result = await deleteCampaignAction(id);
 
-    try {
-      const result = await deleteCampaignAction(id);
+        if (result.error) {
+          throw new Error(result.error);
+        }
 
-      if (result.error) {
-        throw new Error(result.error);
+        setCampaigns(prev => prev.filter(c => c.id !== id));
+
+        if (currentCampaign?.campaign.id === id) {
+          setCurrentCampaign(null);
+        }
+
+        return true;
+      } catch (err) {
+        const errorMessage =
+          err instanceof Error ? err.message : 'Unknown error';
+        setError(errorMessage);
+        return false;
       }
-
-      setCampaigns((prev) => prev.filter((c) => c.id !== id));
-
-      if (currentCampaign?.campaign.id === id) {
-        setCurrentCampaign(null);
-      }
-
-      return true;
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Unknown error';
-      setError(errorMessage);
-      return false;
-    }
-  }, [currentCampaign]);
+    },
+    [currentCampaign]
+  );
 
   return {
     campaigns,
@@ -176,6 +194,6 @@ export function useCampaignPersistence({ initialCampaigns }: UseCampaignPersiste
     createCampaign,
     updateCampaignStatus,
     deleteCampaign,
-    setCurrentCampaign,
+    setCurrentCampaign
   };
 }

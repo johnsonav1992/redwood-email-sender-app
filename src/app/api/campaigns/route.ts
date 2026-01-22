@@ -1,12 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
-import {
-  createCampaign,
-  getCampaignsByUser,
-  initializeSchema,
-} from '@/lib/db';
-import type { CreateCampaignInput, CampaignWithProgress } from '@/types/campaign';
+import { createCampaign, getCampaignsByUser, initializeSchema } from '@/lib/db';
+import type {
+  CreateCampaignInput,
+  CampaignWithProgress
+} from '@/types/campaign';
 
 interface ListResponse {
   campaigns: CampaignWithProgress[];
@@ -29,7 +28,9 @@ async function ensureSchema() {
   }
 }
 
-export async function GET(): Promise<NextResponse<ListResponse | ErrorResponse>> {
+export async function GET(): Promise<
+  NextResponse<ListResponse | ErrorResponse>
+> {
   const session = await getServerSession(authOptions);
 
   if (!session?.user?.email) {
@@ -42,7 +43,10 @@ export async function GET(): Promise<NextResponse<ListResponse | ErrorResponse>>
     return NextResponse.json({ campaigns });
   } catch (error) {
     console.error('Failed to fetch campaigns:', error);
-    return NextResponse.json({ error: 'Failed to fetch campaigns' }, { status: 500 });
+    return NextResponse.json(
+      { error: 'Failed to fetch campaigns' },
+      { status: 500 }
+    );
   }
 }
 
@@ -59,7 +63,15 @@ export async function POST(
     await ensureSchema();
 
     const body = await req.json();
-    const { name, subject, htmlBody, signature, batchSize, batchDelaySeconds, recipients } = body;
+    const {
+      name,
+      subject,
+      htmlBody,
+      signature,
+      batchSize,
+      batchDelaySeconds,
+      recipients
+    } = body;
 
     if (!subject || !htmlBody || !recipients || recipients.length === 0) {
       return NextResponse.json(
@@ -76,16 +88,19 @@ export async function POST(
       signature,
       batch_size: batchSize,
       batch_delay_seconds: batchDelaySeconds,
-      recipients,
+      recipients
     };
 
     const campaign = await createCampaign(input);
 
     return NextResponse.json({
-      campaign: { ...campaign, pending_count: recipients.length },
+      campaign: { ...campaign, pending_count: recipients.length }
     });
   } catch (error) {
     console.error('Failed to create campaign:', error);
-    return NextResponse.json({ error: 'Failed to create campaign' }, { status: 500 });
+    return NextResponse.json(
+      { error: 'Failed to create campaign' },
+      { status: 500 }
+    );
   }
 }

@@ -192,14 +192,25 @@ export default function RichTextEditor({
     if (!editor) return;
 
     const { href } = editor.getAttributes('image');
-    const url = window.prompt('Enter image link URL (leave empty to remove):', href || '');
+    const url = window.prompt(
+      'Enter image link URL (leave empty to remove):',
+      href || ''
+    );
 
     if (url === null) return;
 
     if (url === '') {
-      editor.chain().focus().updateAttributes('image', { href: null, target: null }).run();
+      editor
+        .chain()
+        .focus()
+        .updateAttributes('image', { href: null, target: null })
+        .run();
     } else {
-      editor.chain().focus().updateAttributes('image', { href: url, target: '_blank' }).run();
+      editor
+        .chain()
+        .focus()
+        .updateAttributes('image', { href: url, target: '_blank' })
+        .run();
     }
   }, [editor]);
 
@@ -236,7 +247,7 @@ export default function RichTextEditor({
   }
 
   return (
-    <div className="relative rich-text-editor-with-resize">
+    <div className="rich-text-editor-with-resize relative">
       <div
         className={cn(
           'overflow-hidden rounded-lg border-2 transition',
@@ -297,9 +308,30 @@ export default function RichTextEditor({
               stroke="currentColor"
               viewBox="0 0 24 24"
             >
-              <line x1="19" y1="4" x2="10" y2="4" strokeWidth={2} strokeLinecap="round" />
-              <line x1="14" y1="20" x2="5" y2="20" strokeWidth={2} strokeLinecap="round" />
-              <line x1="15" y1="4" x2="9" y2="20" strokeWidth={2} strokeLinecap="round" />
+              <line
+                x1="19"
+                y1="4"
+                x2="10"
+                y2="4"
+                strokeWidth={2}
+                strokeLinecap="round"
+              />
+              <line
+                x1="14"
+                y1="20"
+                x2="5"
+                y2="20"
+                strokeWidth={2}
+                strokeLinecap="round"
+              />
+              <line
+                x1="15"
+                y1="4"
+                x2="9"
+                y2="20"
+                strokeWidth={2}
+                strokeLinecap="round"
+              />
             </svg>
           </button>
           <button
@@ -330,7 +362,14 @@ export default function RichTextEditor({
                 strokeWidth={2}
                 d="M8 16c0 2.2 1.8 4 4 4s4-1.8 4-4c0-1.5-.8-2.8-2-3.5"
               />
-              <line x1="4" y1="12" x2="20" y2="12" strokeWidth={2} strokeLinecap="round" />
+              <line
+                x1="4"
+                y1="12"
+                x2="20"
+                y2="12"
+                strokeWidth={2}
+                strokeLinecap="round"
+              />
             </svg>
           </button>
           <div className="mx-1 h-5 w-px bg-gray-300" />
@@ -423,7 +462,11 @@ export default function RichTextEditor({
                 'flex cursor-pointer items-center gap-1 rounded p-1.5 text-sm transition-colors hover:bg-gray-200',
                 editor.getAttributes('image').href && 'bg-blue-100'
               )}
-              title={editor.getAttributes('image').href ? 'Edit image link' : 'Add link to image'}
+              title={
+                editor.getAttributes('image').href
+                  ? 'Edit image link'
+                  : 'Add link to image'
+              }
             >
               <svg
                 className="h-4 w-4"
@@ -462,7 +505,8 @@ export default function RichTextEditor({
       />
 
       <p className="mt-1.5 text-xs text-gray-500">
-        Drag & drop or paste images. Click an image to resize it with the corner handles or add a link.
+        Drag & drop or paste images. Click an image to resize it with the corner
+        handles or add a link.
       </p>
 
       <style jsx global>{`
@@ -507,44 +551,56 @@ export default function RichTextEditor({
         }
 
         /* Show handles when container is hovered or has selected state */
-        .rich-text-editor-with-resize [data-resize-container]:hover [data-resize-handle],
-        .rich-text-editor-with-resize [data-resize-container].ProseMirror-selectednode [data-resize-handle],
-        .rich-text-editor-with-resize [data-resize-state="resizing"] [data-resize-handle] {
+        .rich-text-editor-with-resize
+          [data-resize-container]:hover
+          [data-resize-handle],
+        .rich-text-editor-with-resize
+          [data-resize-container].ProseMirror-selectednode
+          [data-resize-handle],
+        .rich-text-editor-with-resize
+          [data-resize-state='resizing']
+          [data-resize-handle] {
           display: block;
         }
 
-        .rich-text-editor-with-resize [data-resize-handle="bottom-left"] {
+        .rich-text-editor-with-resize [data-resize-handle='bottom-left'] {
           bottom: -6px;
           left: -6px;
           cursor: sw-resize;
         }
 
-        .rich-text-editor-with-resize [data-resize-handle="bottom-right"] {
+        .rich-text-editor-with-resize [data-resize-handle='bottom-right'] {
           bottom: -6px;
           right: -6px;
           cursor: se-resize;
         }
 
-        .rich-text-editor-with-resize [data-resize-handle="top-left"] {
+        .rich-text-editor-with-resize [data-resize-handle='top-left'] {
           top: -6px;
           left: -6px;
           cursor: nw-resize;
         }
 
-        .rich-text-editor-with-resize [data-resize-handle="top-right"] {
+        .rich-text-editor-with-resize [data-resize-handle='top-right'] {
           top: -6px;
           right: -6px;
           cursor: ne-resize;
         }
 
         /* Border around image when selected */
-        .rich-text-editor-with-resize [data-resize-container]:hover [data-resize-wrapper],
-        .rich-text-editor-with-resize [data-resize-container].ProseMirror-selectednode [data-resize-wrapper] {
+        .rich-text-editor-with-resize
+          [data-resize-container]:hover
+          [data-resize-wrapper],
+        .rich-text-editor-with-resize
+          [data-resize-container].ProseMirror-selectednode
+          [data-resize-wrapper] {
           outline: 2px solid #3b82f6;
           outline-offset: -2px;
         }
 
-        .rich-text-editor-with-resize [data-resize-state="resizing"] [data-resize-wrapper] {
+        .rich-text-editor-with-resize
+          [data-resize-state='resizing']
+          [data-resize-wrapper] {
           outline: 2px solid #3b82f6;
           outline-offset: -2px;
         }

@@ -12,7 +12,12 @@ import type { QuotaInfo } from '@/lib/gmail';
 
 const NAV_ICONS: Record<string, React.ReactNode> = {
   compose: (
-    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <svg
+      className="h-5 w-5"
+      fill="none"
+      stroke="currentColor"
+      viewBox="0 0 24 24"
+    >
       <path
         strokeLinecap="round"
         strokeLinejoin="round"
@@ -22,7 +27,12 @@ const NAV_ICONS: Record<string, React.ReactNode> = {
     </svg>
   ),
   campaigns: (
-    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <svg
+      className="h-5 w-5"
+      fill="none"
+      stroke="currentColor"
+      viewBox="0 0 24 24"
+    >
       <path
         strokeLinecap="round"
         strokeLinejoin="round"
@@ -30,7 +40,7 @@ const NAV_ICONS: Record<string, React.ReactNode> = {
         d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
       />
     </svg>
-  ),
+  )
 };
 
 interface DashboardLayoutProps {
@@ -40,7 +50,7 @@ interface DashboardLayoutProps {
 
 export default function DashboardLayout({
   children,
-  initialQuota,
+  initialQuota
 }: DashboardLayoutProps) {
   const { data: session } = useSession();
   const pathname = usePathname();
@@ -102,8 +112,18 @@ export default function DashboardLayout({
           )}
           aria-label="Open menu"
         >
-          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+          <svg
+            className="h-6 w-6"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M4 6h16M4 12h16M4 18h16"
+            />
           </svg>
         </button>
       </header>
@@ -136,7 +156,18 @@ export default function DashboardLayout({
           sidebarOpen ? 'translate-x-0' : '-translate-x-full'
         )}
       >
-        <div className={cn('lg:hidden', 'flex', 'items-center', 'justify-between', 'h-16', 'px-4', 'border-b', 'border-gray-200')}>
+        <div
+          className={cn(
+            'lg:hidden',
+            'flex',
+            'items-center',
+            'justify-between',
+            'h-16',
+            'px-4',
+            'border-b',
+            'border-gray-200'
+          )}
+        >
           <Image
             src="/redwood-logo.png"
             alt="Redwood Financial"
@@ -156,13 +187,23 @@ export default function DashboardLayout({
             )}
             aria-label="Close menu"
           >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            <svg
+              className="h-6 w-6"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M6 18L18 6M6 6l12 12"
+              />
             </svg>
           </button>
         </div>
         <nav className={cn('flex-1', 'p-4', 'space-y-1')}>
-          {NAV_ITEMS.map((item) => (
+          {NAV_ITEMS.map(item => (
             <Link
               key={item.id}
               href={item.href}
@@ -182,7 +223,7 @@ export default function DashboardLayout({
                 'transition-colors',
                 'active:bg-gray-100',
                 activeNav === item.id
-                  ? 'bg-slate-100 text-slate-900 font-medium'
+                  ? 'bg-slate-100 font-medium text-slate-900'
                   : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
               )}
             >
@@ -190,7 +231,7 @@ export default function DashboardLayout({
               {item.label}
             </Link>
           ))}
-          <div className="lg:hidden pt-4">
+          <div className="pt-4 lg:hidden">
             <QuotaDisplay initialQuota={initialQuota} />
           </div>
         </nav>
@@ -220,12 +261,26 @@ export default function DashboardLayout({
               <img
                 src={session.user!.image!}
                 alt=""
-                className={cn('w-11', 'h-11', 'lg:w-10', 'lg:h-10', 'rounded-full', 'shrink-0')}
+                className={cn(
+                  'w-11',
+                  'h-11',
+                  'lg:w-10',
+                  'lg:h-10',
+                  'rounded-full',
+                  'shrink-0'
+                )}
                 onError={() => setAvatarError(true)}
               />
             )}
             <div className={cn('flex-1', 'min-w-0')}>
-              <p className={cn('text-sm', 'font-medium', 'text-gray-900', 'truncate')}>
+              <p
+                className={cn(
+                  'text-sm',
+                  'font-medium',
+                  'text-gray-900',
+                  'truncate'
+                )}
+              >
                 {session?.user?.name || 'User'}
               </p>
               <p className={cn('text-xs', 'text-gray-500', 'truncate')}>
@@ -274,8 +329,18 @@ export default function DashboardLayout({
       </aside>
       <div className={cn('flex', 'pt-16', 'lg:pt-20')}>
         <main className={cn('flex-1', 'lg:ml-64', 'p-4', 'sm:p-6', 'lg:p-8')}>
-          <h1 className={cn('text-xl', 'sm:text-2xl', 'font-semibold', 'text-gray-900', 'mb-4', 'sm:mb-6')}>
-            {NAV_ITEMS.find((item) => item.id === activeNav)?.label || 'Dashboard'}
+          <h1
+            className={cn(
+              'text-xl',
+              'sm:text-2xl',
+              'font-semibold',
+              'text-gray-900',
+              'mb-4',
+              'sm:mb-6'
+            )}
+          >
+            {NAV_ITEMS.find(item => item.id === activeNav)?.label ||
+              'Dashboard'}
           </h1>
           {children}
         </main>
