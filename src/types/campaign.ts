@@ -15,6 +15,7 @@ export interface Campaign {
   sent_count: number;
   failed_count: number;
   last_batch_at: string | null;
+  next_batch_at: string | null;
   created_at: string;
   updated_at: string;
 }

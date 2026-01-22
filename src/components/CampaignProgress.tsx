@@ -7,12 +7,25 @@ interface CampaignProgressProps {
   progress: Progress;
   isRunning: boolean;
   isConnected?: boolean;
+  nextBatchIn?: number | null;
+  batchSize?: number;
+}
+
+function formatCountdown(seconds: number): string {
+  const mins = Math.floor(seconds / 60);
+  const secs = seconds % 60;
+  if (mins > 0) {
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  }
+  return `${secs}s`;
 }
 
 export default function CampaignProgress({
   progress,
   isRunning,
   isConnected,
+  nextBatchIn,
+  batchSize = 30,
 }: CampaignProgressProps) {
   if (progress.total === 0) {
     return null;
@@ -75,6 +88,19 @@ export default function CampaignProgress({
           style={{ width: `${progressPercent}%` }}
         />
       </div>
+      {isRunning && nextBatchIn != null && nextBatchIn > 0 && remaining > 0 && (
+        <div className="mb-4 rounded-lg bg-white border border-slate-200 px-4 py-3">
+          <div className="flex items-center justify-between">
+            <div className="text-sm text-slate-600">
+              Next batch: <span className="font-medium text-slate-800">{Math.min(batchSize, remaining)} {Math.min(batchSize, remaining) === 1 ? 'email' : 'emails'}</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-slate-500">Sending in</span>
+              <span className="font-mono text-lg font-semibold text-redwood">{formatCountdown(nextBatchIn)}</span>
+            </div>
+          </div>
+        </div>
+      )}
       <div className="grid grid-cols-4 gap-3">
         <div className="rounded-lg bg-white border border-slate-200 p-3 text-center">
           <div className="text-xs font-medium text-slate-500 uppercase tracking-wide">

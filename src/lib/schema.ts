@@ -14,6 +14,7 @@ CREATE TABLE IF NOT EXISTS campaigns (
   sent_count INTEGER DEFAULT 0,
   failed_count INTEGER DEFAULT 0,
   last_batch_at TEXT,
+  next_batch_at TEXT,
   created_at TEXT NOT NULL,
   updated_at TEXT NOT NULL
 );

@@ -6,6 +6,7 @@ import { authOptions } from '@/lib/auth';
 import {
   createCampaign as dbCreateCampaign,
   updateCampaignStatus as dbUpdateCampaignStatus,
+  updateNextBatchAt,
   deleteCampaign as dbDeleteCampaign,
   getCampaignById,
   getCampaignsByUser,
@@ -188,6 +189,8 @@ export async function updateCampaignStatus(id: string, status: CampaignStatus) {
       } catch (qstashError) {
         console.error(`[Campaign] QStash trigger failed:`, qstashError);
       }
+    } else if (status === 'paused' || status === 'stopped') {
+      await updateNextBatchAt(id, null);
     }
 
     revalidatePath('/compose');

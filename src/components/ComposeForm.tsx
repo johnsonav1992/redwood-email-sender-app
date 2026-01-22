@@ -84,6 +84,7 @@ export default function ComposeForm({ initialCampaigns }: ComposeFormProps) {
     progress: streamProgress,
     isConnected,
     lastError,
+    nextBatchIn,
     isRunning,
     isPaused,
     startCampaign,
@@ -509,6 +510,8 @@ export default function ComposeForm({ initialCampaigns }: ComposeFormProps) {
             progress={progress}
             isRunning={isRunning}
             isConnected={isConnected}
+            nextBatchIn={nextBatchIn}
+            batchSize={batchSize}
           />
         )}
         {lastError && (

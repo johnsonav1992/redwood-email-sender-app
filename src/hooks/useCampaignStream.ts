@@ -12,6 +12,7 @@ interface StreamUpdate {
   type: 'update' | 'deleted';
   status?: CampaignStatus;
   progress?: CampaignProgress;
+  nextBatchAt?: string | null;
 }
 
 interface UseCampaignStreamProps {
@@ -25,14 +26,45 @@ export function useCampaignStream({ campaignId, onStatusChange }: UseCampaignStr
   const [isConnected, setIsConnected] = useState(false);
   const [lastError, setLastError] = useState<string | null>(null);
   const [shouldConnect, setShouldConnect] = useState(false);
+  const [nextBatchAt, setNextBatchAt] = useState<string | null>(null);
+  const [nextBatchIn, setNextBatchIn] = useState<number | null>(null);
 
   const eventSourceRef = useRef<EventSource | null>(null);
   const retryTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const countdownIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const shouldConnectRef = useRef(false);
 
   useEffect(() => {
     shouldConnectRef.current = shouldConnect;
   }, [shouldConnect]);
+
+  useEffect(() => {
+    if (!nextBatchAt || status !== 'running') {
+      setNextBatchIn(null);
+      if (countdownIntervalRef.current) {
+        clearInterval(countdownIntervalRef.current);
+        countdownIntervalRef.current = null;
+      }
+      return;
+    }
+
+    const updateCountdown = () => {
+      const targetTime = new Date(nextBatchAt).getTime();
+      const now = Date.now();
+      const secondsRemaining = Math.max(0, Math.floor((targetTime - now) / 1000));
+      setNextBatchIn(secondsRemaining > 0 ? secondsRemaining : null);
+    };
+
+    updateCountdown();
+    countdownIntervalRef.current = setInterval(updateCountdown, 1000);
+
+    return () => {
+      if (countdownIntervalRef.current) {
+        clearInterval(countdownIntervalRef.current);
+        countdownIntervalRef.current = null;
+      }
+    };
+  }, [nextBatchAt, status]);
 
   useEffect(() => {
     if (!shouldConnect || !campaignId) {
@@ -77,6 +109,9 @@ export function useCampaignStream({ campaignId, onStatusChange }: UseCampaignStr
           }
           if (data.progress) {
             setProgress(data.progress);
+          }
+          if (data.nextBatchAt !== undefined) {
+            setNextBatchAt(data.nextBatchAt);
           }
         } catch (error) {
           console.error('Failed to parse SSE message:', error);
@@ -167,6 +202,7 @@ export function useCampaignStream({ campaignId, onStatusChange }: UseCampaignStr
     progress,
     isConnected,
     lastError,
+    nextBatchIn,
     isRunning: status === 'running',
     isPaused: status === 'paused',
     isCompleted: status === 'completed',

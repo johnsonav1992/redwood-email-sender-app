@@ -211,10 +211,18 @@ export default function CampaignListPage({ initialCampaigns }: CampaignListPageP
               </div>
 
               <div className="flex flex-col items-end gap-2 ml-4">
+                {campaign.status === 'running' && (
+                  <button
+                    onClick={() => handleSelect(campaign)}
+                    className="text-sm w-20 py-2.5 rounded-lg bg-slate-700 text-white hover:bg-slate-800 active:bg-slate-900 cursor-pointer"
+                  >
+                    Monitor
+                  </button>
+                )}
                 {canResume && (
                   <button
                     onClick={() => handleSelect(campaign)}
-                    className="text-sm px-4 py-2.5 rounded-lg bg-slate-700 text-white hover:bg-slate-800 active:bg-slate-900 cursor-pointer"
+                    className="text-sm w-20 py-2.5 rounded-lg bg-slate-700 text-white hover:bg-slate-800 active:bg-slate-900 cursor-pointer"
                   >
                     Resume
                   </button>
@@ -222,15 +230,23 @@ export default function CampaignListPage({ initialCampaigns }: CampaignListPageP
                 {campaign.status === 'draft' && (
                   <button
                     onClick={() => handleSelect(campaign)}
-                    className="text-sm px-4 py-2.5 rounded-lg bg-slate-700 text-white hover:bg-slate-800 active:bg-slate-900 cursor-pointer"
+                    className="text-sm w-20 py-2.5 rounded-lg bg-slate-700 text-white hover:bg-slate-800 active:bg-slate-900 cursor-pointer"
                   >
                     Edit
+                  </button>
+                )}
+                {(campaign.status === 'completed' || campaign.status === 'stopped') && (
+                  <button
+                    onClick={() => handleSelect(campaign)}
+                    className="text-sm w-20 py-2.5 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 active:bg-gray-100 cursor-pointer"
+                  >
+                    View
                   </button>
                 )}
                 {canDelete && (
                   <button
                     onClick={() => setDeleteId(campaign.id)}
-                    className="text-sm px-4 py-2.5 rounded-lg border border-gray-300 text-gray-600 hover:bg-gray-50 active:bg-gray-100 cursor-pointer"
+                    className="text-sm w-20 py-2.5 rounded-lg border border-gray-300 text-gray-600 hover:bg-gray-50 active:bg-gray-100 cursor-pointer"
                   >
                     Delete
                   </button>

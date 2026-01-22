@@ -28,6 +28,7 @@ export async function GET(req: NextRequest, context: RouteContext) {
   let lastSent = -1;
   let lastFailed = -1;
   let lastPending = -1;
+  let lastNextBatchAt = '';
   let isClosed = false;
   let intervalId: ReturnType<typeof setInterval> | null = null;
 
@@ -81,17 +82,21 @@ export async function GET(req: NextRequest, context: RouteContext) {
           // Include 'sending' recipients in pending count for UI display
           const effectivePending = progress.pending + progress.sending;
 
+          const currentNextBatchAt = currentCampaign.next_batch_at || '';
+
           const hasChanged =
             currentCampaign.status !== lastStatus ||
             progress.sent !== lastSent ||
             progress.failed !== lastFailed ||
-            effectivePending !== lastPending;
+            effectivePending !== lastPending ||
+            currentNextBatchAt !== lastNextBatchAt;
 
           if (hasChanged) {
             lastStatus = currentCampaign.status;
             lastSent = progress.sent;
             lastFailed = progress.failed;
             lastPending = effectivePending;
+            lastNextBatchAt = currentNextBatchAt;
 
             // Get the next batch of pending recipients for display
             const nextBatchRecipients = currentCampaign.status === 'running' && effectivePending > 0
@@ -108,6 +113,7 @@ export async function GET(req: NextRequest, context: RouteContext) {
                 pending: effectivePending,
               },
               nextBatch: nextBatchRecipients.map(r => r.email),
+              nextBatchAt: currentCampaign.next_batch_at,
             };
 
             if (!safeEnqueue(encoder.encode(`data: ${JSON.stringify(data)}\n\n`))) {

@@ -9,6 +9,7 @@ import {
   updateCampaignStatus,
   updateCampaignCounts,
   updateLastBatchAt,
+  updateNextBatchAt,
   getCampaignProgress,
   getCampaignImages,
   getUserTokens,
@@ -129,7 +130,10 @@ async function handler(
       const isCompleted = newProgress.pending === 0;
       if (isCompleted) {
         await updateCampaignStatus(id, 'completed');
+        await updateNextBatchAt(id, null);
       } else {
+        const nextBatchTime = new Date(Date.now() + campaign.batch_delay_seconds * 1000).toISOString();
+        await updateNextBatchAt(id, nextBatchTime);
         await scheduleNextBatch(id, campaign.batch_delay_seconds);
       }
 
@@ -151,7 +155,10 @@ async function handler(
       const isCompleted = newProgress.pending === 0;
       if (isCompleted) {
         await updateCampaignStatus(id, 'completed');
+        await updateNextBatchAt(id, null);
       } else {
+        const nextBatchTime = new Date(Date.now() + campaign.batch_delay_seconds * 1000).toISOString();
+        await updateNextBatchAt(id, nextBatchTime);
         await scheduleNextBatch(id, campaign.batch_delay_seconds);
       }
 

@@ -53,6 +53,13 @@ export async function initializeSchema(): Promise<void> {
   } catch {
     // Column already exists
   }
+
+  // Migration: Add next_batch_at column if it doesn't exist
+  try {
+    await db.execute(`ALTER TABLE campaigns ADD COLUMN next_batch_at TEXT`);
+  } catch {
+    // Column already exists
+  }
 }
 
 // Campaign operations
@@ -123,6 +130,13 @@ export async function updateLastBatchAt(id: string): Promise<void> {
   await db.execute({
     sql: `UPDATE campaigns SET last_batch_at = ?, updated_at = ? WHERE id = ?`,
     args: [now(), now(), id],
+  });
+}
+
+export async function updateNextBatchAt(id: string, nextBatchAt: string | null): Promise<void> {
+  await db.execute({
+    sql: `UPDATE campaigns SET next_batch_at = ?, updated_at = ? WHERE id = ?`,
+    args: [nextBatchAt, now(), id],
   });
 }
 
