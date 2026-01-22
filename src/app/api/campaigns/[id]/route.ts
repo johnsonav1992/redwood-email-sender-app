@@ -15,6 +15,7 @@ import type { Campaign, Recipient, CampaignStatus } from '@/types/campaign';
 interface GetResponse {
   campaign: Campaign;
   recipients: Recipient[];
+  recipientsTotal: number;
   progress: {
     total: number;
     sent: number;
@@ -38,7 +39,7 @@ interface ErrorResponse {
 type RouteContext = { params: Promise<{ id: string }> };
 
 export async function GET(
-  _req: NextRequest,
+  req: NextRequest,
   context: RouteContext
 ): Promise<NextResponse<GetResponse | ErrorResponse>> {
   const session = await getServerSession(authOptions);
@@ -49,6 +50,12 @@ export async function GET(
 
   try {
     const { id } = await context.params;
+    const { searchParams } = new URL(req.url);
+
+    const status = searchParams.get('status') as 'all' | 'sent' | 'pending' | 'failed' | null;
+    const limit = parseInt(searchParams.get('limit') || '50', 10);
+    const offset = parseInt(searchParams.get('offset') || '0', 10);
+
     const campaign = await getCampaignById(id);
 
     if (!campaign) {
@@ -59,12 +66,17 @@ export async function GET(
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
-    const [recipients, progress] = await Promise.all([
-      getRecipientsByCampaign(id),
+    const [recipientsResult, progress] = await Promise.all([
+      getRecipientsByCampaign(id, { status: status || 'all', limit, offset }),
       getCampaignProgress(id),
     ]);
 
-    return NextResponse.json({ campaign, recipients, progress });
+    return NextResponse.json({
+      campaign,
+      recipients: recipientsResult.recipients,
+      recipientsTotal: recipientsResult.total,
+      progress,
+    });
   } catch (error) {
     console.error('Failed to fetch campaign:', error);
     return NextResponse.json({ error: 'Failed to fetch campaign' }, { status: 500 });

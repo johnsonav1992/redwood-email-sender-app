@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { STATUS_COLORS, STATUS_LABELS } from '@/lib/constants';
 import { useCampaignPersistence } from '@/hooks/useCampaignPersistence';
+import Tooltip from '@/components/Tooltip';
 import type { CampaignWithProgress } from '@/types/campaign';
 
 interface CampaignListPageProps {
@@ -124,7 +125,9 @@ export default function CampaignListPage({ initialCampaigns }: CampaignListPageP
           .trim()
           .slice(0, 120);
 
-        const emailsPerMinute = Math.round((campaign.batch_size / campaign.batch_delay_seconds) * 60);
+        const delayDisplay = campaign.batch_delay_seconds >= 60
+          ? `${Math.round(campaign.batch_delay_seconds / 60)}m`
+          : `${campaign.batch_delay_seconds}s`;
 
         return (
           <div
@@ -154,31 +157,39 @@ export default function CampaignListPage({ initialCampaigns }: CampaignListPageP
                 )}
 
                 <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-3 text-xs text-gray-500">
-                  <span className="flex items-center gap-1">
-                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
-                    </svg>
-                    {campaign.total_recipients} recipients
-                  </span>
-                  <span className="flex items-center gap-1">
-                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                    </svg>
-                    {emailsPerMinute}/min
-                  </span>
-                  <span className="flex items-center gap-1">
-                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                    </svg>
-                    {createdDate}
-                  </span>
-                  {campaign.status !== 'draft' && (
-                    <span className="flex items-center gap-1">
+                  <Tooltip content="Total recipients in this campaign">
+                    <span className="flex items-center gap-1 cursor-default">
                       <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
                       </svg>
-                      {updatedDate}
+                      {campaign.total_recipients} recipients
                     </span>
+                  </Tooltip>
+                  <Tooltip content="Batch size and delay between batches">
+                    <span className="flex items-center gap-1 cursor-default">
+                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                      </svg>
+                      {campaign.batch_size} / {delayDisplay}
+                    </span>
+                  </Tooltip>
+                  <Tooltip content="Campaign created">
+                    <span className="flex items-center gap-1 cursor-default">
+                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                      </svg>
+                      {createdDate}
+                    </span>
+                  </Tooltip>
+                  {campaign.status !== 'draft' && (
+                    <Tooltip content="Last activity">
+                      <span className="flex items-center gap-1 cursor-default">
+                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        {updatedDate}
+                      </span>
+                    </Tooltip>
                   )}
                 </div>
 
@@ -198,12 +209,18 @@ export default function CampaignListPage({ initialCampaigns }: CampaignListPageP
                       />
                     </div>
                     <div className="flex items-center gap-4 mt-2 text-xs">
-                      <span className="text-green-600">{campaign.sent_count} sent</span>
+                      <Tooltip content="Emails successfully delivered">
+                        <span className="text-green-600 cursor-default">{campaign.sent_count} sent</span>
+                      </Tooltip>
                       {campaign.pending_count > 0 && (
-                        <span className="text-gray-500">{campaign.pending_count} pending</span>
+                        <Tooltip content="Emails waiting to be sent">
+                          <span className="text-gray-500 cursor-default">{campaign.pending_count} pending</span>
+                        </Tooltip>
                       )}
                       {campaign.failed_count > 0 && (
-                        <span className="text-red-500">{campaign.failed_count} failed</span>
+                        <Tooltip content="Emails that failed to send">
+                          <span className="text-red-500 cursor-default">{campaign.failed_count} failed</span>
+                        </Tooltip>
                       )}
                     </div>
                   </div>

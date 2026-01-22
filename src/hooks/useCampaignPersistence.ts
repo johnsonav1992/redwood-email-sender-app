@@ -15,6 +15,7 @@ import type {
 interface CampaignDetail {
   campaign: Campaign;
   recipients: Recipient[];
+  recipientsTotal: number;
   progress: {
     total: number;
     sent: number;

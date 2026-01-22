@@ -16,6 +16,7 @@ import CampaignProgress from './CampaignProgress';
 import CampaignControls from './CampaignControls';
 import AlertModal from './AlertModal';
 import ManualEmailEntry from './ManualEmailEntry';
+import RecipientStatusList from './RecipientStatusList';
 import type {
   ParsedEmailResult,
   CampaignWithProgress,
@@ -464,7 +465,14 @@ export default function ComposeForm({ initialCampaigns }: ComposeFormProps) {
             <label className="mb-2 block text-sm font-semibold text-gray-700">
               Recipients
             </label>
-            {uploadResult ? (
+            {!isDraft && currentCampaign && campaignId ? (
+              <RecipientStatusList
+                campaignId={campaignId}
+                initialRecipients={currentCampaign.recipients}
+                initialTotal={currentCampaign.recipientsTotal}
+                progress={currentCampaign.progress}
+              />
+            ) : uploadResult ? (
               <EmailValidator
                 result={uploadResult}
                 onConfirm={handleConfirmEmails}

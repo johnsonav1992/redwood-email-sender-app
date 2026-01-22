@@ -207,13 +207,51 @@ export async function deleteCampaign(id: string): Promise<void> {
 }
 
 // Recipient operations
-export async function getRecipientsByCampaign(campaignId: string): Promise<Recipient[]> {
+export async function getRecipientsByCampaign(
+  campaignId: string,
+  options?: {
+    status?: 'all' | 'sent' | 'pending' | 'failed';
+    limit?: number;
+    offset?: number;
+  }
+): Promise<{ recipients: Recipient[]; total: number }> {
+  const { status = 'all', limit = 50, offset = 0 } = options || {};
+
+  let whereClause = 'campaign_id = ?';
+  const args: (string | number)[] = [campaignId];
+
+  if (status === 'sent') {
+    whereClause += " AND status = 'sent'";
+  } else if (status === 'pending') {
+    whereClause += " AND status IN ('pending', 'sending')";
+  } else if (status === 'failed') {
+    whereClause += " AND status = 'failed'";
+  }
+
+  const countResult = await db.execute({
+    sql: `SELECT COUNT(*) as count FROM recipients WHERE ${whereClause}`,
+    args,
+  });
+  const total = Number((countResult.rows[0] as Record<string, number>).count);
+
   const result = await db.execute({
-    sql: `SELECT * FROM recipients WHERE campaign_id = ? ORDER BY id`,
-    args: [campaignId],
+    sql: `SELECT * FROM recipients WHERE ${whereClause} ORDER BY
+      CASE status
+        WHEN 'sent' THEN 1
+        WHEN 'failed' THEN 2
+        WHEN 'sending' THEN 3
+        WHEN 'pending' THEN 4
+      END,
+      sent_at DESC NULLS LAST,
+      id
+      LIMIT ? OFFSET ?`,
+    args: [...args, limit, offset],
   });
 
-  return result.rows as unknown as Recipient[];
+  return {
+    recipients: result.rows as unknown as Recipient[],
+    total,
+  };
 }
 
 export async function getPendingRecipients(
