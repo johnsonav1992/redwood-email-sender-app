@@ -50,7 +50,8 @@ export default function ComposeForm({ initialCampaigns }: ComposeFormProps) {
     isOpen: boolean;
     title: string;
     message: string;
-    type: 'success' | 'error' | 'info';
+    type: 'success' | 'error' | 'info' | 'warning';
+    onConfirm?: () => void;
   }>({
     isOpen: false,
     title: '',
@@ -228,9 +229,55 @@ export default function ComposeForm({ initialCampaigns }: ComposeFormProps) {
     }
   };
 
+  const proceedWithCampaign = async () => {
+    closeAlert();
+
+    if (campaignId && status === 'draft') {
+      startCampaign(campaignId);
+      return;
+    }
+
+    const campaign = await createCampaign({
+      name: subject.substring(0, 50),
+      subject,
+      htmlBody,
+      signature: signature || undefined,
+      batchSize,
+      batchDelaySeconds,
+      recipients: recipientList
+    });
+
+    if (campaign) {
+      campaignIdRef.current = campaign.id;
+      setCampaignId(campaign.id);
+      setInitialStatus('draft');
+      await fetchCampaign(campaign.id);
+      startCampaign(campaign.id);
+    }
+  };
+
   const handleCreateAndStart = async () => {
     if (!subject || !htmlBody || recipientList.length === 0) {
       showAlert('Missing Information', 'Please fill in subject, body, and upload recipients', 'error');
+      return;
+    }
+
+    const invalidCount = confirmedResult?.invalid?.length || 0;
+    const duplicateCount = confirmedResult?.duplicates?.length || 0;
+    const excludedCount = invalidCount + duplicateCount;
+
+    if (excludedCount > 0) {
+      const parts = [];
+      if (invalidCount > 0) parts.push(`${invalidCount} invalid`);
+      if (duplicateCount > 0) parts.push(`${duplicateCount} duplicate`);
+
+      setAlertModal({
+        isOpen: true,
+        title: 'Some Emails Excluded',
+        message: `${parts.join(' and ')} email${excludedCount > 1 ? 's' : ''} will not be sent. Only ${recipientList.length} valid recipient${recipientList.length !== 1 ? 's' : ''} will receive this email.`,
+        type: 'warning',
+        onConfirm: proceedWithCampaign
+      });
       return;
     }
 
@@ -275,6 +322,10 @@ export default function ComposeForm({ initialCampaigns }: ComposeFormProps) {
   const handleClearRecipients = () => {
     setRecipientList([]);
     setConfirmedResult(null);
+  };
+
+  const handleRemoveEmail = (emailToRemove: string) => {
+    setRecipientList(prev => prev.filter(email => email !== emailToRemove));
   };
 
   const handleSendTest = async () => {
@@ -437,6 +488,7 @@ export default function ComposeForm({ initialCampaigns }: ComposeFormProps) {
                     invalidEmails={confirmedResult?.invalid}
                     duplicates={confirmedResult?.duplicates}
                     onClear={handleClearRecipients}
+                    onRemoveEmail={handleRemoveEmail}
                     disabled={isRunning || isPaused}
                   />
                 )}
@@ -486,9 +538,12 @@ export default function ComposeForm({ initialCampaigns }: ComposeFormProps) {
       <AlertModal
         isOpen={alertModal.isOpen}
         onClose={closeAlert}
+        onConfirm={alertModal.onConfirm}
         title={alertModal.title}
         message={alertModal.message}
         type={alertModal.type}
+        confirmLabel="Send Anyway"
+        cancelLabel="Review"
       />
     </div>
   );

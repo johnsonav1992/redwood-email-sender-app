@@ -5,17 +5,23 @@ import { cn } from '@/lib/utils';
 interface AlertModalProps {
   isOpen: boolean;
   onClose: () => void;
+  onConfirm?: () => void;
   title: string;
   message: string;
-  type?: 'success' | 'error' | 'info';
+  type?: 'success' | 'error' | 'info' | 'warning';
+  confirmLabel?: string;
+  cancelLabel?: string;
 }
 
 export default function AlertModal({
   isOpen,
   onClose,
+  onConfirm,
   title,
   message,
-  type = 'info'
+  type = 'info',
+  confirmLabel = 'Continue',
+  cancelLabel = 'Cancel'
 }: AlertModalProps) {
   if (!isOpen) return null;
 
@@ -37,6 +43,12 @@ export default function AlertModal({
       border: 'border-blue-200',
       title: 'text-blue-800',
       button: 'bg-blue-600 hover:bg-blue-700'
+    },
+    warning: {
+      bg: 'bg-yellow-50',
+      border: 'border-yellow-200',
+      title: 'text-yellow-800',
+      button: 'bg-yellow-600 hover:bg-yellow-700'
     }
   };
 
@@ -60,16 +72,36 @@ export default function AlertModal({
             {message}
           </p>
         </div>
-        <div className="flex justify-end">
-          <button
-            onClick={onClose}
-            className={cn(
-              'px-6 py-2 text-sm font-medium text-white rounded transition cursor-pointer',
-              color.button
-            )}
-          >
-            OK
-          </button>
+        <div className="flex justify-end gap-3">
+          {onConfirm ? (
+            <>
+              <button
+                onClick={onClose}
+                className="px-6 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded transition cursor-pointer"
+              >
+                {cancelLabel}
+              </button>
+              <button
+                onClick={onConfirm}
+                className={cn(
+                  'px-6 py-2 text-sm font-medium text-white rounded transition cursor-pointer',
+                  color.button
+                )}
+              >
+                {confirmLabel}
+              </button>
+            </>
+          ) : (
+            <button
+              onClick={onClose}
+              className={cn(
+                'px-6 py-2 text-sm font-medium text-white rounded transition cursor-pointer',
+                color.button
+              )}
+            >
+              OK
+            </button>
+          )}
         </div>
       </div>
     </div>
