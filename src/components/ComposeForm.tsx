@@ -15,6 +15,7 @@ import RichTextEditor from './RichTextEditor';
 import CampaignProgress from './CampaignProgress';
 import CampaignControls from './CampaignControls';
 import AlertModal from './AlertModal';
+import ManualEmailEntry from './ManualEmailEntry';
 import type {
   ParsedEmailResult,
   CampaignWithProgress,
@@ -66,8 +67,7 @@ export default function ComposeForm({ initialCampaigns }: ComposeFormProps) {
     fetchCampaigns,
     fetchCampaign,
     createCampaign,
-    updateCampaignStatus,
-    sendNextBatch
+    updateCampaignStatus
   } = useCampaignPersistence({ initialCampaigns });
 
   const handleStatusChange = useCallback(
@@ -79,13 +79,6 @@ export default function ComposeForm({ initialCampaigns }: ComposeFormProps) {
     [updateCampaignStatus]
   );
 
-  const handleSendBatch = useCallback(
-    async (id: string) => {
-      await sendNextBatch(id);
-    },
-    [sendNextBatch]
-  );
-
   const {
     status,
     progress: streamProgress,
@@ -93,8 +86,6 @@ export default function ComposeForm({ initialCampaigns }: ComposeFormProps) {
     lastError,
     isRunning,
     isPaused,
-    nextBatchIn,
-    nextBatchEmails,
     startCampaign,
     pauseCampaign,
     resumeCampaign,
@@ -103,9 +94,7 @@ export default function ComposeForm({ initialCampaigns }: ComposeFormProps) {
     setInitialProgress
   } = useCampaignStream({
     campaignId,
-    batchDelaySeconds,
-    onStatusChange: handleStatusChange,
-    onSendBatch: handleSendBatch
+    onStatusChange: handleStatusChange
   });
 
   useEffect(() => {
@@ -328,6 +317,11 @@ export default function ComposeForm({ initialCampaigns }: ComposeFormProps) {
     setRecipientList(prev => prev.filter(email => email !== emailToRemove));
   };
 
+  const handleAddEmail = (email: string): boolean => {
+    setRecipientList(prev => [...prev, email]);
+    return true;
+  };
+
   const handleSendTest = async () => {
     if (!subject.trim() || !htmlBody.trim()) return;
 
@@ -492,6 +486,11 @@ export default function ComposeForm({ initialCampaigns }: ComposeFormProps) {
                     disabled={isRunning || isPaused}
                   />
                 )}
+                <ManualEmailEntry
+                  onAddEmail={handleAddEmail}
+                  existingEmails={recipientList}
+                  disabled={isRunning || isPaused}
+                />
               </>
             )}
           </div>
@@ -510,9 +509,6 @@ export default function ComposeForm({ initialCampaigns }: ComposeFormProps) {
             progress={progress}
             isRunning={isRunning}
             isConnected={isConnected}
-            nextBatchIn={nextBatchIn}
-            nextBatchEmails={nextBatchEmails}
-            batchSize={batchSize}
           />
         )}
         {lastError && (

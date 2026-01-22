@@ -13,6 +13,7 @@ import {
   getTodaySentCount,
 } from '@/lib/db';
 import { getGmailClient, getQuotaInfo, type QuotaInfo } from '@/lib/gmail';
+import { triggerImmediateBatch } from '@/lib/qstash';
 import type { CampaignStatus, CampaignWithProgress } from '@/types/campaign';
 
 let schemaInitialized = false;
@@ -178,6 +179,17 @@ export async function updateCampaignStatus(id: string, status: CampaignStatus) {
     }
 
     await dbUpdateCampaignStatus(id, status);
+
+    if (status === 'running') {
+      console.log(`[Campaign] Starting campaign ${id}, triggering QStash...`);
+      try {
+        const messageId = await triggerImmediateBatch(id);
+        console.log(`[Campaign] QStash triggered, messageId: ${messageId}`);
+      } catch (qstashError) {
+        console.error(`[Campaign] QStash trigger failed:`, qstashError);
+      }
+    }
+
     revalidatePath('/compose');
     revalidatePath('/campaigns');
     return { success: true };

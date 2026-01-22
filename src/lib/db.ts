@@ -46,6 +46,13 @@ export async function initializeSchema(): Promise<void> {
   for (const statement of statements) {
     await db.execute(statement);
   }
+
+  // Migration: Add last_batch_at column if it doesn't exist
+  try {
+    await db.execute(`ALTER TABLE campaigns ADD COLUMN last_batch_at TEXT`);
+  } catch {
+    // Column already exists
+  }
 }
 
 // Campaign operations
@@ -109,6 +116,13 @@ export async function updateCampaignStatus(id: string, status: CampaignStatus): 
   await db.execute({
     sql: `UPDATE campaigns SET status = ?, updated_at = ? WHERE id = ?`,
     args: [status, now(), id],
+  });
+}
+
+export async function updateLastBatchAt(id: string): Promise<void> {
+  await db.execute({
+    sql: `UPDATE campaigns SET last_batch_at = ?, updated_at = ? WHERE id = ?`,
+    args: [now(), now(), id],
   });
 }
 

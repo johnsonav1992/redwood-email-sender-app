@@ -13,6 +13,7 @@ CREATE TABLE IF NOT EXISTS campaigns (
   total_recipients INTEGER DEFAULT 0,
   sent_count INTEGER DEFAULT 0,
   failed_count INTEGER DEFAULT 0,
+  last_batch_at TEXT,
   created_at TEXT NOT NULL,
   updated_at TEXT NOT NULL
 );

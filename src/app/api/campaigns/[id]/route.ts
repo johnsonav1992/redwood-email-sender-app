@@ -9,6 +9,7 @@ import {
   deleteCampaign,
   updateCampaignDraft,
 } from '@/lib/db';
+import { triggerImmediateBatch } from '@/lib/qstash';
 import type { Campaign, Recipient, CampaignStatus } from '@/types/campaign';
 
 interface GetResponse {
@@ -121,6 +122,16 @@ export async function PATCH(
       }
 
       await updateCampaignStatus(id, status);
+
+      if (status === 'running') {
+        console.log(`[Campaign] Starting campaign ${id}, triggering QStash...`);
+        try {
+          const messageId = await triggerImmediateBatch(id);
+          console.log(`[Campaign] QStash triggered, messageId: ${messageId}`);
+        } catch (qstashError) {
+          console.error(`[Campaign] QStash trigger failed:`, qstashError);
+        }
+      }
     }
 
     if (campaign.status === 'draft' && (name !== undefined || subject !== undefined || emailBody !== undefined || signature !== undefined || batch_size !== undefined || batch_delay_seconds !== undefined || recipients !== undefined)) {

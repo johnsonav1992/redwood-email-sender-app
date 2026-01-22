@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/auth';
+import { verifySignatureAppRouter } from '@upstash/qstash/nextjs';
 import { getGmailClient, sendBccEmail, getUserEmail, getQuotaInfo } from '@/lib/gmail';
 import {
   getCampaignById,
@@ -9,78 +8,55 @@ import {
   markRecipientsAsFailed,
   updateCampaignStatus,
   updateCampaignCounts,
+  updateLastBatchAt,
   getCampaignProgress,
   getCampaignImages,
+  getUserTokens,
   getTodaySentCount,
   recordSentEmail,
 } from '@/lib/db';
-
-interface SendBatchResponse {
-  success: true;
-  batchNumber: number;
-  sent: number;
-  failed: number;
-  remaining: number;
-  completed: boolean;
-  quotaExhausted?: boolean;
-}
-
-interface ErrorResponse {
-  success: false;
-  error: string;
-  quotaExhausted?: boolean;
-}
+import { scheduleNextBatch } from '@/lib/qstash';
 
 type RouteContext = { params: Promise<{ id: string }> };
 
-export async function POST(
-  _req: NextRequest,
+async function handler(
+  req: NextRequest,
   context: RouteContext
-): Promise<NextResponse<SendBatchResponse | ErrorResponse>> {
-  const session = await getServerSession(authOptions);
+): Promise<NextResponse> {
+  const { id } = await context.params;
 
-  if (!session?.accessToken || !session?.refreshToken || !session?.user?.email) {
-    return NextResponse.json(
-      { success: false, error: 'Unauthorized' },
-      { status: 401 }
-    );
+  const campaign = await getCampaignById(id);
+
+  if (!campaign) {
+    return NextResponse.json({ error: 'Campaign not found' }, { status: 404 });
   }
 
+  if (campaign.status !== 'running') {
+    return NextResponse.json({
+      success: true,
+      skipped: true,
+      reason: `Campaign is ${campaign.status}`,
+    });
+  }
+
+  const tokens = await getUserTokens(campaign.user_email);
+  if (!tokens) {
+    await updateCampaignStatus(id, 'paused');
+    return NextResponse.json({
+      success: false,
+      error: 'No valid tokens found - campaign paused',
+    });
+  }
+
+  const gmail = getGmailClient(tokens.accessToken, tokens.refreshToken);
+  const isWorkspace = !!tokens.hostedDomain;
+
   try {
-    const { id } = await context.params;
-    const campaign = await getCampaignById(id);
-
-    if (!campaign) {
-      return NextResponse.json(
-        { success: false, error: 'Campaign not found' },
-        { status: 404 }
-      );
-    }
-
-    if (campaign.user_email !== session.user.email) {
-      return NextResponse.json(
-        { success: false, error: 'Forbidden' },
-        { status: 403 }
-      );
-    }
-
-    if (campaign.status !== 'running') {
-      return NextResponse.json(
-        { success: false, error: `Campaign is not running (status: ${campaign.status})` },
-        { status: 400 }
-      );
-    }
-
-    const gmail = getGmailClient(session.accessToken, session.refreshToken);
-    const isWorkspace = !!session.hostedDomain;
-
-    // Get both Gmail API count and DB count for accurate quota checking
     const [gmailQuota, dbSentCount] = await Promise.all([
       getQuotaInfo(gmail, isWorkspace),
-      getTodaySentCount(session.user.email),
+      getTodaySentCount(campaign.user_email),
     ]);
 
-    // Use the higher count to be conservative (DB is more accurate for BCC emails)
     const sentToday = Math.max(gmailQuota.sentToday, dbSentCount);
     const limit = isWorkspace ? 1500 : 400;
     const remaining = Math.max(0, limit - sentToday);
@@ -89,42 +65,32 @@ export async function POST(
       await updateCampaignStatus(id, 'paused');
       return NextResponse.json({
         success: false,
-        error: `Daily quota exhausted. ${remaining} emails remaining. Campaign paused.`,
+        error: 'Quota exhausted - campaign paused',
         quotaExhausted: true,
       });
     }
 
-    // Atomically claim recipients to prevent race conditions
     const claimedRecipients = await claimPendingRecipients(id, campaign.batch_size);
 
     if (claimedRecipients.length === 0) {
-      // Check if there are any pending recipients left
       const progress = await getCampaignProgress(id);
       if (progress.pending === 0 && progress.sending === 0) {
         await updateCampaignStatus(id, 'completed');
         return NextResponse.json({
           success: true,
-          batchNumber: 0,
-          sent: 0,
-          failed: 0,
-          remaining: 0,
           completed: true,
+          message: 'Campaign completed',
         });
       }
-      // Another process is handling recipients, or they're all claimed
       return NextResponse.json({
         success: true,
-        batchNumber: 0,
-        sent: 0,
-        failed: 0,
-        remaining: progress.pending,
-        completed: false,
+        skipped: true,
+        reason: 'No recipients to process (another batch may be in progress)',
       });
     }
 
     const progress = await getCampaignProgress(id);
     const batchNumber = Math.floor(progress.sent / campaign.batch_size) + 1;
-
     const bccEmails = claimedRecipients.map((r) => r.email);
     const recipientIds = claimedRecipients.map((r) => r.id);
 
@@ -151,10 +117,11 @@ export async function POST(
 
       await markRecipientsAsSent(recipientIds, batchNumber);
 
-      // Record each sent email for quota tracking (persists even if campaign is deleted)
       await Promise.all(
         bccEmails.map(email => recordSentEmail(campaign.user_email, email, id))
       );
+
+      await updateLastBatchAt(id);
 
       const newProgress = await getCampaignProgress(id);
       await updateCampaignCounts(id, newProgress.sent, newProgress.failed);
@@ -162,20 +129,20 @@ export async function POST(
       const isCompleted = newProgress.pending === 0;
       if (isCompleted) {
         await updateCampaignStatus(id, 'completed');
+      } else {
+        await scheduleNextBatch(id, campaign.batch_delay_seconds);
       }
 
       return NextResponse.json({
         success: true,
         batchNumber,
         sent: claimedRecipients.length,
-        failed: 0,
         remaining: newProgress.pending,
         completed: isCompleted,
+        nextBatchScheduled: !isCompleted,
       });
     } catch (sendError) {
-      const errorMessage =
-        sendError instanceof Error ? sendError.message : 'Unknown send error';
-
+      const errorMessage = sendError instanceof Error ? sendError.message : 'Unknown send error';
       await markRecipientsAsFailed(recipientIds, errorMessage, batchNumber);
 
       const newProgress = await getCampaignProgress(id);
@@ -184,6 +151,8 @@ export async function POST(
       const isCompleted = newProgress.pending === 0;
       if (isCompleted) {
         await updateCampaignStatus(id, 'completed');
+      } else {
+        await scheduleNextBatch(id, campaign.batch_delay_seconds);
       }
 
       return NextResponse.json({
@@ -191,15 +160,19 @@ export async function POST(
         batchNumber,
         sent: 0,
         failed: claimedRecipients.length,
+        error: errorMessage,
         remaining: newProgress.pending,
         completed: isCompleted,
+        nextBatchScheduled: !isCompleted,
       });
     }
   } catch (error) {
-    console.error('Send batch error:', error);
+    console.error('Process batch error:', error);
     return NextResponse.json(
-      { success: false, error: 'Failed to send batch' },
+      { success: false, error: 'Failed to process batch' },
       { status: 500 }
     );
   }
 }
+
+export const POST = verifySignatureAppRouter(handler);

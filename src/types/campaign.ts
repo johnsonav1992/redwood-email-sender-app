@@ -14,6 +14,7 @@ export interface Campaign {
   total_recipients: number;
   sent_count: number;
   failed_count: number;
+  last_batch_at: string | null;
   created_at: string;
   updated_at: string;
 }

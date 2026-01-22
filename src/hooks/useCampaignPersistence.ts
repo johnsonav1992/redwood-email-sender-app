@@ -23,17 +23,6 @@ interface CampaignDetail {
   };
 }
 
-interface SendBatchResult {
-  success: boolean;
-  batchNumber: number;
-  sent: number;
-  failed: number;
-  remaining: number;
-  completed: boolean;
-  quotaExhausted?: boolean;
-  error?: string;
-}
-
 interface UseCampaignPersistenceOptions {
   initialCampaigns?: CampaignWithProgress[];
 }
@@ -176,63 +165,6 @@ export function useCampaignPersistence({ initialCampaigns }: UseCampaignPersiste
     }
   }, [currentCampaign]);
 
-  const sendNextBatch = useCallback(async (campaignId: string): Promise<SendBatchResult> => {
-    try {
-      const response = await fetch(`/api/campaigns/${campaignId}/send-next-batch`, {
-        method: 'POST',
-      });
-
-      const result = await response.json();
-
-      if (!response.ok && !result.quotaExhausted) {
-        throw new Error(result.error || 'Failed to send batch');
-      }
-
-      if (currentCampaign?.campaign.id === campaignId) {
-        setCurrentCampaign((prev) => {
-          if (!prev) return null;
-          return {
-            ...prev,
-            progress: {
-              ...prev.progress,
-              sent: prev.progress.sent + (result.sent || 0),
-              failed: prev.progress.failed + (result.failed || 0),
-              pending: result.remaining ?? prev.progress.pending,
-            },
-            campaign: {
-              ...prev.campaign,
-              sent_count: prev.campaign.sent_count + (result.sent || 0),
-              failed_count: prev.campaign.failed_count + (result.failed || 0),
-              status: result.completed ? 'completed' : result.quotaExhausted ? 'paused' : prev.campaign.status,
-            },
-          };
-        });
-      }
-
-      return {
-        success: result.success ?? false,
-        batchNumber: result.batchNumber ?? 0,
-        sent: result.sent ?? 0,
-        failed: result.failed ?? 0,
-        remaining: result.remaining ?? 0,
-        completed: result.completed ?? false,
-        quotaExhausted: result.quotaExhausted,
-        error: result.error,
-      };
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Unknown error';
-      return {
-        success: false,
-        batchNumber: 0,
-        sent: 0,
-        failed: 0,
-        remaining: 0,
-        completed: false,
-        error: errorMessage,
-      };
-    }
-  }, [currentCampaign]);
-
   return {
     campaigns,
     currentCampaign,
@@ -243,7 +175,6 @@ export function useCampaignPersistence({ initialCampaigns }: UseCampaignPersiste
     createCampaign,
     updateCampaignStatus,
     deleteCampaign,
-    sendNextBatch,
     setCurrentCampaign,
   };
 }

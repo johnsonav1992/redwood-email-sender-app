@@ -24,6 +24,7 @@
     "@tiptap/pm": "^3.15.3",
     "@tiptap/react": "^3.15.3",
     "@tiptap/starter-kit": "^3.15.3",
+    "@upstash/qstash": "^2.8.4",
     "clsx": "^2.1.1",
     "exceljs": "^4.4.0",
     "googleapis": "^170.0.0",
