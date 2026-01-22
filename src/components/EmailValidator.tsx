@@ -28,7 +28,7 @@ export default function EmailValidator({
         <h3 className="font-medium text-gray-900">Email Validation Results</h3>
         <button
           onClick={onCancel}
-          className="text-gray-400 hover:text-gray-600"
+          className="cursor-pointer text-gray-400 hover:text-gray-600"
         >
           <svg
             className="h-5 w-5"
@@ -146,7 +146,7 @@ export default function EmailValidator({
           className={cn(
             'flex-1 rounded-lg px-4 py-2 font-medium transition-colors',
             result.valid.length > 0
-              ? 'bg-blue-600 text-white hover:bg-blue-700'
+              ? 'cursor-pointer bg-blue-600 text-white hover:bg-blue-700'
               : 'cursor-not-allowed bg-gray-200 text-gray-500'
           )}
         >
@@ -154,7 +154,7 @@ export default function EmailValidator({
         </button>
         <button
           onClick={onCancel}
-          className="rounded-lg border border-gray-300 px-4 py-2 font-medium text-gray-700 hover:bg-gray-50"
+          className="cursor-pointer rounded-lg border border-gray-300 px-4 py-2 font-medium text-gray-700 hover:bg-gray-50"
         >
           Cancel
         </button>

@@ -164,7 +164,11 @@ export default function ComposeForm({ initialCampaigns }: ComposeFormProps) {
         setSubject(campaign.subject);
         setHtmlBody(campaign.body);
         setSignature(campaign.signature || '');
-        fetchCampaign(campaign.id);
+        fetchCampaign(campaign.id).then(data => {
+          if (data && campaign.status === 'draft') {
+            setRecipientList(data.recipients.map(r => r.email));
+          }
+        });
         setInitialized(true);
       }
     } else if (!editId) {
@@ -282,11 +286,32 @@ export default function ComposeForm({ initialCampaigns }: ComposeFormProps) {
     }
   };
 
+  const saveDraftAndStart = async (id: string) => {
+    const response = await fetch(`/api/campaigns/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name: subject.substring(0, 50) || 'Untitled',
+        subject,
+        body: htmlBody,
+        signature: signature || undefined,
+        batch_size: batchSize,
+        batch_delay_seconds: batchDelaySeconds,
+        recipients: recipientList
+      })
+    });
+
+    if (response.ok) {
+      await fetchCampaign(id);
+      startCampaign(id);
+    }
+  };
+
   const proceedWithCampaign = async () => {
     closeAlert();
 
     if (campaignId && status === 'draft') {
-      startCampaign(campaignId);
+      await saveDraftAndStart(campaignId);
       return;
     }
 
@@ -339,7 +364,7 @@ export default function ComposeForm({ initialCampaigns }: ComposeFormProps) {
     }
 
     if (campaignId && status === 'draft') {
-      startCampaign(campaignId);
+      await saveDraftAndStart(campaignId);
       return;
     }
 
@@ -424,12 +449,19 @@ export default function ComposeForm({ initialCampaigns }: ComposeFormProps) {
   const progress =
     streamProgress.total > 0
       ? streamProgress
-      : currentCampaign?.progress || {
-          total: recipientList.length,
-          sent: 0,
-          failed: 0,
-          pending: recipientList.length
-        };
+      : status === 'draft'
+        ? {
+            total: recipientList.length,
+            sent: 0,
+            failed: 0,
+            pending: recipientList.length
+          }
+        : currentCampaign?.progress || {
+            total: recipientList.length,
+            sent: 0,
+            failed: 0,
+            pending: recipientList.length
+          };
   const isDraft = status === 'draft';
   const hasAnyContent =
     subject.trim() !== '' || htmlBody.trim() !== '' || recipientList.length > 0;
@@ -539,13 +571,21 @@ export default function ComposeForm({ initialCampaigns }: ComposeFormProps) {
             <label className="mb-2 block text-sm font-semibold text-gray-700">
               Recipients
             </label>
-            {!isDraft && currentCampaign && campaignId ? (
+            {(status === 'completed' || status === 'stopped') &&
+            currentCampaign &&
+            campaignId ? (
               <RecipientStatusList
                 campaignId={campaignId}
                 initialRecipients={currentCampaign.recipients}
                 initialTotal={currentCampaign.recipientsTotal}
-                progress={currentCampaign.progress}
+                progress={progress}
               />
+            ) : (isRunning || isPaused) && campaignId ? (
+              <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 text-center text-sm text-slate-600">
+                {progress.total} recipients • {progress.sent} sent •{' '}
+                {progress.pending} pending
+                {progress.failed > 0 && ` • ${progress.failed} failed`}
+              </div>
             ) : uploadResult ? (
               <EmailValidator
                 result={uploadResult}

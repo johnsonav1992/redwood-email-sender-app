@@ -134,6 +134,7 @@ export default function EmailFormFields({
           disabled={isRunning}
           className={cn(
             'mt-2',
+            'cursor-pointer',
             'rounded-lg',
             'bg-gray-100',
             'px-4',

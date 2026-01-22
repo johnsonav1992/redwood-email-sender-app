@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { cn } from '@/lib/utils';
 import type { Recipient } from '@/types/campaign';
 
@@ -63,7 +63,27 @@ export default function RecipientStatusList({
     [campaignId]
   );
 
+  const lastFetchedProgressRef = useRef({
+    sent: progress.sent,
+    failed: progress.failed
+  });
+  const hasNewUpdates =
+    lastFetchedProgressRef.current.sent !== progress.sent ||
+    lastFetchedProgressRef.current.failed !== progress.failed;
+
+  const handleRefresh = () => {
+    lastFetchedProgressRef.current = {
+      sent: progress.sent,
+      failed: progress.failed
+    };
+    fetchRecipients(filter, 0, false);
+  };
+
   const handleFilterChange = (newFilter: FilterStatus) => {
+    lastFetchedProgressRef.current = {
+      sent: progress.sent,
+      failed: progress.failed
+    };
     if (newFilter === filter) return;
     setFilter(newFilter);
     setSearchQuery('');
@@ -114,7 +134,36 @@ export default function RecipientStatusList({
       <div className="border-b border-slate-200 p-4">
         <div className="mb-3 flex items-center justify-between">
           <h3 className="font-semibold text-slate-800">Recipients</h3>
-          <span className="text-sm text-slate-500">{progress.total} total</span>
+          <div className="flex items-center gap-2">
+            {hasNewUpdates && (
+              <button
+                onClick={handleRefresh}
+                disabled={loading}
+                className={cn(
+                  'flex cursor-pointer items-center gap-1 rounded-full bg-blue-50 px-2.5 py-1 text-xs font-medium text-blue-600 transition-colors hover:bg-blue-100',
+                  loading && 'cursor-not-allowed opacity-50'
+                )}
+              >
+                <svg
+                  className="h-3 w-3"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                  />
+                </svg>
+                New updates
+              </button>
+            )}
+            <span className="text-sm text-slate-500">
+              {progress.total} total
+            </span>
+          </div>
         </div>
 
         <div className="mb-3 flex flex-wrap gap-2">
@@ -122,7 +171,7 @@ export default function RecipientStatusList({
             onClick={() => handleFilterChange('all')}
             disabled={loading}
             className={cn(
-              'rounded-full px-3 py-1.5 text-xs font-medium transition-colors',
+              'cursor-pointer rounded-full px-3 py-1.5 text-xs font-medium transition-colors',
               filter === 'all'
                 ? 'bg-slate-700 text-white'
                 : 'bg-slate-100 text-slate-600 hover:bg-slate-200',
@@ -135,7 +184,7 @@ export default function RecipientStatusList({
             onClick={() => handleFilterChange('sent')}
             disabled={loading}
             className={cn(
-              'rounded-full px-3 py-1.5 text-xs font-medium transition-colors',
+              'cursor-pointer rounded-full px-3 py-1.5 text-xs font-medium transition-colors',
               filter === 'sent'
                 ? 'bg-green-600 text-white'
                 : 'bg-green-50 text-green-700 hover:bg-green-100',
@@ -148,7 +197,7 @@ export default function RecipientStatusList({
             onClick={() => handleFilterChange('pending')}
             disabled={loading}
             className={cn(
-              'rounded-full px-3 py-1.5 text-xs font-medium transition-colors',
+              'cursor-pointer rounded-full px-3 py-1.5 text-xs font-medium transition-colors',
               filter === 'pending'
                 ? 'bg-slate-600 text-white'
                 : 'bg-slate-100 text-slate-600 hover:bg-slate-200',
@@ -162,7 +211,7 @@ export default function RecipientStatusList({
               onClick={() => handleFilterChange('failed')}
               disabled={loading}
               className={cn(
-                'rounded-full px-3 py-1.5 text-xs font-medium transition-colors',
+                'cursor-pointer rounded-full px-3 py-1.5 text-xs font-medium transition-colors',
                 filter === 'failed'
                   ? 'bg-red-600 text-white'
                   : 'bg-red-50 text-red-700 hover:bg-red-100',
@@ -240,7 +289,7 @@ export default function RecipientStatusList({
             onClick={handleLoadMore}
             disabled={loading}
             className={cn(
-              'w-full rounded-lg bg-slate-100 py-2 text-sm font-medium text-slate-600',
+              'w-full cursor-pointer rounded-lg bg-slate-100 py-2 text-sm font-medium text-slate-600',
               'transition-colors hover:bg-slate-200',
               loading && 'cursor-not-allowed opacity-50'
             )}

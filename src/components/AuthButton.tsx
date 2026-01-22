@@ -15,6 +15,7 @@ export default function AuthButton() {
         <button
           onClick={() => signOut()}
           className={cn(
+            'cursor-pointer',
             'rounded-lg',
             'bg-gray-100',
             'px-4',
@@ -35,6 +36,7 @@ export default function AuthButton() {
     <button
       onClick={() => signIn('google')}
       className={cn(
+        'cursor-pointer',
         'rounded-lg',
         'bg-blue-600',
         'px-6',

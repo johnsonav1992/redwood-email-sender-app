@@ -49,12 +49,12 @@ export function useCampaignStream({
   }, [shouldConnect]);
 
   useEffect(() => {
+    if (countdownIntervalRef.current) {
+      clearInterval(countdownIntervalRef.current);
+      countdownIntervalRef.current = null;
+    }
+
     if (!nextBatchAt || status !== 'running') {
-      setNextBatchIn(null);
-      if (countdownIntervalRef.current) {
-        clearInterval(countdownIntervalRef.current);
-        countdownIntervalRef.current = null;
-      }
       return;
     }
 
@@ -215,12 +215,15 @@ export function useCampaignStream({
     setProgress(newProgress);
   }, []);
 
+  const displayedNextBatchIn =
+    status === 'running' && nextBatchAt ? nextBatchIn : null;
+
   return {
     status,
     progress,
     isConnected,
     lastError,
-    nextBatchIn,
+    nextBatchIn: displayedNextBatchIn,
     isRunning: status === 'running',
     isPaused: status === 'paused',
     isCompleted: status === 'completed',
