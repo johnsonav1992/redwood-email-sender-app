@@ -60,6 +60,13 @@ export async function initializeSchema(): Promise<void> {
   } catch {
     // Column already exists
   }
+
+  // Migration: Add to_email column if it doesn't exist
+  try {
+    await db.execute(`ALTER TABLE campaigns ADD COLUMN to_email TEXT`);
+  } catch {
+    // Column already exists
+  }
 }
 
 // Campaign operations
@@ -70,8 +77,8 @@ export async function createCampaign(
   const timestamp = now();
 
   await db.execute({
-    sql: `INSERT INTO campaigns (id, user_email, name, subject, body, signature, batch_size, batch_delay_seconds, status, total_recipients, sent_count, failed_count, created_at, updated_at)
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'draft', ?, 0, 0, ?, ?)`,
+    sql: `INSERT INTO campaigns (id, user_email, name, subject, body, signature, to_email, batch_size, batch_delay_seconds, status, total_recipients, sent_count, failed_count, created_at, updated_at)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'draft', ?, 0, 0, ?, ?)`,
     args: [
       id,
       input.user_email,
@@ -79,6 +86,7 @@ export async function createCampaign(
       input.subject,
       input.body,
       input.signature || null,
+      input.to_email || null,
       input.batch_size || 30,
       input.batch_delay_seconds || 60,
       input.recipients.length,
@@ -157,6 +165,7 @@ export async function updateCampaignDraft(
     subject?: string;
     body?: string;
     signature?: string | null;
+    to_email?: string | null;
     batch_size?: number;
     batch_delay_seconds?: number;
     recipients?: string[];
@@ -168,6 +177,7 @@ export async function updateCampaignDraft(
   if (data.subject !== undefined) fields.subject = data.subject;
   if (data.body !== undefined) fields.body = data.body;
   if (data.signature !== undefined) fields.signature = data.signature || null;
+  if (data.to_email !== undefined) fields.to_email = data.to_email || null;
   if (data.batch_size !== undefined) fields.batch_size = data.batch_size;
   if (data.batch_delay_seconds !== undefined)
     fields.batch_delay_seconds = data.batch_delay_seconds;

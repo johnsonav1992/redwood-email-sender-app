@@ -35,6 +35,7 @@ export default function ComposeForm({ initialCampaigns }: ComposeFormProps) {
   const [subject, setSubject] = useState('');
   const [htmlBody, setHtmlBody] = useState('');
   const [signature, setSignature] = useState('');
+  const [toEmail, setToEmail] = useState('');
   const [recipientList, setRecipientList] = useState<string[]>([]);
   const [userBatchSize, setUserBatchSize] = useState<number | null>(null);
   const [userBatchDelaySeconds, setUserBatchDelaySeconds] = useState<
@@ -135,6 +136,7 @@ export default function ComposeForm({ initialCampaigns }: ComposeFormProps) {
       setSubject('');
       setHtmlBody('');
       setSignature('');
+      setToEmail('');
       setRecipientList([]);
       setUploadResult(null);
       setConfirmedResult(null);
@@ -164,6 +166,7 @@ export default function ComposeForm({ initialCampaigns }: ComposeFormProps) {
         setSubject(campaign.subject);
         setHtmlBody(campaign.body);
         setSignature(campaign.signature || '');
+        setToEmail(campaign.to_email || '');
         fetchCampaign(campaign.id).then(data => {
           if (data && campaign.status === 'draft') {
             setRecipientList(data.recipients.map(r => r.email));
@@ -225,6 +228,7 @@ export default function ComposeForm({ initialCampaigns }: ComposeFormProps) {
             subject,
             body: htmlBody,
             signature: signature || undefined,
+            to_email: toEmail || undefined,
             batch_size: batchSize,
             batch_delay_seconds: batchDelaySeconds,
             recipients: recipientList
@@ -261,6 +265,7 @@ export default function ComposeForm({ initialCampaigns }: ComposeFormProps) {
       subject,
       htmlBody,
       signature: signature || undefined,
+      toEmail: toEmail || undefined,
       batchSize,
       batchDelaySeconds,
       recipients: recipientList
@@ -295,6 +300,7 @@ export default function ComposeForm({ initialCampaigns }: ComposeFormProps) {
         subject,
         body: htmlBody,
         signature: signature || undefined,
+        to_email: toEmail || undefined,
         batch_size: batchSize,
         batch_delay_seconds: batchDelaySeconds,
         recipients: recipientList
@@ -320,6 +326,7 @@ export default function ComposeForm({ initialCampaigns }: ComposeFormProps) {
       subject,
       htmlBody,
       signature: signature || undefined,
+      toEmail: toEmail || undefined,
       batchSize,
       batchDelaySeconds,
       recipients: recipientList
@@ -373,6 +380,7 @@ export default function ComposeForm({ initialCampaigns }: ComposeFormProps) {
       subject,
       htmlBody,
       signature: signature || undefined,
+      toEmail: toEmail || undefined,
       batchSize,
       batchDelaySeconds,
       recipients: recipientList
@@ -393,6 +401,7 @@ export default function ComposeForm({ initialCampaigns }: ComposeFormProps) {
     setSubject('');
     setHtmlBody('');
     setSignature('');
+    setToEmail('');
     setRecipientList([]);
     setUploadResult(null);
     setConfirmedResult(null);
@@ -531,6 +540,27 @@ export default function ComposeForm({ initialCampaigns }: ComposeFormProps) {
                 'disabled:cursor-not-allowed disabled:bg-gray-50'
               )}
             />
+          </div>
+          <div>
+            <label className="mb-2 block text-sm font-semibold text-gray-700">
+              To Email
+            </label>
+            <input
+              type="email"
+              value={toEmail}
+              onChange={e => setToEmail(e.target.value)}
+              placeholder="Email address for the 'To' field (recipients will be BCC'd)"
+              disabled={isRunning || isPaused}
+              className={cn(
+                'w-full rounded-lg border-2 border-gray-200 px-4 py-3 text-base transition',
+                'focus:border-slate-400 focus:outline-none',
+                'disabled:cursor-not-allowed disabled:bg-gray-50'
+              )}
+            />
+            <p className="mt-1 text-xs text-gray-500">
+              Optional. If left empty, your email address will be used.
+              Recipients will always be sent via BCC.
+            </p>
           </div>
           <div>
             <label className="mb-2 block text-sm font-semibold text-gray-700">

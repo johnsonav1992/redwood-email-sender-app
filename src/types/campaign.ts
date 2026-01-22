@@ -13,6 +13,7 @@ export interface Campaign {
   subject: string;
   body: string;
   signature: string | null;
+  to_email: string | null;
   batch_size: number;
   batch_delay_seconds: number;
   status: CampaignStatus;
@@ -50,6 +51,7 @@ export interface CreateCampaignInput {
   subject: string;
   body: string;
   signature?: string;
+  to_email?: string;
   batch_size?: number;
   batch_delay_seconds?: number;
   recipients: string[];

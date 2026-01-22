@@ -104,12 +104,14 @@ async function handler(
     const recipientIds = claimedRecipients.map(r => r.id);
 
     const senderEmail = await getUserEmail(gmail);
+    const toEmail = campaign.to_email || senderEmail;
     const images = await getCampaignImages(id);
 
     try {
       await sendBccEmail(
         gmail,
         senderEmail,
+        toEmail,
         bccEmails,
         campaign.subject,
         campaign.body,

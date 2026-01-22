@@ -127,6 +127,7 @@ export async function PATCH(
       subject,
       body: emailBody,
       signature,
+      to_email,
       batch_size,
       batch_delay_seconds,
       recipients
@@ -136,6 +137,7 @@ export async function PATCH(
       subject?: string;
       body?: string;
       signature?: string;
+      to_email?: string;
       batch_size?: number;
       batch_delay_seconds?: number;
       recipients?: string[];
@@ -176,6 +178,7 @@ export async function PATCH(
         subject !== undefined ||
         emailBody !== undefined ||
         signature !== undefined ||
+        to_email !== undefined ||
         batch_size !== undefined ||
         batch_delay_seconds !== undefined ||
         recipients !== undefined)
@@ -185,6 +188,7 @@ export async function PATCH(
         subject,
         body: emailBody,
         signature,
+        to_email,
         batch_size,
         batch_delay_seconds,
         recipients

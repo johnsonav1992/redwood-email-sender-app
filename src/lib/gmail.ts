@@ -61,6 +61,7 @@ export async function sendEmail(
 export async function sendBccEmail(
   gmail: gmail_v1.Gmail,
   senderEmail: string,
+  toEmail: string,
   bccRecipients: string[],
   subject: string,
   htmlBody: string,
@@ -76,7 +77,7 @@ export async function sendBccEmail(
 
   const encodedMessage = buildMimeMessage({
     from: senderEmail,
-    to: senderEmail,
+    to: toEmail,
     bcc: bccRecipients,
     subject,
     htmlBody: processedHtml,

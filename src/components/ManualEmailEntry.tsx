@@ -62,7 +62,7 @@ export default function ManualEmailEntry({
             setError(null);
           }}
           onKeyDown={handleKeyDown}
-          placeholder="Enter email address manually"
+          placeholder="Enter an email address manually"
           disabled={disabled}
           className={cn(
             'flex-1 rounded-lg border px-3 py-2 text-sm transition',

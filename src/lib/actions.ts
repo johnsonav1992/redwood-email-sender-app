@@ -138,6 +138,7 @@ export async function createCampaign(data: {
   subject: string;
   htmlBody: string;
   signature?: string;
+  toEmail?: string;
   batchSize?: number;
   batchDelaySeconds?: number;
   recipients: string[];
@@ -157,6 +158,7 @@ export async function createCampaign(data: {
       subject: data.subject,
       body: data.htmlBody,
       signature: data.signature,
+      to_email: data.toEmail,
       batch_size: data.batchSize || 30,
       batch_delay_seconds: data.batchDelaySeconds || 60,
       recipients: data.recipients

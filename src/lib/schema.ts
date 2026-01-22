@@ -7,6 +7,7 @@ CREATE TABLE IF NOT EXISTS campaigns (
   subject TEXT NOT NULL,
   body TEXT NOT NULL,
   signature TEXT,
+  to_email TEXT,
   batch_size INTEGER DEFAULT 30,
   batch_delay_seconds INTEGER DEFAULT 60,
   status TEXT DEFAULT 'draft',
