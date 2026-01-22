@@ -6,8 +6,8 @@ import { cn } from '@/lib/utils';
 interface BatchSettingsProps {
   batchSize: number;
   batchDelaySeconds: number;
-  onBatchSizeChange: (size: number) => void;
-  onBatchDelayChange: (seconds: number) => void;
+  onBatchSizeChange: (size: number | null) => void;
+  onBatchDelayChange: (seconds: number | null) => void;
   disabled?: boolean;
 }
 
@@ -18,11 +18,19 @@ export default function BatchSettings({
   onBatchDelayChange,
   disabled,
 }: BatchSettingsProps) {
-  const [batchSizeInput, setBatchSizeInput] = useState(String(batchSize));
+  const [isEditing, setIsEditing] = useState(false);
+  const [editValue, setEditValue] = useState('');
   const [batchSizeError, setBatchSizeError] = useState<string | null>(null);
 
+  const displayValue = isEditing ? editValue : String(batchSize);
+
+  const handleFocus = () => {
+    setIsEditing(true);
+    setEditValue(String(batchSize));
+  };
+
   const handleBatchSizeChange = (value: string) => {
-    setBatchSizeInput(value);
+    setEditValue(value);
     setBatchSizeError(null);
 
     const num = parseInt(value);
@@ -32,8 +40,9 @@ export default function BatchSettings({
   };
 
   const handleBatchSizeBlur = () => {
-    const num = parseInt(batchSizeInput);
-    if (batchSizeInput.trim() === '' || isNaN(num)) {
+    setIsEditing(false);
+    const num = parseInt(editValue);
+    if (editValue.trim() === '' || isNaN(num)) {
       setBatchSizeError('Batch size is required');
     } else if (num < 1) {
       setBatchSizeError('Must be at least 1');
@@ -54,7 +63,8 @@ export default function BatchSettings({
           type="number"
           min={1}
           max={100}
-          value={batchSizeInput}
+          value={displayValue}
+          onFocus={handleFocus}
           onChange={(e) => handleBatchSizeChange(e.target.value)}
           onBlur={handleBatchSizeBlur}
           disabled={disabled}

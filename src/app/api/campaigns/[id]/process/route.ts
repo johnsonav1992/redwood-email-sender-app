@@ -1,6 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifySignatureAppRouter } from '@upstash/qstash/nextjs';
-import { getGmailClient, sendBccEmail, getUserEmail, getQuotaInfo } from '@/lib/gmail';
+import {
+  getGmailClient,
+  sendBccEmail,
+  getUserEmail,
+  getQuotaInfo
+} from '@/lib/gmail';
 import {
   getCampaignById,
   claimPendingRecipients,
@@ -14,14 +19,14 @@ import {
   getCampaignImages,
   getUserTokens,
   getTodaySentCount,
-  recordSentEmail,
+  recordSentEmail
 } from '@/lib/db';
 import { scheduleNextBatch } from '@/lib/qstash';
 
 type RouteContext = { params: Promise<{ id: string }> };
 
 async function handler(
-  req: NextRequest,
+  _req: NextRequest,
   context: RouteContext
 ): Promise<NextResponse> {
   const { id } = await context.params;
@@ -36,7 +41,7 @@ async function handler(
     return NextResponse.json({
       success: true,
       skipped: true,
-      reason: `Campaign is ${campaign.status}`,
+      reason: `Campaign is ${campaign.status}`
     });
   }
 
@@ -45,7 +50,7 @@ async function handler(
     await updateCampaignStatus(id, 'paused');
     return NextResponse.json({
       success: false,
-      error: 'No valid tokens found - campaign paused',
+      error: 'No valid tokens found - campaign paused'
     });
   }
 
@@ -55,7 +60,7 @@ async function handler(
   try {
     const [gmailQuota, dbSentCount] = await Promise.all([
       getQuotaInfo(gmail, isWorkspace),
-      getTodaySentCount(campaign.user_email),
+      getTodaySentCount(campaign.user_email)
     ]);
 
     const sentToday = Math.max(gmailQuota.sentToday, dbSentCount);
@@ -67,11 +72,14 @@ async function handler(
       return NextResponse.json({
         success: false,
         error: 'Quota exhausted - campaign paused',
-        quotaExhausted: true,
+        quotaExhausted: true
       });
     }
 
-    const claimedRecipients = await claimPendingRecipients(id, campaign.batch_size);
+    const claimedRecipients = await claimPendingRecipients(
+      id,
+      campaign.batch_size
+    );
 
     if (claimedRecipients.length === 0) {
       const progress = await getCampaignProgress(id);
@@ -80,20 +88,20 @@ async function handler(
         return NextResponse.json({
           success: true,
           completed: true,
-          message: 'Campaign completed',
+          message: 'Campaign completed'
         });
       }
       return NextResponse.json({
         success: true,
         skipped: true,
-        reason: 'No recipients to process (another batch may be in progress)',
+        reason: 'No recipients to process (another batch may be in progress)'
       });
     }
 
     const progress = await getCampaignProgress(id);
     const batchNumber = Math.floor(progress.sent / campaign.batch_size) + 1;
-    const bccEmails = claimedRecipients.map((r) => r.email);
-    const recipientIds = claimedRecipients.map((r) => r.id);
+    const bccEmails = claimedRecipients.map(r => r.email);
+    const recipientIds = claimedRecipients.map(r => r.id);
 
     const senderEmail = await getUserEmail(gmail);
     const images = await getCampaignImages(id);
@@ -107,11 +115,11 @@ async function handler(
         campaign.body,
         campaign.signature || undefined,
         images.length > 0
-          ? images.map((img) => ({
+          ? images.map(img => ({
               contentId: img.content_id,
               filename: img.filename,
               mimeType: img.mime_type,
-              base64Data: img.base64_data,
+              base64Data: img.base64_data
             }))
           : undefined
       );
@@ -132,7 +140,9 @@ async function handler(
         await updateCampaignStatus(id, 'completed');
         await updateNextBatchAt(id, null);
       } else {
-        const nextBatchTime = new Date(Date.now() + campaign.batch_delay_seconds * 1000).toISOString();
+        const nextBatchTime = new Date(
+          Date.now() + campaign.batch_delay_seconds * 1000
+        ).toISOString();
         await updateNextBatchAt(id, nextBatchTime);
         await scheduleNextBatch(id, campaign.batch_delay_seconds);
       }
@@ -143,10 +153,11 @@ async function handler(
         sent: claimedRecipients.length,
         remaining: newProgress.pending,
         completed: isCompleted,
-        nextBatchScheduled: !isCompleted,
+        nextBatchScheduled: !isCompleted
       });
     } catch (sendError) {
-      const errorMessage = sendError instanceof Error ? sendError.message : 'Unknown send error';
+      const errorMessage =
+        sendError instanceof Error ? sendError.message : 'Unknown send error';
       await markRecipientsAsFailed(recipientIds, errorMessage, batchNumber);
 
       const newProgress = await getCampaignProgress(id);
@@ -157,7 +168,9 @@ async function handler(
         await updateCampaignStatus(id, 'completed');
         await updateNextBatchAt(id, null);
       } else {
-        const nextBatchTime = new Date(Date.now() + campaign.batch_delay_seconds * 1000).toISOString();
+        const nextBatchTime = new Date(
+          Date.now() + campaign.batch_delay_seconds * 1000
+        ).toISOString();
         await updateNextBatchAt(id, nextBatchTime);
         await scheduleNextBatch(id, campaign.batch_delay_seconds);
       }
@@ -170,7 +183,7 @@ async function handler(
         error: errorMessage,
         remaining: newProgress.pending,
         completed: isCompleted,
-        nextBatchScheduled: !isCompleted,
+        nextBatchScheduled: !isCompleted
       });
     }
   } catch (error) {

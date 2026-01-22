@@ -152,28 +152,28 @@ export async function updateCampaignDraft(
     recipients?: string[];
   }
 ): Promise<void> {
-  const timestamp = now();
+  const fields: Record<string, string | number | null> = {};
 
-  await db.execute({
-    sql: `UPDATE campaigns
-          SET name = ?, subject = ?, body = ?, signature = ?,
-              batch_size = ?, batch_delay_seconds = ?,
-              total_recipients = ?, updated_at = ?
-          WHERE id = ?`,
-    args: [
-      data.name || null,
-      data.subject || '',
-      data.body || '',
-      data.signature || null,
-      data.batch_size || 30,
-      data.batch_delay_seconds || 60,
-      data.recipients?.length || 0,
-      timestamp,
-      id,
-    ],
-  });
+  if (data.name !== undefined) fields.name = data.name || null;
+  if (data.subject !== undefined) fields.subject = data.subject;
+  if (data.body !== undefined) fields.body = data.body;
+  if (data.signature !== undefined) fields.signature = data.signature || null;
+  if (data.batch_size !== undefined) fields.batch_size = data.batch_size;
+  if (data.batch_delay_seconds !== undefined) fields.batch_delay_seconds = data.batch_delay_seconds;
+  if (data.recipients !== undefined) fields.total_recipients = data.recipients.length;
 
-  if (data.recipients) {
+  const entries = Object.entries(fields);
+  if (entries.length > 0) {
+    const setClauses = [...entries.map(([key]) => `${key} = ?`), 'updated_at = ?'];
+    const args = [...entries.map(([, value]) => value), now(), id];
+
+    await db.execute({
+      sql: `UPDATE campaigns SET ${setClauses.join(', ')} WHERE id = ?`,
+      args,
+    });
+  }
+
+  if (data.recipients !== undefined) {
     await db.execute({
       sql: `DELETE FROM recipients WHERE campaign_id = ?`,
       args: [id],

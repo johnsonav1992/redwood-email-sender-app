@@ -20,9 +20,17 @@ interface UseCampaignStreamProps {
   onStatusChange?: (status: CampaignStatus) => Promise<boolean>;
 }
 
-export function useCampaignStream({ campaignId, onStatusChange }: UseCampaignStreamProps) {
+export function useCampaignStream({
+  campaignId,
+  onStatusChange
+}: UseCampaignStreamProps) {
   const [status, setStatus] = useState<CampaignStatus>('draft');
-  const [progress, setProgress] = useState<CampaignProgress>({ total: 0, sent: 0, failed: 0, pending: 0 });
+  const [progress, setProgress] = useState<CampaignProgress>({
+    total: 0,
+    sent: 0,
+    failed: 0,
+    pending: 0
+  });
   const [isConnected, setIsConnected] = useState(false);
   const [lastError, setLastError] = useState<string | null>(null);
   const [shouldConnect, setShouldConnect] = useState(false);
@@ -31,7 +39,9 @@ export function useCampaignStream({ campaignId, onStatusChange }: UseCampaignStr
 
   const eventSourceRef = useRef<EventSource | null>(null);
   const retryTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const countdownIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const countdownIntervalRef = useRef<ReturnType<typeof setInterval> | null>(
+    null
+  );
   const shouldConnectRef = useRef(false);
 
   useEffect(() => {
@@ -51,7 +61,10 @@ export function useCampaignStream({ campaignId, onStatusChange }: UseCampaignStr
     const updateCountdown = () => {
       const targetTime = new Date(nextBatchAt).getTime();
       const now = Date.now();
-      const secondsRemaining = Math.max(0, Math.floor((targetTime - now) / 1000));
+      const secondsRemaining = Math.max(
+        0,
+        Math.floor((targetTime - now) / 1000)
+      );
       setNextBatchIn(secondsRemaining > 0 ? secondsRemaining : null);
     };
 
@@ -84,7 +97,9 @@ export function useCampaignStream({ campaignId, onStatusChange }: UseCampaignStr
         eventSourceRef.current.close();
       }
 
-      const eventSource = new EventSource(`/api/campaigns/${campaignId}/stream`);
+      const eventSource = new EventSource(
+        `/api/campaigns/${campaignId}/stream`
+      );
       eventSourceRef.current = eventSource;
 
       eventSource.onopen = () => {
@@ -92,7 +107,7 @@ export function useCampaignStream({ campaignId, onStatusChange }: UseCampaignStr
         setLastError(null);
       };
 
-      eventSource.onmessage = (event) => {
+      eventSource.onmessage = event => {
         try {
           const data: StreamUpdate = JSON.parse(event.data);
 
@@ -144,17 +159,20 @@ export function useCampaignStream({ campaignId, onStatusChange }: UseCampaignStr
     };
   }, [shouldConnect, campaignId]);
 
-  const startCampaign = useCallback(async (overrideCampaignId?: string) => {
-    const id = overrideCampaignId || campaignId;
-    if (!id) return;
+  const startCampaign = useCallback(
+    async (overrideCampaignId?: string) => {
+      const id = overrideCampaignId || campaignId;
+      if (!id) return;
 
-    setLastError(null);
-    const success = await onStatusChange?.('running');
-    if (success !== false) {
-      setStatus('running');
-      setShouldConnect(true);
-    }
-  }, [campaignId, onStatusChange]);
+      setLastError(null);
+      const success = await onStatusChange?.('running');
+      if (success !== false) {
+        setStatus('running');
+        setShouldConnect(true);
+      }
+    },
+    [campaignId, onStatusChange]
+  );
 
   const pauseCampaign = useCallback(async () => {
     if (!campaignId) return;
@@ -212,6 +230,6 @@ export function useCampaignStream({ campaignId, onStatusChange }: UseCampaignStr
     resumeCampaign,
     stopCampaign,
     setInitialStatus,
-    setInitialProgress,
+    setInitialProgress
   };
 }

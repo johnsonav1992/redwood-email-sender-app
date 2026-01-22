@@ -36,8 +36,8 @@ export default function ComposeForm({ initialCampaigns }: ComposeFormProps) {
   const [htmlBody, setHtmlBody] = useState('');
   const [signature, setSignature] = useState('');
   const [recipientList, setRecipientList] = useState<string[]>([]);
-  const [batchSize, setBatchSize] = useState(30);
-  const [batchDelaySeconds, setBatchDelaySeconds] = useState(60);
+  const [userBatchSize, setUserBatchSize] = useState<number | null>(null);
+  const [userBatchDelaySeconds, setUserBatchDelaySeconds] = useState<number | null>(null);
   const [uploadResult, setUploadResult] = useState<ParsedEmailResult | null>(
     null
   );
@@ -70,6 +70,9 @@ export default function ComposeForm({ initialCampaigns }: ComposeFormProps) {
     createCampaign,
     updateCampaignStatus
   } = useCampaignPersistence({ initialCampaigns });
+
+  const batchSize = userBatchSize ?? currentCampaign?.campaign?.batch_size ?? 30;
+  const batchDelaySeconds = userBatchDelaySeconds ?? currentCampaign?.campaign?.batch_delay_seconds ?? 60;
 
   const handleStatusChange = useCallback(
     async (newStatus: CampaignStatus) => {
@@ -105,6 +108,37 @@ export default function ComposeForm({ initialCampaigns }: ComposeFormProps) {
     }
   }, [initialCampaigns, fetchCampaigns]);
 
+  const prevCampaignIdRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (campaignId !== prevCampaignIdRef.current) {
+      prevCampaignIdRef.current = campaignId;
+      setUserBatchSize(null);
+      setUserBatchDelaySeconds(null);
+    }
+  }, [campaignId]);
+
+  const prevEditIdRef = useRef<string | null>(null);
+  useEffect(() => {
+    const editId = searchParams.get('edit');
+    const prevEditId = prevEditIdRef.current;
+    prevEditIdRef.current = editId;
+
+    if (prevEditId && !editId) {
+      campaignIdRef.current = null;
+      setCampaignId(null);
+      setSubject('');
+      setHtmlBody('');
+      setSignature('');
+      setRecipientList([]);
+      setUploadResult(null);
+      setConfirmedResult(null);
+      setUserBatchSize(null);
+      setUserBatchDelaySeconds(null);
+      setInitialStatus('draft');
+      setInitialProgress({ total: 0, sent: 0, failed: 0, pending: 0 });
+    }
+  }, [searchParams, setInitialStatus, setInitialProgress]);
+
   useEffect(() => {
     if (initialized) return;
 
@@ -121,8 +155,6 @@ export default function ComposeForm({ initialCampaigns }: ComposeFormProps) {
           failed: campaign.failed_count,
           pending: campaign.pending_count
         });
-        setBatchSize(campaign.batch_size);
-        setBatchDelaySeconds(campaign.batch_delay_seconds);
         setSubject(campaign.subject);
         setHtmlBody(campaign.body);
         setSignature(campaign.signature || '');
@@ -305,6 +337,8 @@ export default function ComposeForm({ initialCampaigns }: ComposeFormProps) {
     setRecipientList([]);
     setUploadResult(null);
     setConfirmedResult(null);
+    setUserBatchSize(null);
+    setUserBatchDelaySeconds(null);
     setInitialStatus('draft');
     setInitialProgress({ total: 0, sent: 0, failed: 0, pending: 0 });
     router.push('/compose');
@@ -507,8 +541,8 @@ export default function ComposeForm({ initialCampaigns }: ComposeFormProps) {
             <BatchSettings
               batchSize={batchSize}
               batchDelaySeconds={batchDelaySeconds}
-              onBatchSizeChange={setBatchSize}
-              onBatchDelayChange={setBatchDelaySeconds}
+              onBatchSizeChange={setUserBatchSize}
+              onBatchDelayChange={setUserBatchDelaySeconds}
               disabled={isRunning || isPaused || (!!campaignId && !isDraft)}
             />
           </div>

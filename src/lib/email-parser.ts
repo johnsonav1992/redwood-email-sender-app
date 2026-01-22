@@ -2,9 +2,9 @@ import Papa from 'papaparse';
 import ExcelJS from 'exceljs';
 import type { ParsedEmailResult } from '@/types/campaign';
 
-// RFC 5322 compliant email regex (simplified but robust)
+// Email regex requiring a valid TLD (at least 2 letters)
 const EMAIL_REGEX =
-  /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/;
+  /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*\.[a-zA-Z]{2,}$/;
 
 export function validateEmail(email: string): { valid: boolean; error?: string } {
   const trimmed = email.trim().toLowerCase();

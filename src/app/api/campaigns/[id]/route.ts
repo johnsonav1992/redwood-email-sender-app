@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
+import { revalidatePath } from 'next/cache';
 import { authOptions } from '@/lib/auth';
 import {
   getCampaignById,
@@ -156,6 +157,8 @@ export async function PATCH(
         batch_delay_seconds,
         recipients
       });
+      revalidatePath('/compose');
+      revalidatePath('/campaigns');
     }
 
     return NextResponse.json({ success: true });

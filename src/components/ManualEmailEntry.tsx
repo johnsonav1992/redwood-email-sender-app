@@ -2,14 +2,13 @@
 
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
+import { validateEmail } from '@/lib/email-parser';
 
 interface ManualEmailEntryProps {
   onAddEmail: (email: string) => boolean;
   disabled?: boolean;
   existingEmails: string[];
 }
-
-const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export default function ManualEmailEntry({
   onAddEmail,
@@ -27,8 +26,9 @@ export default function ManualEmailEntry({
       return;
     }
 
-    if (!EMAIL_REGEX.test(trimmedEmail)) {
-      setError('Invalid email format');
+    const validation = validateEmail(trimmedEmail);
+    if (!validation.valid) {
+      setError(validation.error || 'Invalid email format');
       return;
     }
 
