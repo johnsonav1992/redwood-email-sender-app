@@ -18,7 +18,7 @@ export default function CampaignListPage({
   const router = useRouter();
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
-  const { campaigns, loading, fetchCampaigns, deleteCampaign } =
+  const { campaigns, loading, fetchCampaigns, deleteCampaign, duplicateCampaign } =
     useCampaignPersistence({ initialCampaigns });
 
   useEffect(() => {
@@ -35,6 +35,13 @@ export default function CampaignListPage({
     if (deleteId) {
       await deleteCampaign(deleteId);
       setDeleteId(null);
+    }
+  };
+
+  const handleDuplicate = async (campaign: CampaignWithProgress) => {
+    const newCampaign = await duplicateCampaign(campaign.id);
+    if (newCampaign) {
+      router.push(`/compose?edit=${newCampaign.id}`);
     }
   };
 
@@ -329,6 +336,14 @@ export default function CampaignListPage({
                       className="w-20 cursor-pointer rounded-lg border border-gray-300 py-2.5 text-sm text-gray-700 hover:bg-gray-50 active:bg-gray-100"
                     >
                       View
+                    </button>
+                  )}
+                  {campaign.status !== 'running' && (
+                    <button
+                      onClick={() => handleDuplicate(campaign)}
+                      className="w-20 cursor-pointer rounded-lg border border-gray-300 py-2.5 text-sm text-gray-600 hover:bg-gray-50 active:bg-gray-100"
+                    >
+                      Duplicate
                     </button>
                   )}
                   {canDelete && (

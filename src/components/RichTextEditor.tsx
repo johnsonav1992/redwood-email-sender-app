@@ -487,7 +487,7 @@ export default function RichTextEditor({
         </div>
         <div className="relative">
           <EditorContent editor={editor} />
-          {!editor.getText() && !disabled && (
+          {editor.isEmpty && !disabled && (
             <div className="pointer-events-none absolute top-3 left-4 text-gray-400">
               {placeholder}
             </div>

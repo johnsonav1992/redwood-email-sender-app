@@ -51,6 +51,7 @@ export default function ComposeForm({ initialCampaigns }: ComposeFormProps) {
   const [initialized, setInitialized] = useState(false);
   const [sendingTest, setSendingTest] = useState(false);
   const [testSent, setTestSent] = useState(false);
+  const [startingCampaign, setStartingCampaign] = useState(false);
   const [alertModal, setAlertModal] = useState<{
     isOpen: boolean;
     title: string;
@@ -370,28 +371,33 @@ export default function ComposeForm({ initialCampaigns }: ComposeFormProps) {
       return;
     }
 
-    if (campaignId && status === 'draft') {
-      await saveDraftAndStart(campaignId);
-      return;
-    }
+    setStartingCampaign(true);
+    try {
+      if (campaignId && status === 'draft') {
+        await saveDraftAndStart(campaignId);
+        return;
+      }
 
-    const campaign = await createCampaign({
-      name: subject.substring(0, 50),
-      subject,
-      htmlBody,
-      signature: signature || undefined,
-      toEmail: toEmail || undefined,
-      batchSize,
-      batchDelaySeconds,
-      recipients: recipientList
-    });
+      const campaign = await createCampaign({
+        name: subject.substring(0, 50),
+        subject,
+        htmlBody,
+        signature: signature || undefined,
+        toEmail: toEmail || undefined,
+        batchSize,
+        batchDelaySeconds,
+        recipients: recipientList
+      });
 
-    if (campaign) {
-      campaignIdRef.current = campaign.id;
-      setCampaignId(campaign.id);
-      setInitialStatus('draft');
-      await fetchCampaign(campaign.id);
-      startCampaign(campaign.id);
+      if (campaign) {
+        campaignIdRef.current = campaign.id;
+        setCampaignId(campaign.id);
+        setInitialStatus('draft');
+        await fetchCampaign(campaign.id);
+        startCampaign(campaign.id);
+      }
+    } finally {
+      setStartingCampaign(false);
     }
   };
 
@@ -678,6 +684,7 @@ export default function ComposeForm({ initialCampaigns }: ComposeFormProps) {
             canStart={canStart}
             canSaveDraft={canSaveDraft}
             batchSize={batchSize}
+            loading={startingCampaign}
             onStart={handleCreateAndStart}
             onSaveDraft={handleSaveDraft}
             onPause={pauseCampaign}

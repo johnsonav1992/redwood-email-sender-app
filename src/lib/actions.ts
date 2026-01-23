@@ -8,6 +8,7 @@ import {
   updateCampaignStatus as dbUpdateCampaignStatus,
   updateNextBatchAt,
   deleteCampaign as dbDeleteCampaign,
+  duplicateCampaign as dbDuplicateCampaign,
   getCampaignById,
   getCampaignsByUser,
   initializeSchema,
@@ -235,5 +236,29 @@ export async function deleteCampaign(id: string) {
   } catch (error) {
     console.error('Delete campaign error:', error);
     return { error: 'Failed to delete campaign' };
+  }
+}
+
+export async function duplicateCampaign(id: string) {
+  const session = await getServerSession(authOptions);
+
+  if (!session?.user?.email) {
+    return { error: 'Unauthorized' };
+  }
+
+  try {
+    await ensureSchema();
+
+    const campaign = await dbDuplicateCampaign(id, session.user.email);
+    if (!campaign) {
+      return { error: 'Campaign not found or access denied' };
+    }
+
+    revalidatePath('/compose');
+    revalidatePath('/campaigns');
+    return { campaign: { ...campaign, pending_count: 0 } };
+  } catch (error) {
+    console.error('Duplicate campaign error:', error);
+    return { error: 'Failed to duplicate campaign' };
   }
 }

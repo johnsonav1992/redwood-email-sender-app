@@ -9,6 +9,7 @@ interface CampaignControlsProps {
   canStart: boolean;
   canSaveDraft: boolean;
   batchSize?: number;
+  loading?: boolean;
   onStart: () => void;
   onSaveDraft: () => void;
   onPause: () => void;
@@ -22,6 +23,7 @@ export default function CampaignControls({
   canStart,
   canSaveDraft,
   batchSize = 30,
+  loading = false,
   onStart,
   onSaveDraft,
   onPause,
@@ -116,14 +118,16 @@ export default function CampaignControls({
       )}
       <button
         onClick={onStart}
-        disabled={!canStart || recipientCount === 0}
+        disabled={!canStart || recipientCount === 0 || loading}
         className={cn(
           'bg-redwood flex-1 rounded-lg px-6 py-4 text-base font-semibold text-white transition sm:text-lg',
           'hover:bg-redwood-light active:bg-redwood-dark cursor-pointer',
           'disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-500'
         )}
       >
-        Start Campaign ({recipientCount} recipients, {batchSize} per batch)
+        {loading
+          ? 'Starting...'
+          : `Start Campaign (${recipientCount} recipients, ${batchSize} per batch)`}
       </button>
     </div>
   );

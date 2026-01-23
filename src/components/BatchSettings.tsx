@@ -69,7 +69,7 @@ export default function BatchSettings({
           onBlur={handleBatchSizeBlur}
           disabled={disabled}
           className={cn(
-            'w-full rounded-lg border px-4 py-3 text-base focus:border-slate-400 focus:ring-2 focus:ring-slate-400',
+            'h-12 w-full rounded-lg border px-4 text-base focus:border-slate-400 focus:ring-2 focus:ring-slate-400',
             disabled && 'bg-gray-100 text-gray-500',
             batchSizeError &&
               'border-red-500 focus:border-red-500 focus:ring-red-500'
@@ -92,7 +92,7 @@ export default function BatchSettings({
           onChange={e => onBatchDelayChange(parseInt(e.target.value))}
           disabled={disabled}
           className={cn(
-            'w-full rounded-lg border px-4 py-3 text-base focus:border-slate-400 focus:ring-2 focus:ring-slate-400',
+            'h-12 w-full rounded-lg border px-4 text-base focus:border-slate-400 focus:ring-2 focus:ring-slate-400',
             disabled && 'bg-gray-100 text-gray-500'
           )}
         >

@@ -231,6 +231,40 @@ export async function deleteCampaign(id: string): Promise<void> {
   });
 }
 
+export async function duplicateCampaign(
+  sourceId: string,
+  userEmail: string
+): Promise<Campaign | null> {
+  const source = await getCampaignById(sourceId);
+  if (!source || source.user_email !== userEmail) {
+    return null;
+  }
+
+  const id = generateId();
+  const timestamp = now();
+  const newName = source.name ? `${source.name} (Copy)` : null;
+
+  await db.execute({
+    sql: `INSERT INTO campaigns (id, user_email, name, subject, body, signature, to_email, batch_size, batch_delay_seconds, status, total_recipients, sent_count, failed_count, created_at, updated_at)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'draft', 0, 0, 0, ?, ?)`,
+    args: [
+      id,
+      userEmail,
+      newName,
+      source.subject,
+      source.body,
+      source.signature,
+      source.to_email,
+      source.batch_size,
+      source.batch_delay_seconds,
+      timestamp,
+      timestamp
+    ]
+  });
+
+  return getCampaignById(id);
+}
+
 // Recipient operations
 export async function getRecipientsByCampaign(
   campaignId: string,

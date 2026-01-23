@@ -3,6 +3,7 @@ import {
   createCampaign as createCampaignAction,
   updateCampaignStatus as updateCampaignStatusAction,
   deleteCampaign as deleteCampaignAction,
+  duplicateCampaign as duplicateCampaignAction,
   fetchCampaigns as fetchCampaignsAction
 } from '@/lib/actions';
 import type {
@@ -185,6 +186,31 @@ export function useCampaignPersistence({
     [currentCampaign]
   );
 
+  const duplicateCampaign = useCallback(async (id: string) => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const result = await duplicateCampaignAction(id);
+
+      if (result.error) {
+        throw new Error(result.error);
+      }
+
+      if (result.campaign) {
+        setCampaigns(prev => [result.campaign as CampaignWithProgress, ...prev]);
+        return result.campaign as CampaignWithProgress;
+      }
+      return null;
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+      setError(errorMessage);
+      return null;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
   return {
     campaigns,
     currentCampaign,
@@ -195,6 +221,7 @@ export function useCampaignPersistence({
     createCampaign,
     updateCampaignStatus,
     deleteCampaign,
+    duplicateCampaign,
     setCurrentCampaign
   };
 }
