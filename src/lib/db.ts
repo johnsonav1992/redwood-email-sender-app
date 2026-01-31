@@ -521,19 +521,32 @@ export async function recordSentEmail(
 // Get count of emails sent today by a user (independent of campaign deletions)
 // This is more accurate than Gmail API for BCC emails since each recipient = 1 quota
 export async function getTodaySentCount(userEmail: string): Promise<number> {
-  // Get start of today in UTC
-  const today = new Date();
-  today.setUTCHours(0, 0, 0, 0);
-  const todayStart = today.toISOString();
+  // Count emails sent in the last 24 hours (rolling window)
+  // Gmail's quota is per rolling 24-hour period, not calendar day
+  const twentyFourHoursAgo = new Date();
+  twentyFourHoursAgo.setHours(twentyFourHoursAgo.getHours() - 24);
+  const cutoffTime = twentyFourHoursAgo.toISOString();
 
   const result = await db.execute({
     sql: `SELECT COUNT(*) as count
           FROM sent_emails
           WHERE user_email = ?
             AND sent_at >= ?`,
-    args: [userEmail, todayStart]
+    args: [userEmail, cutoffTime]
   });
 
   const row = result.rows[0] as Record<string, number>;
   return Number(row.count) || 0;
+}
+
+export async function cleanupOldSentEmails(): Promise<void> {
+  // Delete records older than 7 days
+  const sevenDaysAgo = new Date();
+  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+  const cutoffTime = sevenDaysAgo.toISOString();
+
+  await db.execute({
+    sql: `DELETE FROM sent_emails WHERE sent_at < ?`,
+    args: [cutoffTime]
+  });
 }

@@ -1,7 +1,12 @@
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
-import { getGmailClient, getQuotaInfo, type QuotaInfo } from '@/lib/gmail';
+import {
+  getGmailClient,
+  getQuotaInfo,
+  isAuthError,
+  type QuotaInfo
+} from '@/lib/gmail';
 import { getTodaySentCount } from '@/lib/db';
 
 interface ErrorResponse {
@@ -47,6 +52,13 @@ export async function GET(): Promise<NextResponse<QuotaInfo | ErrorResponse>> {
     });
   } catch (error) {
     console.error('Error fetching quota:', error);
+
+    if (isAuthError(error)) {
+      return NextResponse.json<ErrorResponse>(
+        { error: 'Session expired. Please sign in again.' },
+        { status: 401 }
+      );
+    }
 
     const errorMessage =
       error instanceof Error ? error.message : 'Unknown error';

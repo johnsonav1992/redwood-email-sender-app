@@ -14,7 +14,13 @@ import {
   initializeSchema,
   getTodaySentCount
 } from '@/lib/db';
-import { getGmailClient, getQuotaInfo, type QuotaInfo } from '@/lib/gmail';
+import {
+  getGmailClient,
+  getQuotaInfo,
+  isAuthError,
+  AUTH_ERROR_CODE,
+  type QuotaInfo
+} from '@/lib/gmail';
 import { triggerImmediateBatch } from '@/lib/qstash';
 import type { CampaignStatus, CampaignWithProgress } from '@/types/campaign';
 
@@ -69,6 +75,9 @@ export async function getInitialData(): Promise<{
     };
   } catch (error) {
     console.error('Get initial data error:', error);
+    if (isAuthError(error)) {
+      return { campaigns: [], quota: null, error: AUTH_ERROR_CODE };
+    }
     return { campaigns: [], quota: null, error: 'Failed to load data' };
   }
 }
@@ -130,6 +139,9 @@ export async function fetchQuota(): Promise<{
     };
   } catch (error) {
     console.error('Fetch quota error:', error);
+    if (isAuthError(error)) {
+      return { quota: null, error: AUTH_ERROR_CODE };
+    }
     return { quota: null, error: 'Failed to fetch quota' };
   }
 }

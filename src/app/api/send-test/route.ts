@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
-import { getGmailClient, sendEmail } from '@/lib/gmail';
+import { getGmailClient, sendEmail, isAuthError } from '@/lib/gmail';
 import type { ErrorResponse } from '@/types/email';
 
 interface SendTestRequest {
@@ -50,6 +50,12 @@ export async function POST(
     });
   } catch (error) {
     console.error('Error sending test email:', error);
+    if (isAuthError(error)) {
+      return NextResponse.json<ErrorResponse>(
+        { error: 'Session expired. Please sign in again.' },
+        { status: 401 }
+      );
+    }
     const errorMessage =
       error instanceof Error ? error.message : 'Unknown error';
     return NextResponse.json<ErrorResponse>(

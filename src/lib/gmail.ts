@@ -5,6 +5,20 @@ import {
   type InlineImage
 } from './mime-builder';
 
+export const AUTH_ERROR_CODE = 'AUTH_REFRESH_REQUIRED';
+
+export function isAuthError(error: unknown): boolean {
+  if (error instanceof Error) {
+    const message = error.message.toLowerCase();
+    return (
+      message.includes('invalid_grant') ||
+      message.includes('token has been expired or revoked') ||
+      message.includes('invalid credentials')
+    );
+  }
+  return false;
+}
+
 export function getGmailClient(accessToken: string, refreshToken: string) {
   const oauth2Client = new google.auth.OAuth2(
     process.env.GOOGLE_CLIENT_ID,

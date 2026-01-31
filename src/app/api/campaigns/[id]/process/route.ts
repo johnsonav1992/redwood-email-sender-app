@@ -19,7 +19,8 @@ import {
   getCampaignImages,
   getUserTokens,
   getTodaySentCount,
-  recordSentEmail
+  recordSentEmail,
+  cleanupOldSentEmails
 } from '@/lib/db';
 import { scheduleNextBatch } from '@/lib/qstash';
 
@@ -30,6 +31,11 @@ async function handler(
   context: RouteContext
 ): Promise<NextResponse> {
   const { id } = await context.params;
+
+  // Clean up old sent_emails records (fire-and-forget)
+  cleanupOldSentEmails().catch(err =>
+    console.error('Failed to cleanup old sent emails:', err)
+  );
 
   const campaign = await getCampaignById(id);
 
