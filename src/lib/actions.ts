@@ -61,7 +61,7 @@ export async function getInitialData(): Promise<{
     ]);
 
     const sentToday = Math.max(gmailQuota.sentToday, dbSentCount);
-    const limit = isWorkspace ? 1500 : 400;
+    const limit = isWorkspace ? 2000 : 500;
     const remaining = Math.max(0, limit - sentToday);
 
     return {
@@ -126,7 +126,7 @@ export async function fetchQuota(): Promise<{
     ]);
 
     const sentToday = Math.max(gmailQuota.sentToday, dbSentCount);
-    const limit = isWorkspace ? 1500 : 400;
+    const limit = isWorkspace ? 2000 : 500;
     const remaining = Math.max(0, limit - sentToday);
 
     return {

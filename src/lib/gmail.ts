@@ -124,25 +124,38 @@ export async function getQuotaInfo(
   gmail: gmail_v1.Gmail,
   isWorkspace: boolean
 ): Promise<QuotaInfo> {
-  const now = new Date();
-  const tomorrow = new Date(now);
-  tomorrow.setDate(tomorrow.getDate() + 1);
-  tomorrow.setHours(0, 0, 0, 0);
+  let sentCount = 0;
+  let pageToken: string | undefined;
+  let pagesFetched = 0;
 
-  const response = await gmail.users.messages.list({
-    userId: 'me',
-    q: 'in:sent newer_than:1d',
-    maxResults: 500
-  });
+  do {
+    const response = await gmail.users.messages.list({
+      userId: 'me',
+      q: 'in:sent newer_than:1d',
+      maxResults: 500,
+      ...(pageToken && { pageToken })
+    });
 
-  const sentToday = response.data.messages?.length || 0;
-  const limit = isWorkspace ? 1500 : 400;
-  const remaining = Math.max(0, limit - sentToday);
+    const pageCount = response.data.messages?.length ?? 0;
+    sentCount += pageCount;
+    pageToken = response.data.nextPageToken ?? undefined;
+    pagesFetched++;
+
+    console.log(
+      `[quota/gmail] page ${pagesFetched}: ${pageCount} messages (running total: ${sentCount})`
+    );
+  } while (pageToken);
+
+  const limit = isWorkspace ? 2000 : 500;
+
+  console.log(
+    `[quota/gmail] done — ${sentCount} sent in last 24h, limit: ${limit} (${isWorkspace ? 'Workspace' : 'free'})`
+  );
 
   return {
-    sentToday,
+    sentToday: sentCount,
     limit,
-    remaining,
-    resetTime: tomorrow.toISOString()
+    remaining: Math.max(0, limit - sentCount),
+    resetTime: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
   };
 }

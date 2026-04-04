@@ -70,7 +70,7 @@ async function handler(
     ]);
 
     const sentToday = Math.max(gmailQuota.sentToday, dbSentCount);
-    const limit = isWorkspace ? 1500 : 400;
+    const limit = isWorkspace ? 2000 : 500;
     const remaining = Math.max(0, limit - sentToday);
 
     if (remaining < campaign.batch_size) {

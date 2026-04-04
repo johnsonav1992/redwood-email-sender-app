@@ -539,6 +539,21 @@ export async function getTodaySentCount(userEmail: string): Promise<number> {
   return Number(row.count) || 0;
 }
 
+export async function getOldestSentEmailTime(userEmail: string): Promise<string | null> {
+  const cutoffTime = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+
+  const result = await db.execute({
+    sql: `SELECT MIN(sent_at) as oldest
+          FROM sent_emails
+          WHERE user_email = ?
+            AND sent_at >= ?`,
+    args: [userEmail, cutoffTime]
+  });
+
+  const row = result.rows[0] as Record<string, string | null>;
+  return row.oldest ?? null;
+}
+
 export async function cleanupOldSentEmails(): Promise<void> {
   // Delete records older than 7 days
   const sevenDaysAgo = new Date();

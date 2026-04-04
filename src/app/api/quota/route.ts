@@ -7,7 +7,7 @@ import {
   isAuthError,
   type QuotaInfo
 } from '@/lib/gmail';
-import { getTodaySentCount } from '@/lib/db';
+import { getTodaySentCount, getOldestSentEmailTime } from '@/lib/db';
 
 interface ErrorResponse {
   error: string;
@@ -32,23 +32,36 @@ export async function GET(): Promise<NextResponse<QuotaInfo | ErrorResponse>> {
     const gmail = getGmailClient(session.accessToken, session.refreshToken);
     const isWorkspace = !!session.hostedDomain;
 
-    // Get both Gmail API count (for comparison) and our database count (accurate for BCC)
-    const [gmailQuota, dbSentCount] = await Promise.all([
+    const [gmailQuota, dbSentCount, oldestSentAt] = await Promise.all([
       getQuotaInfo(gmail, isWorkspace),
-      getTodaySentCount(session.user.email)
+      getTodaySentCount(session.user.email),
+      getOldestSentEmailTime(session.user.email)
     ]);
 
-    // Use the higher of the two counts to be conservative
-    // Gmail API undercounts BCC emails, DB accurately counts each recipient
+    console.log(
+      `[quota] user=${session.user.email} gmail=${gmailQuota.sentToday} db=${dbSentCount} oldest=${oldestSentAt ?? 'none'}`
+    );
+
     const sentToday = Math.max(gmailQuota.sentToday, dbSentCount);
-    const limit = isWorkspace ? 1500 : 400;
+    const limit = isWorkspace ? 2000 : 500;
     const remaining = Math.max(0, limit - sentToday);
+
+    // Rolling reset: oldest tracked email expires 24h after it was sent
+    const resetTime = oldestSentAt
+      ? new Date(
+          new Date(oldestSentAt).getTime() + 24 * 60 * 60 * 1000
+        ).toISOString()
+      : gmailQuota.resetTime;
+
+    console.log(
+      `[quota] sentToday=${sentToday} remaining=${remaining} resetTime=${resetTime}`
+    );
 
     return NextResponse.json<QuotaInfo>({
       sentToday,
       limit,
       remaining,
-      resetTime: gmailQuota.resetTime
+      resetTime
     });
   } catch (error) {
     console.error('Error fetching quota:', error);
