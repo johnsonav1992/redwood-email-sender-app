@@ -134,7 +134,7 @@ export function useCampaignPersistence({
         const result = await updateCampaignStatusAction(id, status);
 
         if (result.error) {
-          throw new Error(result.error);
+          throw new Error(result.error || 'Failed to update campaign status');
         }
 
         setCampaigns(prev =>
@@ -152,7 +152,7 @@ export function useCampaignPersistence({
         const errorMessage =
           err instanceof Error ? err.message : 'Unknown error';
         setError(errorMessage);
-        return false;
+        return errorMessage;
       }
     },
     [currentCampaign]

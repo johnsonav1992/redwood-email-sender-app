@@ -1,4 +1,4 @@
-import { createClient } from '@libsql/client';
+import { createClient, type InStatement } from '@libsql/client';
 import { SCHEMA_SQL } from './schema';
 import type {
   Campaign,
@@ -36,6 +36,33 @@ function toPlainObject<T extends object>(row: T): T {
 
 function toPlainObjects<T extends object>(rows: T[]): T[] {
   return rows.map(row => ({ ...row }));
+}
+
+function recipientInsertStatements(
+  campaignId: string,
+  recipients: string[]
+): InStatement[] {
+  return recipients.map(email => ({
+    sql: `INSERT INTO recipients (id, campaign_id, email, status) VALUES (?, ?, ?, 'pending')`,
+    args: [generateId(), campaignId, email.toLowerCase().trim()]
+  }));
+}
+
+async function executeWriteTransaction(statements: InStatement[]): Promise<void> {
+  const chunkSize = 100;
+  const transaction = await db.transaction('write');
+
+  try {
+    for (let i = 0; i < statements.length; i += chunkSize) {
+      await transaction.batch(statements.slice(i, i + chunkSize));
+    }
+    await transaction.commit();
+  } catch (error) {
+    await transaction.rollback().catch(() => undefined);
+    throw error;
+  } finally {
+    transaction.close();
+  }
 }
 
 export async function initializeSchema(): Promise<void> {
@@ -76,32 +103,27 @@ export async function createCampaign(
   const id = generateId();
   const timestamp = now();
 
-  await db.execute({
-    sql: `INSERT INTO campaigns (id, user_email, name, subject, body, signature, to_email, batch_size, batch_delay_seconds, status, total_recipients, sent_count, failed_count, created_at, updated_at)
+  await executeWriteTransaction([
+    {
+      sql: `INSERT INTO campaigns (id, user_email, name, subject, body, signature, to_email, batch_size, batch_delay_seconds, status, total_recipients, sent_count, failed_count, created_at, updated_at)
           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'draft', ?, 0, 0, ?, ?)`,
-    args: [
-      id,
-      input.user_email,
-      input.name || null,
-      input.subject,
-      input.body,
-      input.signature || null,
-      input.to_email || null,
-      input.batch_size || 30,
-      input.batch_delay_seconds || 60,
-      input.recipients.length,
-      timestamp,
-      timestamp
-    ]
-  });
-
-  // Insert recipients
-  for (const email of input.recipients) {
-    await db.execute({
-      sql: `INSERT INTO recipients (id, campaign_id, email, status) VALUES (?, ?, ?, 'pending')`,
-      args: [generateId(), id, email.toLowerCase().trim()]
-    });
-  }
+      args: [
+        id,
+        input.user_email,
+        input.name || null,
+        input.subject,
+        input.body,
+        input.signature || null,
+        input.to_email || null,
+        input.batch_size || 30,
+        input.batch_delay_seconds || 60,
+        input.recipients.length,
+        timestamp,
+        timestamp
+      ]
+    },
+    ...recipientInsertStatements(id, input.recipients)
+  ]);
 
   return getCampaignById(id) as Promise<Campaign>;
 }
@@ -185,31 +207,29 @@ export async function updateCampaignDraft(
     fields.total_recipients = data.recipients.length;
 
   const entries = Object.entries(fields);
+  const statements: InStatement[] = [];
+
   if (entries.length > 0) {
     const setClauses = [
       ...entries.map(([key]) => `${key} = ?`),
       'updated_at = ?'
     ];
-    const args = [...entries.map(([, value]) => value), now(), id];
-
-    await db.execute({
+    statements.push({
       sql: `UPDATE campaigns SET ${setClauses.join(', ')} WHERE id = ?`,
-      args
+      args: [...entries.map(([, value]) => value), now(), id]
     });
   }
 
   if (data.recipients !== undefined) {
-    await db.execute({
+    statements.push({
       sql: `DELETE FROM recipients WHERE campaign_id = ?`,
       args: [id]
     });
+    statements.push(...recipientInsertStatements(id, data.recipients));
+  }
 
-    for (const email of data.recipients) {
-      await db.execute({
-        sql: `INSERT INTO recipients (id, campaign_id, email, status) VALUES (?, ?, ?, 'pending')`,
-        args: [generateId(), id, email.toLowerCase().trim()]
-      });
-    }
+  if (statements.length > 0) {
+    await executeWriteTransaction(statements);
   }
 }
 

@@ -9,6 +9,7 @@ import {
   updateNextBatchAt,
   deleteCampaign as dbDeleteCampaign,
   duplicateCampaign as dbDuplicateCampaign,
+  getCampaignProgress,
   getCampaignById,
   getCampaignsByUser,
   initializeSchema,
@@ -200,6 +201,16 @@ export async function updateCampaignStatus(id: string, status: CampaignStatus) {
     }
     if (campaign.user_email !== session.user.email) {
       return { error: 'Forbidden' };
+    }
+
+    if (status === 'running') {
+      const progress = await getCampaignProgress(id);
+      if (progress.total !== campaign.total_recipients) {
+        return {
+          error:
+            'Recipient list is incomplete. Please re-upload the recipients before starting this campaign.'
+        };
+      }
     }
 
     await dbUpdateCampaignStatus(id, status);

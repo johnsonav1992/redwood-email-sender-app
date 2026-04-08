@@ -159,6 +159,19 @@ export async function PATCH(
         );
       }
 
+      if (status === 'running') {
+        const progress = await getCampaignProgress(id);
+        if (progress.total !== campaign.total_recipients) {
+          return NextResponse.json(
+            {
+              error:
+                'Recipient list is incomplete. Please re-upload the recipients before starting this campaign.'
+            },
+            { status: 409 }
+          );
+        }
+      }
+
       await updateCampaignStatus(id, status);
 
       if (status === 'running') {
@@ -170,6 +183,9 @@ export async function PATCH(
           console.error(`[Campaign] QStash trigger failed:`, qstashError);
         }
       }
+
+      revalidatePath('/compose');
+      revalidatePath('/campaigns');
     }
 
     if (

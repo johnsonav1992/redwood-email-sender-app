@@ -83,9 +83,9 @@ export default function ComposeForm({ initialCampaigns }: ComposeFormProps) {
     60;
 
   const handleStatusChange = useCallback(
-    async (newStatus: CampaignStatus) => {
-      const id = campaignIdRef.current;
-      if (!id) return false;
+    async (newStatus: CampaignStatus, explicitCampaignId?: string | null) => {
+      const id = explicitCampaignId || campaignIdRef.current;
+      if (!id) return 'No campaign selected.';
       return await updateCampaignStatus(id, newStatus);
     },
     [updateCampaignStatus]
@@ -292,7 +292,15 @@ export default function ComposeForm({ initialCampaigns }: ComposeFormProps) {
     }
   };
 
-  const saveDraftAndStart = async (id: string) => {
+  const showStartFailed = () => {
+    showAlert(
+      'Start Failed',
+      'The campaign was saved as a draft, but it did not start. Please try Start Campaign again.',
+      'error'
+    );
+  };
+
+  const saveDraftAndStart = async (id: string): Promise<boolean> => {
     const response = await fetch(`/api/campaigns/${id}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
@@ -308,37 +316,62 @@ export default function ComposeForm({ initialCampaigns }: ComposeFormProps) {
       })
     });
 
-    if (response.ok) {
-      await fetchCampaign(id);
-      startCampaign(id);
+    if (!response.ok) {
+      showAlert(
+        'Start Failed',
+        'Failed to save the draft before starting. Please try again.',
+        'error'
+      );
+      return false;
     }
+
+    await fetchCampaign(id);
+    const started = await startCampaign(id);
+    if (!started) showStartFailed();
+    return started;
+  };
+
+  const startCreatedCampaign = async (
+    campaign: CampaignWithProgress
+  ): Promise<boolean> => {
+    campaignIdRef.current = campaign.id;
+    setCampaignId(campaign.id);
+    setInitialStatus('draft');
+    await fetchCampaign(campaign.id);
+
+    const started = await startCampaign(campaign.id);
+    if (!started) showStartFailed();
+    return started;
   };
 
   const proceedWithCampaign = async () => {
     closeAlert();
 
-    if (campaignId && status === 'draft') {
-      await saveDraftAndStart(campaignId);
-      return;
-    }
+    setStartingCampaign(true);
+    try {
+      if (campaignId && status === 'draft') {
+        await saveDraftAndStart(campaignId);
+        return;
+      }
 
-    const campaign = await createCampaign({
-      name: subject.substring(0, 50),
-      subject,
-      htmlBody,
-      signature: signature || undefined,
-      toEmail: toEmail || undefined,
-      batchSize,
-      batchDelaySeconds,
-      recipients: recipientList
-    });
+      const campaign = await createCampaign({
+        name: subject.substring(0, 50),
+        subject,
+        htmlBody,
+        signature: signature || undefined,
+        toEmail: toEmail || undefined,
+        batchSize,
+        batchDelaySeconds,
+        recipients: recipientList
+      });
 
-    if (campaign) {
-      campaignIdRef.current = campaign.id;
-      setCampaignId(campaign.id);
-      setInitialStatus('draft');
-      await fetchCampaign(campaign.id);
-      startCampaign(campaign.id);
+      if (campaign) {
+        await startCreatedCampaign(campaign);
+      } else {
+        showStartFailed();
+      }
+    } finally {
+      setStartingCampaign(false);
     }
   };
 
@@ -390,11 +423,9 @@ export default function ComposeForm({ initialCampaigns }: ComposeFormProps) {
       });
 
       if (campaign) {
-        campaignIdRef.current = campaign.id;
-        setCampaignId(campaign.id);
-        setInitialStatus('draft');
-        await fetchCampaign(campaign.id);
-        startCampaign(campaign.id);
+        await startCreatedCampaign(campaign);
+      } else {
+        showStartFailed();
       }
     } finally {
       setStartingCampaign(false);

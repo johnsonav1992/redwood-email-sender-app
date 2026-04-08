@@ -17,7 +17,10 @@ interface StreamUpdate {
 
 interface UseCampaignStreamProps {
   campaignId: string | null;
-  onStatusChange?: (status: CampaignStatus) => Promise<boolean>;
+  onStatusChange?: (
+    status: CampaignStatus,
+    campaignId?: string | null
+  ) => Promise<true | string | false>;
 }
 
 export function useCampaignStream({
@@ -162,46 +165,77 @@ export function useCampaignStream({
   const startCampaign = useCallback(
     async (overrideCampaignId?: string) => {
       const id = overrideCampaignId || campaignId;
-      if (!id) return;
+      if (!id) {
+        setLastError('No campaign selected.');
+        return false;
+      }
 
       setLastError(null);
-      const success = await onStatusChange?.('running');
-      if (success !== false) {
+      const success = await onStatusChange?.('running', id);
+      if (success === true || success === undefined) {
         setStatus('running');
         setShouldConnect(true);
+        return true;
       }
+      setLastError(
+        typeof success === 'string'
+          ? success
+          : 'Failed to start campaign. Please try again.'
+      );
+      return false;
     },
     [campaignId, onStatusChange]
   );
 
   const pauseCampaign = useCallback(async () => {
-    if (!campaignId) return;
+    if (!campaignId) return false;
 
-    const success = await onStatusChange?.('paused');
-    if (success !== false) {
+    const success = await onStatusChange?.('paused', campaignId);
+    if (success === true || success === undefined) {
       setStatus('paused');
+      return true;
     }
+    setLastError(
+      typeof success === 'string'
+        ? success
+        : 'Failed to pause campaign. Please try again.'
+    );
+    return false;
   }, [campaignId, onStatusChange]);
 
   const resumeCampaign = useCallback(async () => {
-    if (!campaignId || status !== 'paused') return;
+    if (!campaignId || status !== 'paused') return false;
 
     setLastError(null);
-    const success = await onStatusChange?.('running');
-    if (success !== false) {
+    const success = await onStatusChange?.('running', campaignId);
+    if (success === true || success === undefined) {
       setStatus('running');
       setShouldConnect(true);
+      return true;
     }
+    setLastError(
+      typeof success === 'string'
+        ? success
+        : 'Failed to resume campaign. Please try again.'
+    );
+    return false;
   }, [campaignId, status, onStatusChange]);
 
   const stopCampaign = useCallback(async () => {
-    if (!campaignId) return;
+    if (!campaignId) return false;
 
-    const success = await onStatusChange?.('stopped');
-    if (success !== false) {
+    const success = await onStatusChange?.('stopped', campaignId);
+    if (success === true || success === undefined) {
       setStatus('stopped');
       setShouldConnect(false);
+      return true;
     }
+    setLastError(
+      typeof success === 'string'
+        ? success
+        : 'Failed to stop campaign. Please try again.'
+    );
+    return false;
   }, [campaignId, onStatusChange]);
 
   const setInitialStatus = useCallback((newStatus: CampaignStatus) => {
