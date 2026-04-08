@@ -1,5 +1,6 @@
 import { createClient, type InStatement } from '@libsql/client';
 import { SCHEMA_SQL } from './schema';
+import { logError, logInfo } from '@/lib/logger';
 import type {
   Campaign,
   Recipient,
@@ -48,8 +49,23 @@ function recipientInsertStatements(
   }));
 }
 
-async function executeWriteTransaction(statements: InStatement[]): Promise<void> {
+async function executeWriteTransaction(
+  statements: InStatement[],
+  context: {
+    operation: string;
+    campaignId?: string;
+    userEmail?: string;
+    recipientCount?: number;
+  }
+): Promise<void> {
   const chunkSize = 100;
+  const startedAt = Date.now();
+  logInfo('db.write_transaction_start', {
+    ...context,
+    statementCount: statements.length,
+    chunkSize
+  });
+
   const transaction = await db.transaction('write');
 
   try {
@@ -57,8 +73,22 @@ async function executeWriteTransaction(statements: InStatement[]): Promise<void>
       await transaction.batch(statements.slice(i, i + chunkSize));
     }
     await transaction.commit();
+    logInfo('db.write_transaction_success', {
+      ...context,
+      statementCount: statements.length,
+      durationMs: Date.now() - startedAt
+    });
   } catch (error) {
     await transaction.rollback().catch(() => undefined);
+    logError(
+      'db.write_transaction_failed',
+      {
+        ...context,
+        statementCount: statements.length,
+        durationMs: Date.now() - startedAt
+      },
+      error
+    );
     throw error;
   } finally {
     transaction.close();
@@ -102,6 +132,19 @@ export async function createCampaign(
 ): Promise<Campaign> {
   const id = generateId();
   const timestamp = now();
+  const startedAt = Date.now();
+
+  logInfo('campaign.db_create_start', {
+    campaignId: id,
+    userEmail: input.user_email,
+    recipientCount: input.recipients.length,
+    batchSize: input.batch_size || 30,
+    batchDelaySeconds: input.batch_delay_seconds || 60,
+    hasSignature: !!input.signature,
+    hasToEmail: !!input.to_email,
+    bodyLength: input.body.length,
+    subjectLength: input.subject.length
+  });
 
   await executeWriteTransaction([
     {
@@ -123,7 +166,19 @@ export async function createCampaign(
       ]
     },
     ...recipientInsertStatements(id, input.recipients)
-  ]);
+  ], {
+    operation: 'createCampaign',
+    campaignId: id,
+    userEmail: input.user_email,
+    recipientCount: input.recipients.length
+  });
+
+  logInfo('campaign.db_create_success', {
+    campaignId: id,
+    userEmail: input.user_email,
+    recipientCount: input.recipients.length,
+    durationMs: Date.now() - startedAt
+  });
 
   return getCampaignById(id) as Promise<Campaign>;
 }
@@ -193,6 +248,7 @@ export async function updateCampaignDraft(
     recipients?: string[];
   }
 ): Promise<void> {
+  const startedAt = Date.now();
   const fields: Record<string, string | number | null> = {};
 
   if (data.name !== undefined) fields.name = data.name || null;
@@ -229,7 +285,31 @@ export async function updateCampaignDraft(
   }
 
   if (statements.length > 0) {
-    await executeWriteTransaction(statements);
+    logInfo('campaign.db_update_draft_start', {
+      campaignId: id,
+      updatesContent:
+        data.name !== undefined ||
+        data.subject !== undefined ||
+        data.body !== undefined ||
+        data.signature !== undefined ||
+        data.to_email !== undefined,
+      updatesBatch:
+        data.batch_size !== undefined ||
+        data.batch_delay_seconds !== undefined,
+      updatesRecipients: data.recipients !== undefined,
+      recipientCount: data.recipients?.length,
+      statementCount: statements.length
+    });
+    await executeWriteTransaction(statements, {
+      operation: 'updateCampaignDraft',
+      campaignId: id,
+      recipientCount: data.recipients?.length
+    });
+    logInfo('campaign.db_update_draft_success', {
+      campaignId: id,
+      recipientCount: data.recipients?.length,
+      durationMs: Date.now() - startedAt
+    });
   }
 }
 

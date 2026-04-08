@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 import { getGmailClient, sendEmail, isAuthError } from '@/lib/gmail';
+import { logError, logInfo, logWarn } from '@/lib/logger';
 import type { ErrorResponse } from '@/types/email';
 
 interface SendTestRequest {
@@ -24,6 +25,7 @@ export async function POST(
     !session?.refreshToken ||
     !session?.user?.email
   ) {
+    logWarn('send_test.unauthorized');
     return NextResponse.json<ErrorResponse>(
       { error: 'Unauthorized' },
       { status: 401 }
@@ -34,6 +36,11 @@ export async function POST(
   const { subject, htmlBody } = body;
 
   if (!subject || !htmlBody) {
+    logWarn('send_test.validation_failed', {
+      userEmail: session.user.email,
+      hasSubject: !!subject,
+      hasHtmlBody: !!htmlBody
+    });
     return NextResponse.json<ErrorResponse>(
       { error: 'Subject and body are required' },
       { status: 400 }
@@ -41,15 +48,30 @@ export async function POST(
   }
 
   try {
+    const startedAt = Date.now();
+    logInfo('send_test.start', {
+      userEmail: session.user.email,
+      subjectLength: subject.length,
+      bodyLength: htmlBody.length
+    });
     const gmail = getGmailClient(session.accessToken, session.refreshToken);
     await sendEmail(gmail, session.user.email, `[TEST] ${subject}`, htmlBody);
+
+    logInfo('send_test.success', {
+      userEmail: session.user.email,
+      durationMs: Date.now() - startedAt
+    });
 
     return NextResponse.json<SendTestResponse>({
       success: true,
       recipient: session.user.email
     });
   } catch (error) {
-    console.error('Error sending test email:', error);
+    logError(
+      'send_test.failed',
+      { userEmail: session.user.email },
+      error
+    );
     if (isAuthError(error)) {
       return NextResponse.json<ErrorResponse>(
         { error: 'Session expired. Please sign in again.' },

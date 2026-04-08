@@ -22,6 +22,7 @@ import {
   AUTH_ERROR_CODE,
   type QuotaInfo
 } from '@/lib/gmail';
+import { logError, logInfo, logWarn } from '@/lib/logger';
 import { triggerImmediateBatch } from '@/lib/qstash';
 import type { CampaignStatus, CampaignWithProgress } from '@/types/campaign';
 
@@ -160,11 +161,24 @@ export async function createCampaign(data: {
   const session = await getServerSession(authOptions);
 
   if (!session?.user?.email) {
+    logWarn('campaign.action_create_unauthorized');
     return { error: 'Unauthorized' };
   }
 
   try {
     await ensureSchema();
+
+    const startedAt = Date.now();
+    logInfo('campaign.action_create_start', {
+      userEmail: session.user.email,
+      recipientCount: data.recipients.length,
+      batchSize: data.batchSize || 30,
+      batchDelaySeconds: data.batchDelaySeconds || 60,
+      hasSignature: !!data.signature,
+      hasToEmail: !!data.toEmail,
+      subjectLength: data.subject.length,
+      bodyLength: data.htmlBody.length
+    });
 
     const campaign = await dbCreateCampaign({
       user_email: session.user.email,
@@ -178,11 +192,27 @@ export async function createCampaign(data: {
       recipients: data.recipients
     });
 
+    logInfo('campaign.action_create_success', {
+      campaignId: campaign.id,
+      userEmail: session.user.email,
+      recipientCount: data.recipients.length,
+      durationMs: Date.now() - startedAt
+    });
+
     revalidatePath('/compose');
     revalidatePath('/campaigns');
     return { campaign: { ...campaign, pending_count: data.recipients.length } };
   } catch (error) {
-    console.error('Create campaign error:', error);
+    logError(
+      'campaign.action_create_failed',
+      {
+        userEmail: session.user.email,
+        recipientCount: data.recipients.length,
+        batchSize: data.batchSize || 30,
+        batchDelaySeconds: data.batchDelaySeconds || 60
+      },
+      error
+    );
     return { error: 'Failed to create campaign' };
   }
 }
@@ -191,21 +221,57 @@ export async function updateCampaignStatus(id: string, status: CampaignStatus) {
   const session = await getServerSession(authOptions);
 
   if (!session?.user?.email) {
+    logWarn('campaign.action_status_unauthorized', { campaignId: id, status });
     return { error: 'Unauthorized' };
   }
 
   try {
+    const startedAt = Date.now();
+    logInfo('campaign.action_status_start', {
+      campaignId: id,
+      userEmail: session.user.email,
+      requestedStatus: status
+    });
+
     const campaign = await getCampaignById(id);
     if (!campaign) {
+      logWarn('campaign.action_status_not_found', {
+        campaignId: id,
+        userEmail: session.user.email,
+        requestedStatus: status
+      });
       return { error: 'Campaign not found' };
     }
     if (campaign.user_email !== session.user.email) {
+      logWarn('campaign.action_status_forbidden', {
+        campaignId: id,
+        userEmail: session.user.email,
+        ownerEmail: campaign.user_email,
+        requestedStatus: status
+      });
       return { error: 'Forbidden' };
     }
 
     if (status === 'running') {
       const progress = await getCampaignProgress(id);
+      logInfo('campaign.action_status_start_guard', {
+        campaignId: id,
+        userEmail: session.user.email,
+        campaignStatus: campaign.status,
+        totalRecipients: campaign.total_recipients,
+        progressTotal: progress.total,
+        pending: progress.pending,
+        sending: progress.sending,
+        sent: progress.sent,
+        failed: progress.failed
+      });
       if (progress.total !== campaign.total_recipients) {
+        logWarn('campaign.action_status_incomplete_recipients', {
+          campaignId: id,
+          userEmail: session.user.email,
+          totalRecipients: campaign.total_recipients,
+          progressTotal: progress.total
+        });
         return {
           error:
             'Recipient list is incomplete. Please re-upload the recipients before starting this campaign.'
@@ -216,12 +282,26 @@ export async function updateCampaignStatus(id: string, status: CampaignStatus) {
     await dbUpdateCampaignStatus(id, status);
 
     if (status === 'running') {
-      console.log(`[Campaign] Starting campaign ${id}, triggering QStash...`);
+      logInfo('campaign.action_status_trigger_qstash_start', {
+        campaignId: id,
+        userEmail: session.user.email
+      });
       try {
         const messageId = await triggerImmediateBatch(id);
-        console.log(`[Campaign] QStash triggered, messageId: ${messageId}`);
+        logInfo('campaign.action_status_trigger_qstash_success', {
+          campaignId: id,
+          userEmail: session.user.email,
+          messageId
+        });
       } catch (qstashError) {
-        console.error(`[Campaign] QStash trigger failed:`, qstashError);
+        logError(
+          'campaign.action_status_trigger_qstash_failed',
+          {
+            campaignId: id,
+            userEmail: session.user.email
+          },
+          qstashError
+        );
       }
     } else if (status === 'paused' || status === 'stopped') {
       await updateNextBatchAt(id, null);
@@ -229,9 +309,24 @@ export async function updateCampaignStatus(id: string, status: CampaignStatus) {
 
     revalidatePath('/compose');
     revalidatePath('/campaigns');
+    logInfo('campaign.action_status_success', {
+      campaignId: id,
+      userEmail: session.user.email,
+      previousStatus: campaign.status,
+      newStatus: status,
+      durationMs: Date.now() - startedAt
+    });
     return { success: true };
   } catch (error) {
-    console.error('Update campaign status error:', error);
+    logError(
+      'campaign.action_status_failed',
+      {
+        campaignId: id,
+        userEmail: session.user.email,
+        requestedStatus: status
+      },
+      error
+    );
     return { error: 'Failed to update campaign' };
   }
 }

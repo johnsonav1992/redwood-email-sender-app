@@ -8,6 +8,7 @@ import {
   type QuotaInfo
 } from '@/lib/gmail';
 import { getTodaySentCount, getOldestSentEmailTime } from '@/lib/db';
+import { logError, logInfo, logWarn } from '@/lib/logger';
 
 interface ErrorResponse {
   error: string;
@@ -22,6 +23,7 @@ export async function GET(): Promise<NextResponse<QuotaInfo | ErrorResponse>> {
     !session?.refreshToken ||
     !session?.user?.email
   ) {
+    logWarn('quota.api_unauthorized');
     return NextResponse.json<ErrorResponse>(
       { error: 'Unauthorized' },
       { status: 401 }
@@ -29,6 +31,7 @@ export async function GET(): Promise<NextResponse<QuotaInfo | ErrorResponse>> {
   }
 
   try {
+    const startedAt = Date.now();
     const gmail = getGmailClient(session.accessToken, session.refreshToken);
     const isWorkspace = !!session.hostedDomain;
 
@@ -37,10 +40,6 @@ export async function GET(): Promise<NextResponse<QuotaInfo | ErrorResponse>> {
       getTodaySentCount(session.user.email),
       getOldestSentEmailTime(session.user.email)
     ]);
-
-    console.log(
-      `[quota] user=${session.user.email} gmail=${gmailQuota.sentToday} db=${dbSentCount} oldest=${oldestSentAt ?? 'none'}`
-    );
 
     const sentToday = Math.max(gmailQuota.sentToday, dbSentCount);
     const limit = isWorkspace ? 2000 : 500;
@@ -53,9 +52,18 @@ export async function GET(): Promise<NextResponse<QuotaInfo | ErrorResponse>> {
         ).toISOString()
       : gmailQuota.resetTime;
 
-    console.log(
-      `[quota] sentToday=${sentToday} remaining=${remaining} resetTime=${resetTime}`
-    );
+    logInfo('quota.api_success', {
+      userEmail: session.user.email,
+      isWorkspace,
+      gmailSentToday: gmailQuota.sentToday,
+      dbSentCount,
+      oldestSentAt,
+      sentToday,
+      limit,
+      remaining,
+      resetTime,
+      durationMs: Date.now() - startedAt
+    });
 
     return NextResponse.json<QuotaInfo>({
       sentToday,
@@ -64,7 +72,11 @@ export async function GET(): Promise<NextResponse<QuotaInfo | ErrorResponse>> {
       resetTime
     });
   } catch (error) {
-    console.error('Error fetching quota:', error);
+    logError(
+      'quota.api_failed',
+      { userEmail: session.user.email },
+      error
+    );
 
     if (isAuthError(error)) {
       return NextResponse.json<ErrorResponse>(

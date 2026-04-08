@@ -4,6 +4,7 @@ import {
   extractImagesFromHtml,
   type InlineImage
 } from './mime-builder';
+import { logInfo } from '@/lib/logger';
 
 export const AUTH_ERROR_CODE = 'AUTH_REFRESH_REQUIRED';
 
@@ -141,16 +142,21 @@ export async function getQuotaInfo(
     pageToken = response.data.nextPageToken ?? undefined;
     pagesFetched++;
 
-    console.log(
-      `[quota/gmail] page ${pagesFetched}: ${pageCount} messages (running total: ${sentCount})`
-    );
+    logInfo('quota.gmail_page_fetched', {
+      page: pagesFetched,
+      pageCount,
+      runningTotal: sentCount
+    });
   } while (pageToken);
 
   const limit = isWorkspace ? 2000 : 500;
 
-  console.log(
-    `[quota/gmail] done — ${sentCount} sent in last 24h, limit: ${limit} (${isWorkspace ? 'Workspace' : 'free'})`
-  );
+  logInfo('quota.gmail_fetch_complete', {
+    sentCount,
+    limit,
+    isWorkspace,
+    pagesFetched
+  });
 
   return {
     sentToday: sentCount,

@@ -1,8 +1,9 @@
 import { Client } from '@upstash/qstash';
+import { logError, logInfo, logWarn } from '@/lib/logger';
 
 function getQStashClient(): Client | null {
   if (!process.env.QSTASH_TOKEN) {
-    console.warn('[QStash] QSTASH_TOKEN not configured');
+    logWarn('qstash.client_missing_token');
     return null;
   }
   return new Client({ token: process.env.QSTASH_TOKEN });
@@ -14,19 +15,25 @@ export async function scheduleNextBatch(
 ): Promise<string | null> {
   const qstash = getQStashClient();
   if (!qstash) {
+    logWarn('qstash.schedule_skipped_no_client', { campaignId, delaySeconds });
     return null;
   }
 
   const baseUrl = process.env.SITE_URL || process.env.NEXTAUTH_URL;
   if (!baseUrl) {
-    console.error('[QStash] SITE_URL or NEXTAUTH_URL not configured');
+    logError('qstash.schedule_missing_base_url', {
+      campaignId,
+      delaySeconds
+    });
     return null;
   }
 
   const targetUrl = `${baseUrl}/api/campaigns/${campaignId}/process`;
-  console.log(`[QStash] Scheduling batch for campaign ${campaignId}`);
-  console.log(`[QStash] Target URL: ${targetUrl}`);
-  console.log(`[QStash] Delay: ${delaySeconds}s`);
+  logInfo('qstash.schedule_attempt', {
+    campaignId,
+    delaySeconds,
+    targetUrl
+  });
 
   try {
     const result = await qstash.publishJSON({
@@ -35,10 +42,22 @@ export async function scheduleNextBatch(
       body: { campaignId }
     });
 
-    console.log(`[QStash] Message scheduled successfully: ${result.messageId}`);
+    logInfo('qstash.schedule_success', {
+      campaignId,
+      delaySeconds,
+      messageId: result.messageId
+    });
     return result.messageId;
   } catch (error) {
-    console.error('[QStash] Failed to schedule message:', error);
+    logError(
+      'qstash.schedule_failed',
+      {
+        campaignId,
+        delaySeconds,
+        targetUrl
+      },
+      error
+    );
     throw error;
   }
 }
@@ -46,6 +65,6 @@ export async function scheduleNextBatch(
 export async function triggerImmediateBatch(
   campaignId: string
 ): Promise<string | null> {
-  console.log(`[QStash] Triggering immediate batch for campaign ${campaignId}`);
+  logInfo('qstash.trigger_immediate', { campaignId });
   return scheduleNextBatch(campaignId, 0);
 }
