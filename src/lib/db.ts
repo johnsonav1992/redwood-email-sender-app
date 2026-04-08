@@ -70,7 +70,24 @@ async function executeWriteTransaction(
 
   try {
     for (let i = 0; i < statements.length; i += chunkSize) {
-      await transaction.batch(statements.slice(i, i + chunkSize));
+      const chunk = statements.slice(i, i + chunkSize);
+      try {
+        await transaction.batch(chunk);
+      } catch (error) {
+        logError(
+          'db.write_transaction_chunk_failed',
+          {
+            ...context,
+            chunkStart: i,
+            chunkEnd: i + chunk.length - 1,
+            chunkSize: chunk.length,
+            statementCount: statements.length,
+            durationMs: Date.now() - startedAt
+          },
+          error
+        );
+        throw error;
+      }
     }
     await transaction.commit();
     logInfo('db.write_transaction_success', {
@@ -93,6 +110,40 @@ async function executeWriteTransaction(
   } finally {
     transaction.close();
   }
+}
+
+async function verifyRecipientCount(
+  campaignId: string,
+  expectedCount: number,
+  context: {
+    operation: string;
+    userEmail?: string;
+  }
+): Promise<void> {
+  const result = await db.execute({
+    sql: `SELECT COUNT(*) as count FROM recipients WHERE campaign_id = ?`,
+    args: [campaignId]
+  });
+  const actualCount = Number((result.rows[0] as Record<string, number>).count);
+
+  if (actualCount !== expectedCount) {
+    logError('campaign.recipient_count_mismatch', {
+      ...context,
+      campaignId,
+      expectedCount,
+      actualCount
+    });
+    throw new Error(
+      `Recipient count mismatch: expected ${expectedCount}, got ${actualCount}`
+    );
+  }
+
+  logInfo('campaign.recipient_count_verified', {
+    ...context,
+    campaignId,
+    expectedCount,
+    actualCount
+  });
 }
 
 export async function initializeSchema(): Promise<void> {
@@ -178,6 +229,11 @@ export async function createCampaign(
     userEmail: input.user_email,
     recipientCount: input.recipients.length,
     durationMs: Date.now() - startedAt
+  });
+
+  await verifyRecipientCount(id, input.recipients.length, {
+    operation: 'createCampaign',
+    userEmail: input.user_email
   });
 
   return getCampaignById(id) as Promise<Campaign>;
@@ -310,6 +366,12 @@ export async function updateCampaignDraft(
       recipientCount: data.recipients?.length,
       durationMs: Date.now() - startedAt
     });
+
+    if (data.recipients !== undefined) {
+      await verifyRecipientCount(id, data.recipients.length, {
+        operation: 'updateCampaignDraft'
+      });
+    }
   }
 }
 
