@@ -16,7 +16,6 @@ import {
   updateLastBatchAt,
   updateNextBatchAt,
   getCampaignProgress,
-  getCampaignImages,
   getUserTokens,
   getTodaySentCount,
   recordSentEmail,
@@ -189,7 +188,6 @@ async function handler(
 
     const senderEmail = await getUserEmail(gmail);
     const toEmail = campaign.to_email || senderEmail;
-    const images = await getCampaignImages(id);
 
     logInfo('campaign.process_send_attempt', {
       requestId,
@@ -201,7 +199,6 @@ async function handler(
       progressPending: progress.pending,
       senderEmail,
       toEmail,
-      imageCount: images.length,
       subjectLength: campaign.subject.length,
       bodyLength: campaign.body.length,
       hasSignature: !!campaign.signature
@@ -215,15 +212,7 @@ async function handler(
         bccEmails,
         campaign.subject,
         campaign.body,
-        campaign.signature || undefined,
-        images.length > 0
-          ? images.map(img => ({
-              contentId: img.content_id,
-              filename: img.filename,
-              mimeType: img.mime_type,
-              base64Data: img.base64_data
-            }))
-          : undefined
+        campaign.signature || undefined
       );
 
       await markRecipientsAsSent(recipientIds, batchNumber);

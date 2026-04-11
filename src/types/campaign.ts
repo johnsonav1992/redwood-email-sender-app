@@ -36,15 +36,6 @@ export interface Recipient {
   sent_at: string | null;
 }
 
-export interface CampaignImage {
-  id: string;
-  campaign_id: string;
-  content_id: string;
-  filename: string;
-  mime_type: string;
-  base64_data: string;
-}
-
 export interface CreateCampaignInput {
   user_email: string;
   name?: string;

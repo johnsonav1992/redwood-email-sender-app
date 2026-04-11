@@ -40,13 +40,7 @@ function writeLog(
 
   const message = JSON.stringify(payload);
 
-  if (level === 'error') {
-    console.error(message);
-  } else if (level === 'warn') {
-    console.warn(message);
-  } else {
-    console.log(message);
-  }
+  console[level](message);
 }
 
 export function logInfo(event: string, fields?: LogFields) {

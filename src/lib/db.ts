@@ -4,7 +4,6 @@ import { logError, logInfo } from '@/lib/logger';
 import type {
   Campaign,
   Recipient,
-  CampaignImage,
   CampaignStatus,
   CreateCampaignInput,
   CampaignWithProgress
@@ -22,6 +21,9 @@ export const db = createClient({
   url: process.env.TURSO_DATABASE_URL,
   authToken: process.env.TURSO_AUTH_TOKEN
 });
+
+const SCHEMA_VERSION = 2;
+let schemaInitializationPromise: Promise<void> | null = null;
 
 function generateId(): string {
   return crypto.randomUUID();
@@ -146,7 +148,7 @@ async function verifyRecipientCount(
   });
 }
 
-export async function initializeSchema(): Promise<void> {
+async function initializeSchema(): Promise<void> {
   const statements = SCHEMA_SQL.split(';')
     .map(s => s.trim())
     .filter(s => s.length > 0);
@@ -175,6 +177,53 @@ export async function initializeSchema(): Promise<void> {
   } catch {
     // Column already exists
   }
+}
+
+export async function ensureSchema(): Promise<void> {
+  if (schemaInitializationPromise) {
+    return schemaInitializationPromise;
+  }
+
+  schemaInitializationPromise = (async () => {
+    await db.execute(`
+      CREATE TABLE IF NOT EXISTS app_meta (
+        key TEXT PRIMARY KEY,
+        value TEXT NOT NULL,
+        updated_at TEXT NOT NULL
+      )
+    `);
+
+    const versionResult = await db.execute({
+      sql: `SELECT value FROM app_meta WHERE key = ?`,
+      args: ['schema_version']
+    });
+    const currentVersion =
+      versionResult.rows.length > 0
+        ? Number(
+            (versionResult.rows[0] as Record<string, string>).value || '0'
+          )
+        : 0;
+
+    if (currentVersion >= SCHEMA_VERSION) {
+      return;
+    }
+
+    await initializeSchema();
+
+    await db.execute({
+      sql: `INSERT INTO app_meta (key, value, updated_at)
+            VALUES (?, ?, ?)
+            ON CONFLICT(key) DO UPDATE SET
+              value = excluded.value,
+              updated_at = excluded.updated_at`,
+      args: ['schema_version', String(SCHEMA_VERSION), now()]
+    });
+  })().catch(error => {
+    schemaInitializationPromise = null;
+    throw error;
+  });
+
+  return schemaInitializationPromise;
 }
 
 // Campaign operations
@@ -591,43 +640,6 @@ export async function getCampaignProgress(campaignId: string): Promise<{
     pending: Number(row.pending) || 0,
     sending: Number(row.sending) || 0
   };
-}
-
-// Campaign image operations
-export async function addCampaignImage(
-  campaignId: string,
-  contentId: string,
-  filename: string,
-  mimeType: string,
-  base64Data: string
-): Promise<CampaignImage> {
-  const id = generateId();
-
-  await db.execute({
-    sql: `INSERT INTO campaign_images (id, campaign_id, content_id, filename, mime_type, base64_data)
-          VALUES (?, ?, ?, ?, ?, ?)`,
-    args: [id, campaignId, contentId, filename, mimeType, base64Data]
-  });
-
-  return {
-    id,
-    campaign_id: campaignId,
-    content_id: contentId,
-    filename,
-    mime_type: mimeType,
-    base64_data: base64Data
-  };
-}
-
-export async function getCampaignImages(
-  campaignId: string
-): Promise<CampaignImage[]> {
-  const result = await db.execute({
-    sql: `SELECT * FROM campaign_images WHERE campaign_id = ?`,
-    args: [campaignId]
-  });
-
-  return result.rows as unknown as CampaignImage[];
 }
 
 // User token operations (for server-side campaign processing)

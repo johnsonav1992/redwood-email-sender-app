@@ -12,7 +12,7 @@ import {
   getCampaignProgress,
   getCampaignById,
   getCampaignsByUser,
-  initializeSchema,
+  ensureSchema,
   getTodaySentCount
 } from '@/lib/db';
 import {
@@ -25,15 +25,6 @@ import {
 import { logError, logInfo, logWarn } from '@/lib/logger';
 import { triggerImmediateBatch } from '@/lib/qstash';
 import type { CampaignStatus, CampaignWithProgress } from '@/types/campaign';
-
-let schemaInitialized = false;
-
-async function ensureSchema() {
-  if (!schemaInitialized) {
-    await initializeSchema();
-    schemaInitialized = true;
-  }
-}
 
 export async function getInitialData(): Promise<{
   campaigns: CampaignWithProgress[];

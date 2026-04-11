@@ -1,4 +1,10 @@
 export const SCHEMA_SQL = `
+CREATE TABLE IF NOT EXISTS app_meta (
+  key TEXT PRIMARY KEY,
+  value TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);
+
 -- campaigns table
 CREATE TABLE IF NOT EXISTS campaigns (
   id TEXT PRIMARY KEY,
@@ -32,17 +38,6 @@ CREATE TABLE IF NOT EXISTS recipients (
   FOREIGN KEY (campaign_id) REFERENCES campaigns(id) ON DELETE CASCADE
 );
 
--- campaign_images table (for inline images)
-CREATE TABLE IF NOT EXISTS campaign_images (
-  id TEXT PRIMARY KEY,
-  campaign_id TEXT NOT NULL,
-  content_id TEXT NOT NULL,
-  filename TEXT NOT NULL,
-  mime_type TEXT NOT NULL,
-  base64_data TEXT NOT NULL,
-  FOREIGN KEY (campaign_id) REFERENCES campaigns(id) ON DELETE CASCADE
-);
-
 -- user_tokens table (for server-side campaign processing)
 CREATE TABLE IF NOT EXISTS user_tokens (
   user_email TEXT PRIMARY KEY,
@@ -66,6 +61,5 @@ CREATE INDEX IF NOT EXISTS idx_campaigns_user_email ON campaigns(user_email);
 CREATE INDEX IF NOT EXISTS idx_campaigns_status ON campaigns(status);
 CREATE INDEX IF NOT EXISTS idx_recipients_campaign_id ON recipients(campaign_id);
 CREATE INDEX IF NOT EXISTS idx_recipients_campaign_status ON recipients(campaign_id, status);
-CREATE INDEX IF NOT EXISTS idx_campaign_images_campaign_id ON campaign_images(campaign_id);
 CREATE INDEX IF NOT EXISTS idx_sent_emails_user_date ON sent_emails(user_email, sent_at);
 `;

@@ -6,7 +6,8 @@
     "dev": "NODE_NO_WARNINGS=1 next dev --turbopack",
     "build": "next build --turbopack",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "db:cleanup-legacy": "node scripts/cleanup-legacy-schema.mjs"
   },
   "dependencies": {
     "@libsql/client": "^0.17.0",

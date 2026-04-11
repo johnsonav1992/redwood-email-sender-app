@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
-import { createCampaign, getCampaignsByUser, initializeSchema } from '@/lib/db';
+import { createCampaign, getCampaignsByUser, ensureSchema } from '@/lib/db';
 import { logError, logInfo, logWarn } from '@/lib/logger';
 import type {
   CreateCampaignInput,
@@ -18,15 +18,6 @@ interface CreateResponse {
 
 interface ErrorResponse {
   error: string;
-}
-
-let schemaInitialized = false;
-
-async function ensureSchema() {
-  if (!schemaInitialized) {
-    await initializeSchema();
-    schemaInitialized = true;
-  }
 }
 
 export async function GET(): Promise<
