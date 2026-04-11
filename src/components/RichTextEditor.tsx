@@ -68,7 +68,9 @@ export default function RichTextEditor({
       StarterKit.configure({
         paragraph: false,
         hardBreak: { keepMarks: true },
-        gapcursor: false
+        gapcursor: false,
+        link: false,
+        underline: false
       }),
       Gapcursor,
       ParagraphWithStyles,
