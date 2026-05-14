@@ -20,9 +20,21 @@ export const authOptions: NextAuthOptions = {
   callbacks: {
     async jwt({ token, account, profile }) {
       if (account) {
+        const previousUserEmail = token.userEmail;
+        const accountEmail =
+          (profile as { email?: string })?.email ||
+          (typeof token.email === 'string' ? token.email : undefined);
+        const sameUser =
+          !!previousUserEmail &&
+          !!accountEmail &&
+          previousUserEmail.toLowerCase() === accountEmail.toLowerCase();
+
         token.accessToken = account.access_token;
-        token.refreshToken = account.refresh_token;
+        token.refreshToken =
+          account.refresh_token ||
+          (sameUser ? (token.refreshToken as string | undefined) : undefined);
         token.hostedDomain = (profile as { hd?: string })?.hd || null;
+        token.userEmail = accountEmail;
       }
       return token;
     },
@@ -31,7 +43,7 @@ export const authOptions: NextAuthOptions = {
       session.refreshToken = token.refreshToken as string;
       session.hostedDomain = token.hostedDomain || null;
 
-      if (session.user?.email && session.accessToken && session.refreshToken) {
+      if (session.user?.email && session.accessToken) {
         try {
           await saveUserTokens(
             session.user.email,

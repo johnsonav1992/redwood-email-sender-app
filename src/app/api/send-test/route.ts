@@ -1,7 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
-import { getGmailClient, sendEmail, isAuthError } from '@/lib/gmail';
+import {
+  getGmailClient,
+  sendEmail,
+  isAuthError,
+  getUserEmail
+} from '@/lib/gmail';
 import { logError, logInfo, logWarn } from '@/lib/logger';
 import type { ErrorResponse } from '@/types/email';
 
@@ -49,12 +54,33 @@ export async function POST(
 
   try {
     const startedAt = Date.now();
+    const gmail = getGmailClient(session.accessToken, session.refreshToken);
+    const gmailAccountEmail = await getUserEmail(gmail);
+
+    if (
+      gmailAccountEmail &&
+      gmailAccountEmail.toLowerCase() !== session.user.email.toLowerCase()
+    ) {
+      logWarn('send_test.account_mismatch', {
+        sessionUserEmail: session.user.email,
+        gmailAccountEmail
+      });
+      return NextResponse.json<ErrorResponse>(
+        {
+          error:
+            'Signed-in account does not match the connected Gmail account. Please sign out and sign in with the correct Google account.'
+        },
+        { status: 409 }
+      );
+    }
+
     logInfo('send_test.start', {
       userEmail: session.user.email,
+      gmailAccountEmail,
       subjectLength: subject.length,
       bodyLength: htmlBody.length
     });
-    const gmail = getGmailClient(session.accessToken, session.refreshToken);
+
     await sendEmail(gmail, session.user.email, `[TEST] ${subject}`, htmlBody);
 
     logInfo('send_test.success', {

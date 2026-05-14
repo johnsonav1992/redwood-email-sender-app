@@ -614,6 +614,21 @@ export async function markRecipientsAsFailed(
   }
 }
 
+export async function releaseClaimedRecipients(
+  recipientIds: string[]
+): Promise<void> {
+  if (recipientIds.length === 0) return;
+
+  for (const id of recipientIds) {
+    await db.execute({
+      sql: `UPDATE recipients
+            SET status = 'pending', error_message = NULL
+            WHERE id = ? AND status = 'sending'`,
+      args: [id]
+    });
+  }
+}
+
 export async function getCampaignProgress(campaignId: string): Promise<{
   total: number;
   sent: number;
@@ -646,7 +661,7 @@ export async function getCampaignProgress(campaignId: string): Promise<{
 export async function saveUserTokens(
   userEmail: string,
   accessToken: string,
-  refreshToken: string,
+  refreshToken?: string,
   hostedDomain?: string
 ): Promise<void> {
   await db.execute({
@@ -654,10 +669,10 @@ export async function saveUserTokens(
           VALUES (?, ?, ?, ?, ?)
           ON CONFLICT(user_email) DO UPDATE SET
             access_token = excluded.access_token,
-            refresh_token = excluded.refresh_token,
+            refresh_token = COALESCE(excluded.refresh_token, user_tokens.refresh_token),
             hosted_domain = excluded.hosted_domain,
             updated_at = excluded.updated_at`,
-    args: [userEmail, accessToken, refreshToken, hostedDomain || null, now()]
+    args: [userEmail, accessToken, refreshToken || null, hostedDomain || null, now()]
   });
 }
 

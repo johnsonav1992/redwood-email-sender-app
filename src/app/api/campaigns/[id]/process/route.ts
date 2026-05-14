@@ -11,6 +11,7 @@ import {
   claimPendingRecipients,
   markRecipientsAsSent,
   markRecipientsAsFailed,
+  releaseClaimedRecipients,
   updateCampaignStatus,
   updateCampaignCounts,
   updateLastBatchAt,
@@ -187,6 +188,24 @@ async function handler(
     const recipientIds = claimedRecipients.map(r => r.id);
 
     const senderEmail = await getUserEmail(gmail);
+
+    if (senderEmail.toLowerCase() !== campaign.user_email.toLowerCase()) {
+      await releaseClaimedRecipients(recipientIds);
+      await updateCampaignStatus(id, 'paused');
+      await updateNextBatchAt(id, null);
+      logWarn('campaign.process_sender_mismatch_paused', {
+        requestId,
+        campaignId: id,
+        campaignUserEmail: campaign.user_email,
+        senderEmail
+      });
+      return NextResponse.json({
+        success: false,
+        error:
+          'Connected Gmail account does not match the campaign owner. Campaign paused until the correct account signs in again.'
+      });
+    }
+
     const toEmail = campaign.to_email || senderEmail;
 
     logInfo('campaign.process_send_attempt', {
