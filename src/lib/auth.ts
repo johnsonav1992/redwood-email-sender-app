@@ -3,6 +3,9 @@ import GoogleProvider from 'next-auth/providers/google';
 import { saveUserTokens } from './db';
 
 export const authOptions: NextAuthOptions = {
+  pages: {
+    error: '/auth-error'
+  },
   providers: [
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID!,

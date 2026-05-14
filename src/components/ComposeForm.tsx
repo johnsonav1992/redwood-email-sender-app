@@ -368,7 +368,7 @@ export default function ComposeForm({ initialCampaigns }: ComposeFormProps) {
       if (campaign) {
         await startCreatedCampaign(campaign);
       } else {
-        showStartFailed();
+        showAlert('Start Failed', 'Failed to create the campaign. Please try again.', 'error');
       }
     } finally {
       setStartingCampaign(false);
@@ -425,7 +425,7 @@ export default function ComposeForm({ initialCampaigns }: ComposeFormProps) {
       if (campaign) {
         await startCreatedCampaign(campaign);
       } else {
-        showStartFailed();
+        showAlert('Start Failed', 'Failed to create the campaign. Please try again.', 'error');
       }
     } finally {
       setStartingCampaign(false);
