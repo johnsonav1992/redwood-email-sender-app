@@ -113,11 +113,15 @@ export function useCampaignPersistence({
           ]);
           return result.campaign as CampaignWithProgress;
         }
+        console.error('Campaign creation returned no campaign and no error.');
         return null;
       } catch (err) {
         const errorMessage =
           err instanceof Error ? err.message : 'Unknown error';
         setError(errorMessage);
+        console.error('Failed to create campaign:', {
+          error: errorMessage
+        });
         return null;
       } finally {
         setLoading(false);
@@ -152,7 +156,14 @@ export function useCampaignPersistence({
         const errorMessage =
           err instanceof Error ? err.message : 'Unknown error';
         setError(errorMessage);
-        return errorMessage;
+        console.error('Failed to update campaign status:', {
+          campaignId: id,
+          requestedStatus: status,
+          error: errorMessage
+        });
+        return status === 'running'
+          ? 'Failed to start campaign. Please try again.'
+          : 'Failed to update campaign. Please try again.';
       }
     },
     [currentCampaign]

@@ -43,6 +43,10 @@ export const authOptions: NextAuthOptions = {
       session.refreshToken = token.refreshToken as string;
       session.hostedDomain = token.hostedDomain || null;
 
+      if (session.user && typeof token.userEmail === 'string') {
+        session.user.email = token.userEmail;
+      }
+
       if (session.user?.email && session.accessToken) {
         try {
           await saveUserTokens(

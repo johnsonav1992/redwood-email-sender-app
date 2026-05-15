@@ -13,10 +13,12 @@ import {
   getCampaignById,
   getCampaignsByUser,
   ensureSchema,
-  getTodaySentCount
+  getTodaySentCount,
+  getUserTokens
 } from '@/lib/db';
 import {
   getGmailClient,
+  getUserEmail,
   getQuotaInfo,
   isAuthError,
   AUTH_ERROR_CODE,
@@ -244,6 +246,67 @@ export async function updateCampaignStatus(id: string, status: CampaignStatus) {
     }
 
     if (status === 'running') {
+      if (!session.accessToken || !session.refreshToken) {
+        logWarn('campaign.action_status_missing_session_tokens', {
+          campaignId: id,
+          userEmail: session.user.email
+        });
+        return {
+          error:
+            'Your Google authorization is incomplete. Please sign out and sign in again with Gmail access.'
+        };
+      }
+
+      const tokens = await getUserTokens(session.user.email);
+      if (!tokens) {
+        logWarn('campaign.action_status_missing_stored_tokens', {
+          campaignId: id,
+          userEmail: session.user.email
+        });
+        return {
+          error:
+            'The app does not have saved Gmail access for this account. Please sign out and sign in again.'
+        };
+      }
+
+      try {
+        const gmail = getGmailClient(session.accessToken, session.refreshToken);
+        const gmailAccountEmail = await getUserEmail(gmail);
+
+        if (
+          gmailAccountEmail.toLowerCase() !== session.user.email.toLowerCase()
+        ) {
+          logWarn('campaign.action_status_account_mismatch', {
+            campaignId: id,
+            sessionUserEmail: session.user.email,
+            gmailAccountEmail
+          });
+          return {
+            error:
+              'Signed-in account does not match the connected Gmail account. Please sign out and sign in with the correct Google account.'
+          };
+        }
+      } catch (authCheckError) {
+        logError(
+          'campaign.action_status_gmail_check_failed',
+          {
+            campaignId: id,
+            userEmail: session.user.email
+          },
+          authCheckError
+        );
+        if (isAuthError(authCheckError)) {
+          return {
+            error:
+              'Google authorization expired or was revoked. Please sign out and sign in again.'
+          };
+        }
+        return {
+          error:
+            'Could not verify Gmail access for this account. Please try signing out and back in.'
+        };
+      }
+
       const progress = await getCampaignProgress(id);
       logInfo('campaign.action_status_start_guard', {
         campaignId: id,
@@ -279,12 +342,24 @@ export async function updateCampaignStatus(id: string, status: CampaignStatus) {
       });
       try {
         const messageId = await triggerImmediateBatch(id);
+        if (!messageId) {
+          await dbUpdateCampaignStatus(id, campaign.status);
+          logError('campaign.action_status_trigger_qstash_missing_message_id', {
+            campaignId: id,
+            userEmail: session.user.email
+          });
+          return {
+            error:
+              'Campaign could not start because background sending is not configured. Please contact support.'
+          };
+        }
         logInfo('campaign.action_status_trigger_qstash_success', {
           campaignId: id,
           userEmail: session.user.email,
           messageId
         });
       } catch (qstashError) {
+        await dbUpdateCampaignStatus(id, campaign.status);
         logError(
           'campaign.action_status_trigger_qstash_failed',
           {
@@ -293,6 +368,10 @@ export async function updateCampaignStatus(id: string, status: CampaignStatus) {
           },
           qstashError
         );
+        return {
+          error:
+            'Campaign could not start because background sending failed to queue. Please try again.'
+        };
       }
     } else if (status === 'paused' || status === 'stopped') {
       await updateNextBatchAt(id, null);

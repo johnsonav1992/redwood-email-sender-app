@@ -686,7 +686,9 @@ export async function getUserTokens(userEmail: string): Promise<{
     args: [userEmail]
   });
   if (result.rows.length === 0) return null;
-  const row = result.rows[0] as Record<string, string>;
+  const row = result.rows[0] as Record<string, string | null>;
+  if (!row.access_token || !row.refresh_token) return null;
+
   return {
     accessToken: row.access_token,
     refreshToken: row.refresh_token,

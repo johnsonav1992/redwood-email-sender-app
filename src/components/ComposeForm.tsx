@@ -236,6 +236,8 @@ export default function ComposeForm({ initialCampaigns }: ComposeFormProps) {
           })
         });
 
+        const data = await response.json().catch(() => null);
+
         if (response.ok) {
           await fetchCampaign(campaignId);
           showAlert(
@@ -244,6 +246,11 @@ export default function ComposeForm({ initialCampaigns }: ComposeFormProps) {
             'success'
           );
         } else {
+          console.error('Failed to save draft:', {
+            status: response.status,
+            error: data?.error,
+            details: data?.details
+          });
           showAlert(
             'Save Failed',
             'Failed to save draft. Please try again.',
@@ -316,7 +323,15 @@ export default function ComposeForm({ initialCampaigns }: ComposeFormProps) {
       })
     });
 
+    const data = await response.json().catch(() => null);
+
     if (!response.ok) {
+      console.error('Failed to save draft before starting campaign:', {
+        campaignId: id,
+        status: response.status,
+        error: data?.error,
+        details: data?.details
+      });
       showAlert(
         'Start Failed',
         'Failed to save the draft before starting. Please try again.',

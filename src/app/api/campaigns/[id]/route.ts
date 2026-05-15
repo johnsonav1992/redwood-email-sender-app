@@ -260,12 +260,27 @@ export async function PATCH(
         });
         try {
           const messageId = await triggerImmediateBatch(id);
+          if (!messageId) {
+            await updateCampaignStatus(id, campaign.status);
+            logError('campaign.api_patch_trigger_qstash_missing_message_id', {
+              campaignId: id,
+              userEmail: session.user.email
+            });
+            return NextResponse.json(
+              {
+                error:
+                  'Campaign could not start because background sending is not configured. Please contact support.'
+              },
+              { status: 500 }
+            );
+          }
           logInfo('campaign.api_patch_trigger_qstash_success', {
             campaignId: id,
             userEmail: session.user.email,
             messageId
           });
         } catch (qstashError) {
+          await updateCampaignStatus(id, campaign.status);
           logError(
             'campaign.api_patch_trigger_qstash_failed',
             {
@@ -273,6 +288,13 @@ export async function PATCH(
               userEmail: session.user.email
             },
             qstashError
+          );
+          return NextResponse.json(
+            {
+              error:
+                'Campaign could not start because background sending failed to queue. Please try again.'
+            },
+            { status: 500 }
           );
         }
       }

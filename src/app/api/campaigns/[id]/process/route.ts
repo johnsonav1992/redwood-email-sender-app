@@ -4,7 +4,8 @@ import {
   getGmailClient,
   sendBccEmail,
   getUserEmail,
-  getQuotaInfo
+  getQuotaInfo,
+  isAuthError
 } from '@/lib/gmail';
 import {
   getCampaignById,
@@ -367,6 +368,18 @@ async function handler(
       },
       error
     );
+    if (isAuthError(error)) {
+      await updateCampaignStatus(id, 'paused');
+      await updateNextBatchAt(id, null);
+      return NextResponse.json(
+        {
+          success: false,
+          error:
+            'Google authorization expired or was revoked. Campaign paused until the user signs in again.'
+        },
+        { status: 401 }
+      );
+    }
     return NextResponse.json(
       { success: false, error: 'Failed to process batch' },
       { status: 500 }
