@@ -13,6 +13,16 @@ import type {
   Recipient
 } from '@/types/campaign';
 
+function isStaleDeploymentError(error: unknown): boolean {
+  if (!(error instanceof Error)) return false;
+
+  const message = error.message.toLowerCase();
+  return (
+    message.includes('failed to find server action') ||
+    message.includes('older or newer deployment')
+  );
+}
+
 interface CampaignDetail {
   campaign: Campaign;
   recipients: Recipient[];
@@ -55,6 +65,10 @@ export function useCampaignPersistence({
       return result.campaigns;
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+      if (isStaleDeploymentError(err) && typeof window !== 'undefined') {
+        window.location.reload();
+        return [];
+      }
       setError(errorMessage);
       return [];
     } finally {
@@ -118,6 +132,10 @@ export function useCampaignPersistence({
       } catch (err) {
         const errorMessage =
           err instanceof Error ? err.message : 'Unknown error';
+        if (isStaleDeploymentError(err) && typeof window !== 'undefined') {
+          window.location.reload();
+          return null;
+        }
         setError(errorMessage);
         console.error('Failed to create campaign:', {
           error: errorMessage
@@ -155,6 +173,10 @@ export function useCampaignPersistence({
       } catch (err) {
         const errorMessage =
           err instanceof Error ? err.message : 'Unknown error';
+        if (isStaleDeploymentError(err) && typeof window !== 'undefined') {
+          window.location.reload();
+          return 'Reloading to update the app...';
+        }
         setError(errorMessage);
         console.error('Failed to update campaign status:', {
           campaignId: id,
@@ -190,6 +212,10 @@ export function useCampaignPersistence({
       } catch (err) {
         const errorMessage =
           err instanceof Error ? err.message : 'Unknown error';
+        if (isStaleDeploymentError(err) && typeof window !== 'undefined') {
+          window.location.reload();
+          return false;
+        }
         setError(errorMessage);
         return false;
       }
@@ -215,6 +241,10 @@ export function useCampaignPersistence({
       return null;
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+      if (isStaleDeploymentError(err) && typeof window !== 'undefined') {
+        window.location.reload();
+        return null;
+      }
       setError(errorMessage);
       return null;
     } finally {
