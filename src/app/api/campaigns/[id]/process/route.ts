@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { verifySignatureAppRouter } from '@upstash/qstash/nextjs';
 import {
   getGmailClient,
   sendBccEmail,
@@ -24,17 +23,30 @@ import {
   cleanupOldSentEmails
 } from '@/lib/db';
 import { logError, logInfo, logWarn } from '@/lib/logger';
-import { scheduleNextBatch } from '@/lib/qstash';
+import { getQStashProcessSecret, scheduleNextBatch } from '@/lib/qstash';
 
 type RouteContext = { params: Promise<{ id: string }> };
 
-async function handler(
-  _req: NextRequest,
+export async function POST(
+  req: NextRequest,
   context: RouteContext
 ): Promise<NextResponse> {
   const { id } = await context.params;
   const requestId = crypto.randomUUID();
   const startedAt = Date.now();
+
+  const processSecret = getQStashProcessSecret();
+  const requestSecret = req.headers.get('x-redwood-qstash-secret');
+
+  if (!processSecret || requestSecret !== processSecret) {
+    logWarn('campaign.process_unauthorized', {
+      requestId,
+      campaignId: id,
+      hasProcessSecret: !!processSecret,
+      hasRequestSecret: !!requestSecret
+    });
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
 
   logInfo('campaign.process_start', {
     requestId,
@@ -386,5 +398,3 @@ async function handler(
     );
   }
 }
-
-export const POST = verifySignatureAppRouter(handler);

@@ -1,6 +1,10 @@
 import { Client } from '@upstash/qstash';
 import { logError, logInfo, logWarn } from '@/lib/logger';
 
+export function getQStashProcessSecret(): string | null {
+  return process.env.QSTASH_PROCESS_SECRET || null;
+}
+
 function getQStashClient(): Client | null {
   if (!process.env.QSTASH_TOKEN) {
     logWarn('qstash.client_missing_token');
@@ -29,6 +33,15 @@ export async function scheduleNextBatch(
   }
 
   const targetUrl = `${baseUrl}/api/campaigns/${campaignId}/process`;
+  const processSecret = getQStashProcessSecret();
+  if (!processSecret) {
+    logError('qstash.schedule_missing_process_secret', {
+      campaignId,
+      delaySeconds
+    });
+    return null;
+  }
+
   logInfo('qstash.schedule_attempt', {
     campaignId,
     delaySeconds,
@@ -36,10 +49,12 @@ export async function scheduleNextBatch(
   });
 
   try {
-    const result = await qstash.publishJSON({
+    const result = await qstash.publish({
       url: targetUrl,
       delay: delaySeconds,
-      body: { campaignId }
+      headers: {
+        'X-Redwood-Qstash-Secret': processSecret
+      }
     });
 
     logInfo('qstash.schedule_success', {
